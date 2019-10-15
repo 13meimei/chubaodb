@@ -8,6 +8,8 @@ NoSQL - redis API
 
 NewSQL - MySQL API + PostgreSQL API
 
+Graph - Gremlin
+
 ## sharding
 
 table ranges, multi-raft replication, logical split, dynamic rebalancing
