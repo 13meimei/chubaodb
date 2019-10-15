@@ -14,9 +14,13 @@ table ranges, multi-raft replication, logical split, dynamic rebalancing
 
 ## storage engines
 
-hot ranges: masstree as the in-memory store
+hot ranges: currently masstree as the in-memory store
 
 warm ranges: rocksdb
+
+## smart scheduling of storage medium
+
+according to the access temperature, intelligent transition of range replicas between RAM and disk.  
 
 ## transactions
 
