@@ -62,6 +62,8 @@ var codeErrMap = map[mspb.ErrorType]error{
 	mspb.ErrorType_NotAllowDelete:           errors.New("not allow delete"),
 	mspb.ErrorType_ClientIPNotSet:           errors.New("client ip not set"),
 	mspb.ErrorType_DatabaseNotEmpty:         errors.New("database is not empty"),
+	mspb.ErrorType_NodeStateNotExpected:         errors.New("node state not expected"),
+	mspb.ErrorType_WatcherMasterHashErr:         errors.New("watcher master redirect has err"),
 }
 
 var errCodeMap = make(map[error]mspb.ErrorType)

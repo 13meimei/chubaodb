@@ -17,6 +17,7 @@ package client
 import (
 	"errors"
 	"fmt"
+	"github.com/chubaodb/chubaodb/master/entity"
 	"github.com/chubaodb/chubaodb/master/entity/pkg/basepb"
 	"github.com/chubaodb/chubaodb/master/entity/pkg/dspb"
 	"github.com/chubaodb/chubaodb/master/utils/log"
@@ -47,27 +48,37 @@ type SchRpcClient struct {
 	pool *ResourcePool
 }
 
-func (c *SchRpcClient) ChangeMember(ctx context.Context, addr string, r *dspb.ChangeRaftMemberRequest) error {
-
+func (c *SchRpcClient) ChangeMember(ctx context.Context, addr string, r *dspb.ChangeRaftMemberRequest) (err error) {
+	var conn RpcClient
+	var header *dspb.SchResponse_Header
 	now := time.Now()
 	defer func() {
-		log.GetOrDef(DefLog).Info("to change member addr:[%s] rangeID:[%d] changeType:[%v] peerID:[%d] useTime:[%s]", addr, r.RangeId, r.ChangeType, r.TargetPeer.Id, time.Now().Sub(now))
+		log.GetrDef(DefLog).Info("to change member addr:[%s] rangeID:[%d] changeType:[%v] peerID:[%d] useTime:[%s]", addr, r.RangeId, r.ChangeType, r.TargetPeer.Id, time.Now().Sub(now))
+		m := entity.Monitor()
+		if m != nil {
+			m.GetGauge(m.GetCluster(), "schedule", "count").Add(1)
+			if err != nil {
+				m.GetGauge(m.GetCluster(), "schedule", "event", "change_member", "fail").Add(1)
+			} else {
+				m.GetGauge(m.GetCluster(), "schedule", "event", "change_member", "success").Add(1)
+			}
+		}
 	}()
 
-	conn, err := c.getConn(addr)
+	conn, err = c.getConn(addr)
 	if err != nil {
-		log.GetOrDef(DefLog).Error("is alive has err:[%s]", err.Error())
+		log.GetrDef(DefLog).Error("is alive has err:[%s]", err.Error())
 		return err
 	}
 
-	header, _, err := conn.ChangeMember(ctx, r)
+	header, _, err = conn.ChangeMember(ctx, r)
 	if err != nil {
-		log.GetOrDef(DefLog).Error("is alive has err:[%s]", err.Error())
+		log.GetrDef(DefLog).Error("is alive has err:[%s]", err.Error())
 		return err
 	}
 	if header.GetError() != nil {
-		err = fmt.Errorf("SchRpcClient ChangeMember hash err:[%s]", header.GetError().Detail)
-		log.GetOrDef(DefLog).Error(err.Error())
+		err = fmt.Errorf("SchRpcClient ChangeMember hash err:[%s]", header.GetError().String())
+		log.GetrDef(DefLog).Error(err.Error())
 		return err
 	}
 	return nil
@@ -81,11 +92,11 @@ func (c *SchRpcClient) NodeInfo(ctx context.Context, addr string) (*dspb.NodeInf
 
 	header, response, err := conn.NodeInfo(ctx)
 	if err != nil {
-		log.GetOrDef(DefLog).Error("is alive has err:[%s]", err.Error())
+		log.GetrDef(DefLog).Error("is alive has err:[%s]", err.Error())
 		return nil, err
 	}
 	if header.GetError() != nil {
-		return nil, fmt.Errorf("SchRpcClient NodeInfo hash err:[%s]", header.GetError().Detail)
+		return nil, fmt.Errorf("SchRpcClient NodeInfo hash err:[%s]", header.GetError().String())
 	}
 	return response, nil
 }
@@ -102,7 +113,7 @@ func (c *SchRpcClient) IsAlive(ctx context.Context, addr string) bool {
 		return false
 	}
 	if header.GetError() != nil {
-		log.Error("check isAlive has err in header:[%s]", header.GetError().Detail)
+		log.Error("check isAlive has err in header:[%s]", header.GetError().String())
 		return false
 	}
 	return response.Alive
@@ -121,16 +132,27 @@ func (c *SchRpcClient) Close() error {
 	return nil
 }
 
-func (c *SchRpcClient) CreateRange(ctx context.Context, addr string, r *basepb.Range) error {
+func (c *SchRpcClient) CreateRange(ctx context.Context, addr string, r *basepb.Range) (err error) {
+	var conn RpcClient
+	var header *dspb.SchResponse_Header
 
 	now := time.Now()
 	defer func() {
-		go log.GetOrDef(DefLog).Info("create Range addr:[%s] range:[%d] useTime:[%s]", addr, r.Id, time.Now().Sub(now))
+		go log.GetrDef(DefLog).Info("create Range addr:[%s] range:[%d] useTime:[%s]", addr, r.Id, time.Now().Sub(now))
+		m := entity.Monitor()
+		if m != nil {
+			m.GetGauge(m.GetCluster(), "schedule", "count").Add(1)
+			if err != nil {
+				m.GetGauge(m.GetCluster(), "schedule", "event", "add_peer", "fail").Add(1)
+			} else {
+				m.GetGauge(m.GetCluster(), "schedule", "event", "add_peer", "success").Add(1)
+			}
+		}
 	}()
 
-	conn, err := c.getConn(addr)
+	conn, err = c.getConn(addr)
 	if err != nil {
-		log.GetOrDef(DefLog).Error(err.Error())
+		log.GetrDef(DefLog).Error(err.Error())
 		return err
 	}
 	req := &dspb.CreateRangeRequest{
@@ -138,67 +160,89 @@ func (c *SchRpcClient) CreateRange(ctx context.Context, addr string, r *basepb.R
 		Leader: r.Peers[0].NodeId,
 	}
 
-	header, _, err := conn.CreateRange(ctx, req)
+	header, _, err = conn.CreateRange(ctx, req)
 	if err != nil {
 		err = fmt.Errorf("SchRpcClient CreateRange hash err:[%s]", err.Error())
-		log.GetOrDef(DefLog).Error(err.Error())
+		log.GetrDef(DefLog).Error(err.Error())
 		return err
 	}
 
 	if header.GetError() != nil {
-		err = fmt.Errorf("SchRpcClient CreateRange hash err:[%s]", header.GetError().Detail)
-		log.GetOrDef(DefLog).Error(err.Error())
+		err = fmt.Errorf("SchRpcClient CreateRange hash err:[%s]", header.GetError().String())
+		log.GetrDef(DefLog).Error(err.Error())
 		return err
 	}
 	return nil
 }
 
-func (c *SchRpcClient) DeleteRange(ctx context.Context, addr string, rangeId uint64, peerID uint64) error {
+func (c *SchRpcClient) DeleteRange(ctx context.Context, addr string, rangeId uint64, peerID uint64) (err error) {
+	var conn RpcClient
+	var header *dspb.SchResponse_Header
 	now := time.Now()
 	defer func() {
-		go log.GetOrDef(DefLog).Info("delete Range addr:[%s] range:[%d] peer:[%d] useTime:[%s]", addr, rangeId, peerID, time.Now().Sub(now))
+		go log.GetrDef(DefLog).Info("delete Range addr:[%s] range:[%d] peer:[%d] useTime:[%s]", addr, rangeId, peerID, time.Now().Sub(now))
+		m := entity.Monitor()
+		if m != nil {
+			m.GetGauge(m.GetCluster(), "schedule", "count").Add(1)
+			if err != nil {
+				m.GetGauge(m.GetCluster(), "schedule", "event", "del_peer", "fail").Add(1)
+			} else {
+				m.GetGauge(m.GetCluster(), "schedule", "event", "del_peer", "success").Add(1)
+			}
+		}
 	}()
 
-	conn, err := c.getConn(addr)
+	conn, err = c.getConn(addr)
 	if err != nil {
-		log.GetOrDef(DefLog).Error(err.Error())
+		log.GetrDef(DefLog).Error(err.Error())
 		return err
 	}
 	req := &dspb.DeleteRangeRequest{RangeId: rangeId, PeerId: peerID}
-	header, _, err := conn.DeleteRange(ctx, req)
+	header, _, err = conn.DeleteRange(ctx, req)
 	if err != nil {
 		err = fmt.Errorf("SchRpcClient DeleteRange hash err:[%s]", err.Error())
-		log.GetOrDef(DefLog).Error(err.Error())
+		log.GetrDef(DefLog).Error(err.Error())
 		return err
 	}
 	if header.GetError() != nil {
-		err = fmt.Errorf("SchRpcClient DeleteRange hash err:[%s]", header.GetError().Detail)
-		log.GetOrDef(DefLog).Error(err.Error())
+		err = fmt.Errorf("SchRpcClient DeleteRange hash head err:[%s]", header.GetError().String())
+		log.GetrDef(DefLog).Error(err.Error())
 		return err
 	}
 	return nil
 }
 
-func (c *SchRpcClient) TransferLeader(ctx context.Context, addr string, rangeId uint64) error {
+func (c *SchRpcClient) TransferLeader(ctx context.Context, addr string, rangeId uint64) (err error) {
+	var conn RpcClient
+	var header *dspb.SchResponse_Header
 	now := time.Now()
 	defer func() {
-		go log.GetOrDef(DefLog).Info("transfer leader addr:[%s] range:[%d] useTime:[%s]", addr, rangeId, time.Now().Sub(now))
+		go log.GetrDef(DefLog).Info("transfer leader addr:[%s] range:[%d] useTime:[%s]", addr, rangeId, time.Now().Sub(now))
+		m := entity.Monitor()
+		if m != nil {
+			m.GetGauge(m.GetCluster(), "schedule", "count").Add(1)
+			if err != nil {
+				m.GetGauge(m.GetCluster(), "schedule", "event", "transfer_leader", "fail").Add(1)
+			} else {
+				m.GetGauge(m.GetCluster(), "schedule", "event", "transfer_leader", "success").Add(1)
+			}
+		}
 	}()
 
-	conn, err := c.getConn(addr)
+	conn, err = c.getConn(addr)
 	if err != nil {
 		return err
 	}
 	req := &dspb.TransferRangeLeaderRequest{RangeId: rangeId}
-	header, _, err := conn.TransferLeader(ctx, req)
+	header, _, err = conn.TransferLeader(ctx, req)
 	if err != nil {
 		err = fmt.Errorf("SchRpcClient TransferLeader hash err:[%s]", err.Error())
-		log.GetOrDef(DefLog).Error(err.Error())
+		log.GetrDef(DefLog).Error(err.Error())
 		return err
 	}
 	if header.GetError() != nil {
-		err = fmt.Errorf("SchRpcClient TransferLeader hash err:[%s]", header.GetError().Detail)
-		log.GetOrDef(DefLog).Error(err.Error())
+		err = fmt.Errorf("SchRpcClient TransferLeader hash err:[%s]", header.GetError().String())
+		log.GetrDef(DefLog).Error(err.Error())
 		return err
 	}
 	return nil
@@ -219,7 +263,7 @@ func (c *SchRpcClient) GetPeerInfo(addr string, rangeId uint64) (*dspb.GetPeerIn
 		return nil, fmt.Errorf("SchRpcClient GetPeerInfo hash err:[%s]", err.Error())
 	}
 	if header.GetError() != nil {
-		return nil, fmt.Errorf("SchRpcClient GetPeerInfo hash err:[%s]", header.GetError().Detail)
+		return nil, fmt.Errorf("SchRpcClient GetPeerInfo hash err:[%s]", header.GetError().String())
 	}
 	return resp, nil
 }

@@ -31,6 +31,7 @@
 #include <google/protobuf/generated_enum_reflection.h>
 #include <google/protobuf/unknown_field_set.h>
 #include "dspb/expr.pb.h"
+#include "dspb/processorpb.pb.h"
 // @@protoc_insertion_point(includes)
 namespace dspb {
 class ClearupRequest;
@@ -54,9 +55,6 @@ extern GetLockInfoResponseDefaultTypeInternal _GetLockInfoResponse_default_insta
 class KeyValue;
 class KeyValueDefaultTypeInternal;
 extern KeyValueDefaultTypeInternal _KeyValue_default_instance_;
-class Limit;
-class LimitDefaultTypeInternal;
-extern LimitDefaultTypeInternal _Limit_default_instance_;
 class LockError;
 class LockErrorDefaultTypeInternal;
 extern LockErrorDefaultTypeInternal _LockError_default_instance_;
@@ -96,6 +94,12 @@ extern ScopeDefaultTypeInternal _Scope_default_instance_;
 class SelectField;
 class SelectFieldDefaultTypeInternal;
 extern SelectFieldDefaultTypeInternal _SelectField_default_instance_;
+class SelectFlowRequest;
+class SelectFlowRequestDefaultTypeInternal;
+extern SelectFlowRequestDefaultTypeInternal _SelectFlowRequest_default_instance_;
+class SelectFlowResponse;
+class SelectFlowResponseDefaultTypeInternal;
+extern SelectFlowResponseDefaultTypeInternal _SelectFlowResponse_default_instance_;
 class SelectRequest;
 class SelectRequestDefaultTypeInternal;
 extern SelectRequestDefaultTypeInternal _SelectRequest_default_instance_;
@@ -2852,110 +2856,6 @@ class SelectField : public ::google::protobuf::Message /* @@protoc_insertion_poi
 };
 // -------------------------------------------------------------------
 
-class Limit : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:dspb.Limit) */ {
- public:
-  Limit();
-  virtual ~Limit();
-
-  Limit(const Limit& from);
-
-  inline Limit& operator=(const Limit& from) {
-    CopyFrom(from);
-    return *this;
-  }
-  #if LANG_CXX11
-  Limit(Limit&& from) noexcept
-    : Limit() {
-    *this = ::std::move(from);
-  }
-
-  inline Limit& operator=(Limit&& from) noexcept {
-    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
-      if (this != &from) InternalSwap(&from);
-    } else {
-      CopyFrom(from);
-    }
-    return *this;
-  }
-  #endif
-  static const ::google::protobuf::Descriptor* descriptor();
-  static const Limit& default_instance();
-
-  static inline const Limit* internal_default_instance() {
-    return reinterpret_cast<const Limit*>(
-               &_Limit_default_instance_);
-  }
-  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    20;
-
-  void Swap(Limit* other);
-  friend void swap(Limit& a, Limit& b) {
-    a.Swap(&b);
-  }
-
-  // implements Message ----------------------------------------------
-
-  inline Limit* New() const PROTOBUF_FINAL { return New(NULL); }
-
-  Limit* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
-  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
-  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
-  void CopyFrom(const Limit& from);
-  void MergeFrom(const Limit& from);
-  void Clear() PROTOBUF_FINAL;
-  bool IsInitialized() const PROTOBUF_FINAL;
-
-  size_t ByteSizeLong() const PROTOBUF_FINAL;
-  bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
-  void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
-  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
-      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
-  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
-  private:
-  void SharedCtor();
-  void SharedDtor();
-  void SetCachedSize(int size) const PROTOBUF_FINAL;
-  void InternalSwap(Limit* other);
-  private:
-  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
-    return NULL;
-  }
-  inline void* MaybeArenaPtr() const {
-    return NULL;
-  }
-  public:
-
-  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
-
-  // nested types ----------------------------------------------------
-
-  // accessors -------------------------------------------------------
-
-  // uint64 offset = 1;
-  void clear_offset();
-  static const int kOffsetFieldNumber = 1;
-  ::google::protobuf::uint64 offset() const;
-  void set_offset(::google::protobuf::uint64 value);
-
-  // uint64 count = 2;
-  void clear_count();
-  static const int kCountFieldNumber = 2;
-  ::google::protobuf::uint64 count() const;
-  void set_count(::google::protobuf::uint64 value);
-
-  // @@protoc_insertion_point(class_scope:dspb.Limit)
- private:
-
-  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  ::google::protobuf::uint64 offset_;
-  ::google::protobuf::uint64 count_;
-  mutable int _cached_size_;
-  friend struct protobuf_dspb_2ftxn_2eproto::TableStruct;
-};
-// -------------------------------------------------------------------
-
 class Scope : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:dspb.Scope) */ {
  public:
   Scope();
@@ -2990,7 +2890,7 @@ class Scope : public ::google::protobuf::Message /* @@protoc_insertion_point(cla
                &_Scope_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    21;
+    20;
 
   void Swap(Scope* other);
   friend void swap(Scope& a, Scope& b) {
@@ -3110,7 +3010,7 @@ class SelectRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
                &_SelectRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    22;
+    21;
 
   void Swap(SelectRequest* other);
   friend void swap(SelectRequest& a, SelectRequest& b) {
@@ -3258,7 +3158,7 @@ class RowValue : public ::google::protobuf::Message /* @@protoc_insertion_point(
                &_RowValue_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    23;
+    22;
 
   void Swap(RowValue* other);
   friend void swap(RowValue& a, RowValue& b) {
@@ -3305,18 +3205,6 @@ class RowValue : public ::google::protobuf::Message /* @@protoc_insertion_point(
 
   // accessors -------------------------------------------------------
 
-  // repeated int64 aggred_counts = 2;
-  int aggred_counts_size() const;
-  void clear_aggred_counts();
-  static const int kAggredCountsFieldNumber = 2;
-  ::google::protobuf::int64 aggred_counts(int index) const;
-  void set_aggred_counts(int index, ::google::protobuf::int64 value);
-  void add_aggred_counts(::google::protobuf::int64 value);
-  const ::google::protobuf::RepeatedField< ::google::protobuf::int64 >&
-      aggred_counts() const;
-  ::google::protobuf::RepeatedField< ::google::protobuf::int64 >*
-      mutable_aggred_counts();
-
   // bytes fields = 1;
   void clear_fields();
   static const int kFieldsFieldNumber = 1;
@@ -3331,9 +3219,9 @@ class RowValue : public ::google::protobuf::Message /* @@protoc_insertion_point(
   ::std::string* release_fields();
   void set_allocated_fields(::std::string* fields);
 
-  // uint64 version = 3;
+  // uint64 version = 2;
   void clear_version();
-  static const int kVersionFieldNumber = 3;
+  static const int kVersionFieldNumber = 2;
   ::google::protobuf::uint64 version() const;
   void set_version(::google::protobuf::uint64 value);
 
@@ -3341,8 +3229,6 @@ class RowValue : public ::google::protobuf::Message /* @@protoc_insertion_point(
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  ::google::protobuf::RepeatedField< ::google::protobuf::int64 > aggred_counts_;
-  mutable int _aggred_counts_cached_byte_size_;
   ::google::protobuf::internal::ArenaStringPtr fields_;
   ::google::protobuf::uint64 version_;
   mutable int _cached_size_;
@@ -3384,7 +3270,7 @@ class RowIntent : public ::google::protobuf::Message /* @@protoc_insertion_point
                &_RowIntent_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    24;
+    23;
 
   void Swap(RowIntent* other);
   friend void swap(RowIntent& a, RowIntent& b) {
@@ -3528,7 +3414,7 @@ class Row : public ::google::protobuf::Message /* @@protoc_insertion_point(class
                &_Row_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    25;
+    24;
 
   void Swap(Row* other);
   friend void swap(Row& a, Row& b) {
@@ -3653,7 +3539,7 @@ class SelectResponse : public ::google::protobuf::Message /* @@protoc_insertion_
                &_SelectResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    26;
+    25;
 
   void Swap(SelectResponse* other);
   friend void swap(SelectResponse& a, SelectResponse& b) {
@@ -3736,6 +3622,268 @@ class SelectResponse : public ::google::protobuf::Message /* @@protoc_insertion_
 };
 // -------------------------------------------------------------------
 
+class SelectFlowRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:dspb.SelectFlowRequest) */ {
+ public:
+  SelectFlowRequest();
+  virtual ~SelectFlowRequest();
+
+  SelectFlowRequest(const SelectFlowRequest& from);
+
+  inline SelectFlowRequest& operator=(const SelectFlowRequest& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  SelectFlowRequest(SelectFlowRequest&& from) noexcept
+    : SelectFlowRequest() {
+    *this = ::std::move(from);
+  }
+
+  inline SelectFlowRequest& operator=(SelectFlowRequest&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const SelectFlowRequest& default_instance();
+
+  static inline const SelectFlowRequest* internal_default_instance() {
+    return reinterpret_cast<const SelectFlowRequest*>(
+               &_SelectFlowRequest_default_instance_);
+  }
+  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
+    26;
+
+  void Swap(SelectFlowRequest* other);
+  friend void swap(SelectFlowRequest& a, SelectFlowRequest& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline SelectFlowRequest* New() const PROTOBUF_FINAL { return New(NULL); }
+
+  SelectFlowRequest* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void CopyFrom(const SelectFlowRequest& from);
+  void MergeFrom(const SelectFlowRequest& from);
+  void Clear() PROTOBUF_FINAL;
+  bool IsInitialized() const PROTOBUF_FINAL;
+
+  size_t ByteSizeLong() const PROTOBUF_FINAL;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
+  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const PROTOBUF_FINAL;
+  void InternalSwap(SelectFlowRequest* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // repeated .dspb.Processor processors = 1;
+  int processors_size() const;
+  void clear_processors();
+  static const int kProcessorsFieldNumber = 1;
+  const ::dspb::Processor& processors(int index) const;
+  ::dspb::Processor* mutable_processors(int index);
+  ::dspb::Processor* add_processors();
+  ::google::protobuf::RepeatedPtrField< ::dspb::Processor >*
+      mutable_processors();
+  const ::google::protobuf::RepeatedPtrField< ::dspb::Processor >&
+      processors() const;
+
+  // repeated uint32 output_offsets = 2;
+  int output_offsets_size() const;
+  void clear_output_offsets();
+  static const int kOutputOffsetsFieldNumber = 2;
+  ::google::protobuf::uint32 output_offsets(int index) const;
+  void set_output_offsets(int index, ::google::protobuf::uint32 value);
+  void add_output_offsets(::google::protobuf::uint32 value);
+  const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
+      output_offsets() const;
+  ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
+      mutable_output_offsets();
+
+  // bool gather_trace = 3;
+  void clear_gather_trace();
+  static const int kGatherTraceFieldNumber = 3;
+  bool gather_trace() const;
+  void set_gather_trace(bool value);
+
+  // @@protoc_insertion_point(class_scope:dspb.SelectFlowRequest)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::RepeatedPtrField< ::dspb::Processor > processors_;
+  ::google::protobuf::RepeatedField< ::google::protobuf::uint32 > output_offsets_;
+  mutable int _output_offsets_cached_byte_size_;
+  bool gather_trace_;
+  mutable int _cached_size_;
+  friend struct protobuf_dspb_2ftxn_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class SelectFlowResponse : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:dspb.SelectFlowResponse) */ {
+ public:
+  SelectFlowResponse();
+  virtual ~SelectFlowResponse();
+
+  SelectFlowResponse(const SelectFlowResponse& from);
+
+  inline SelectFlowResponse& operator=(const SelectFlowResponse& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  SelectFlowResponse(SelectFlowResponse&& from) noexcept
+    : SelectFlowResponse() {
+    *this = ::std::move(from);
+  }
+
+  inline SelectFlowResponse& operator=(SelectFlowResponse&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const SelectFlowResponse& default_instance();
+
+  static inline const SelectFlowResponse* internal_default_instance() {
+    return reinterpret_cast<const SelectFlowResponse*>(
+               &_SelectFlowResponse_default_instance_);
+  }
+  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
+    27;
+
+  void Swap(SelectFlowResponse* other);
+  friend void swap(SelectFlowResponse& a, SelectFlowResponse& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline SelectFlowResponse* New() const PROTOBUF_FINAL { return New(NULL); }
+
+  SelectFlowResponse* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void CopyFrom(const SelectFlowResponse& from);
+  void MergeFrom(const SelectFlowResponse& from);
+  void Clear() PROTOBUF_FINAL;
+  bool IsInitialized() const PROTOBUF_FINAL;
+
+  size_t ByteSizeLong() const PROTOBUF_FINAL;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
+  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const PROTOBUF_FINAL;
+  void InternalSwap(SelectFlowResponse* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // repeated .dspb.Row rows = 2;
+  int rows_size() const;
+  void clear_rows();
+  static const int kRowsFieldNumber = 2;
+  const ::dspb::Row& rows(int index) const;
+  ::dspb::Row* mutable_rows(int index);
+  ::dspb::Row* add_rows();
+  ::google::protobuf::RepeatedPtrField< ::dspb::Row >*
+      mutable_rows();
+  const ::google::protobuf::RepeatedPtrField< ::dspb::Row >&
+      rows() const;
+
+  // repeated .dspb.ProcessorTrace traces = 4;
+  int traces_size() const;
+  void clear_traces();
+  static const int kTracesFieldNumber = 4;
+  const ::dspb::ProcessorTrace& traces(int index) const;
+  ::dspb::ProcessorTrace* mutable_traces(int index);
+  ::dspb::ProcessorTrace* add_traces();
+  ::google::protobuf::RepeatedPtrField< ::dspb::ProcessorTrace >*
+      mutable_traces();
+  const ::google::protobuf::RepeatedPtrField< ::dspb::ProcessorTrace >&
+      traces() const;
+
+  // bytes last_key = 3;
+  void clear_last_key();
+  static const int kLastKeyFieldNumber = 3;
+  const ::std::string& last_key() const;
+  void set_last_key(const ::std::string& value);
+  #if LANG_CXX11
+  void set_last_key(::std::string&& value);
+  #endif
+  void set_last_key(const char* value);
+  void set_last_key(const void* value, size_t size);
+  ::std::string* mutable_last_key();
+  ::std::string* release_last_key();
+  void set_allocated_last_key(::std::string* last_key);
+
+  // int32 code = 1;
+  void clear_code();
+  static const int kCodeFieldNumber = 1;
+  ::google::protobuf::int32 code() const;
+  void set_code(::google::protobuf::int32 value);
+
+  // @@protoc_insertion_point(class_scope:dspb.SelectFlowResponse)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::RepeatedPtrField< ::dspb::Row > rows_;
+  ::google::protobuf::RepeatedPtrField< ::dspb::ProcessorTrace > traces_;
+  ::google::protobuf::internal::ArenaStringPtr last_key_;
+  ::google::protobuf::int32 code_;
+  mutable int _cached_size_;
+  friend struct protobuf_dspb_2ftxn_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
 class ValueIntent : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:dspb.ValueIntent) */ {
  public:
   ValueIntent();
@@ -3770,7 +3918,7 @@ class ValueIntent : public ::google::protobuf::Message /* @@protoc_insertion_poi
                &_ValueIntent_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    27;
+    28;
 
   void Swap(ValueIntent* other);
   friend void swap(ValueIntent& a, ValueIntent& b) {
@@ -3919,7 +4067,7 @@ class KeyValue : public ::google::protobuf::Message /* @@protoc_insertion_point(
                &_KeyValue_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    28;
+    29;
 
   void Swap(KeyValue* other);
   friend void swap(KeyValue& a, KeyValue& b) {
@@ -4049,7 +4197,7 @@ class ScanRequest : public ::google::protobuf::Message /* @@protoc_insertion_poi
                &_ScanRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    29;
+    30;
 
   void Swap(ScanRequest* other);
   friend void swap(ScanRequest& a, ScanRequest& b) {
@@ -4176,7 +4324,7 @@ class ScanResponse : public ::google::protobuf::Message /* @@protoc_insertion_po
                &_ScanResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    30;
+    31;
 
   void Swap(ScanResponse* other);
   friend void swap(ScanResponse& a, ScanResponse& b) {
@@ -6726,38 +6874,6 @@ inline void SelectField::set_allocated_column(::dspb::ColumnInfo* column) {
 
 // -------------------------------------------------------------------
 
-// Limit
-
-// uint64 offset = 1;
-inline void Limit::clear_offset() {
-  offset_ = GOOGLE_ULONGLONG(0);
-}
-inline ::google::protobuf::uint64 Limit::offset() const {
-  // @@protoc_insertion_point(field_get:dspb.Limit.offset)
-  return offset_;
-}
-inline void Limit::set_offset(::google::protobuf::uint64 value) {
-  
-  offset_ = value;
-  // @@protoc_insertion_point(field_set:dspb.Limit.offset)
-}
-
-// uint64 count = 2;
-inline void Limit::clear_count() {
-  count_ = GOOGLE_ULONGLONG(0);
-}
-inline ::google::protobuf::uint64 Limit::count() const {
-  // @@protoc_insertion_point(field_get:dspb.Limit.count)
-  return count_;
-}
-inline void Limit::set_count(::google::protobuf::uint64 value) {
-  
-  count_ = value;
-  // @@protoc_insertion_point(field_set:dspb.Limit.count)
-}
-
-// -------------------------------------------------------------------
-
 // Scope
 
 // bytes start = 1;
@@ -7130,37 +7246,7 @@ inline void RowValue::set_allocated_fields(::std::string* fields) {
   // @@protoc_insertion_point(field_set_allocated:dspb.RowValue.fields)
 }
 
-// repeated int64 aggred_counts = 2;
-inline int RowValue::aggred_counts_size() const {
-  return aggred_counts_.size();
-}
-inline void RowValue::clear_aggred_counts() {
-  aggred_counts_.Clear();
-}
-inline ::google::protobuf::int64 RowValue::aggred_counts(int index) const {
-  // @@protoc_insertion_point(field_get:dspb.RowValue.aggred_counts)
-  return aggred_counts_.Get(index);
-}
-inline void RowValue::set_aggred_counts(int index, ::google::protobuf::int64 value) {
-  aggred_counts_.Set(index, value);
-  // @@protoc_insertion_point(field_set:dspb.RowValue.aggred_counts)
-}
-inline void RowValue::add_aggred_counts(::google::protobuf::int64 value) {
-  aggred_counts_.Add(value);
-  // @@protoc_insertion_point(field_add:dspb.RowValue.aggred_counts)
-}
-inline const ::google::protobuf::RepeatedField< ::google::protobuf::int64 >&
-RowValue::aggred_counts() const {
-  // @@protoc_insertion_point(field_list:dspb.RowValue.aggred_counts)
-  return aggred_counts_;
-}
-inline ::google::protobuf::RepeatedField< ::google::protobuf::int64 >*
-RowValue::mutable_aggred_counts() {
-  // @@protoc_insertion_point(field_mutable_list:dspb.RowValue.aggred_counts)
-  return &aggred_counts_;
-}
-
-// uint64 version = 3;
+// uint64 version = 2;
 inline void RowValue::clear_version() {
   version_ = GOOGLE_ULONGLONG(0);
 }
@@ -7549,6 +7635,215 @@ inline void SelectResponse::set_offset(::google::protobuf::uint64 value) {
   
   offset_ = value;
   // @@protoc_insertion_point(field_set:dspb.SelectResponse.offset)
+}
+
+// -------------------------------------------------------------------
+
+// SelectFlowRequest
+
+// repeated .dspb.Processor processors = 1;
+inline int SelectFlowRequest::processors_size() const {
+  return processors_.size();
+}
+inline void SelectFlowRequest::clear_processors() {
+  processors_.Clear();
+}
+inline const ::dspb::Processor& SelectFlowRequest::processors(int index) const {
+  // @@protoc_insertion_point(field_get:dspb.SelectFlowRequest.processors)
+  return processors_.Get(index);
+}
+inline ::dspb::Processor* SelectFlowRequest::mutable_processors(int index) {
+  // @@protoc_insertion_point(field_mutable:dspb.SelectFlowRequest.processors)
+  return processors_.Mutable(index);
+}
+inline ::dspb::Processor* SelectFlowRequest::add_processors() {
+  // @@protoc_insertion_point(field_add:dspb.SelectFlowRequest.processors)
+  return processors_.Add();
+}
+inline ::google::protobuf::RepeatedPtrField< ::dspb::Processor >*
+SelectFlowRequest::mutable_processors() {
+  // @@protoc_insertion_point(field_mutable_list:dspb.SelectFlowRequest.processors)
+  return &processors_;
+}
+inline const ::google::protobuf::RepeatedPtrField< ::dspb::Processor >&
+SelectFlowRequest::processors() const {
+  // @@protoc_insertion_point(field_list:dspb.SelectFlowRequest.processors)
+  return processors_;
+}
+
+// repeated uint32 output_offsets = 2;
+inline int SelectFlowRequest::output_offsets_size() const {
+  return output_offsets_.size();
+}
+inline void SelectFlowRequest::clear_output_offsets() {
+  output_offsets_.Clear();
+}
+inline ::google::protobuf::uint32 SelectFlowRequest::output_offsets(int index) const {
+  // @@protoc_insertion_point(field_get:dspb.SelectFlowRequest.output_offsets)
+  return output_offsets_.Get(index);
+}
+inline void SelectFlowRequest::set_output_offsets(int index, ::google::protobuf::uint32 value) {
+  output_offsets_.Set(index, value);
+  // @@protoc_insertion_point(field_set:dspb.SelectFlowRequest.output_offsets)
+}
+inline void SelectFlowRequest::add_output_offsets(::google::protobuf::uint32 value) {
+  output_offsets_.Add(value);
+  // @@protoc_insertion_point(field_add:dspb.SelectFlowRequest.output_offsets)
+}
+inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
+SelectFlowRequest::output_offsets() const {
+  // @@protoc_insertion_point(field_list:dspb.SelectFlowRequest.output_offsets)
+  return output_offsets_;
+}
+inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
+SelectFlowRequest::mutable_output_offsets() {
+  // @@protoc_insertion_point(field_mutable_list:dspb.SelectFlowRequest.output_offsets)
+  return &output_offsets_;
+}
+
+// bool gather_trace = 3;
+inline void SelectFlowRequest::clear_gather_trace() {
+  gather_trace_ = false;
+}
+inline bool SelectFlowRequest::gather_trace() const {
+  // @@protoc_insertion_point(field_get:dspb.SelectFlowRequest.gather_trace)
+  return gather_trace_;
+}
+inline void SelectFlowRequest::set_gather_trace(bool value) {
+  
+  gather_trace_ = value;
+  // @@protoc_insertion_point(field_set:dspb.SelectFlowRequest.gather_trace)
+}
+
+// -------------------------------------------------------------------
+
+// SelectFlowResponse
+
+// int32 code = 1;
+inline void SelectFlowResponse::clear_code() {
+  code_ = 0;
+}
+inline ::google::protobuf::int32 SelectFlowResponse::code() const {
+  // @@protoc_insertion_point(field_get:dspb.SelectFlowResponse.code)
+  return code_;
+}
+inline void SelectFlowResponse::set_code(::google::protobuf::int32 value) {
+  
+  code_ = value;
+  // @@protoc_insertion_point(field_set:dspb.SelectFlowResponse.code)
+}
+
+// repeated .dspb.Row rows = 2;
+inline int SelectFlowResponse::rows_size() const {
+  return rows_.size();
+}
+inline void SelectFlowResponse::clear_rows() {
+  rows_.Clear();
+}
+inline const ::dspb::Row& SelectFlowResponse::rows(int index) const {
+  // @@protoc_insertion_point(field_get:dspb.SelectFlowResponse.rows)
+  return rows_.Get(index);
+}
+inline ::dspb::Row* SelectFlowResponse::mutable_rows(int index) {
+  // @@protoc_insertion_point(field_mutable:dspb.SelectFlowResponse.rows)
+  return rows_.Mutable(index);
+}
+inline ::dspb::Row* SelectFlowResponse::add_rows() {
+  // @@protoc_insertion_point(field_add:dspb.SelectFlowResponse.rows)
+  return rows_.Add();
+}
+inline ::google::protobuf::RepeatedPtrField< ::dspb::Row >*
+SelectFlowResponse::mutable_rows() {
+  // @@protoc_insertion_point(field_mutable_list:dspb.SelectFlowResponse.rows)
+  return &rows_;
+}
+inline const ::google::protobuf::RepeatedPtrField< ::dspb::Row >&
+SelectFlowResponse::rows() const {
+  // @@protoc_insertion_point(field_list:dspb.SelectFlowResponse.rows)
+  return rows_;
+}
+
+// bytes last_key = 3;
+inline void SelectFlowResponse::clear_last_key() {
+  last_key_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& SelectFlowResponse::last_key() const {
+  // @@protoc_insertion_point(field_get:dspb.SelectFlowResponse.last_key)
+  return last_key_.GetNoArena();
+}
+inline void SelectFlowResponse::set_last_key(const ::std::string& value) {
+  
+  last_key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:dspb.SelectFlowResponse.last_key)
+}
+#if LANG_CXX11
+inline void SelectFlowResponse::set_last_key(::std::string&& value) {
+  
+  last_key_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:dspb.SelectFlowResponse.last_key)
+}
+#endif
+inline void SelectFlowResponse::set_last_key(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  last_key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:dspb.SelectFlowResponse.last_key)
+}
+inline void SelectFlowResponse::set_last_key(const void* value, size_t size) {
+  
+  last_key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:dspb.SelectFlowResponse.last_key)
+}
+inline ::std::string* SelectFlowResponse::mutable_last_key() {
+  
+  // @@protoc_insertion_point(field_mutable:dspb.SelectFlowResponse.last_key)
+  return last_key_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* SelectFlowResponse::release_last_key() {
+  // @@protoc_insertion_point(field_release:dspb.SelectFlowResponse.last_key)
+  
+  return last_key_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void SelectFlowResponse::set_allocated_last_key(::std::string* last_key) {
+  if (last_key != NULL) {
+    
+  } else {
+    
+  }
+  last_key_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), last_key);
+  // @@protoc_insertion_point(field_set_allocated:dspb.SelectFlowResponse.last_key)
+}
+
+// repeated .dspb.ProcessorTrace traces = 4;
+inline int SelectFlowResponse::traces_size() const {
+  return traces_.size();
+}
+inline void SelectFlowResponse::clear_traces() {
+  traces_.Clear();
+}
+inline const ::dspb::ProcessorTrace& SelectFlowResponse::traces(int index) const {
+  // @@protoc_insertion_point(field_get:dspb.SelectFlowResponse.traces)
+  return traces_.Get(index);
+}
+inline ::dspb::ProcessorTrace* SelectFlowResponse::mutable_traces(int index) {
+  // @@protoc_insertion_point(field_mutable:dspb.SelectFlowResponse.traces)
+  return traces_.Mutable(index);
+}
+inline ::dspb::ProcessorTrace* SelectFlowResponse::add_traces() {
+  // @@protoc_insertion_point(field_add:dspb.SelectFlowResponse.traces)
+  return traces_.Add();
+}
+inline ::google::protobuf::RepeatedPtrField< ::dspb::ProcessorTrace >*
+SelectFlowResponse::mutable_traces() {
+  // @@protoc_insertion_point(field_mutable_list:dspb.SelectFlowResponse.traces)
+  return &traces_;
+}
+inline const ::google::protobuf::RepeatedPtrField< ::dspb::ProcessorTrace >&
+SelectFlowResponse::traces() const {
+  // @@protoc_insertion_point(field_list:dspb.SelectFlowResponse.traces)
+  return traces_;
 }
 
 // -------------------------------------------------------------------
@@ -8068,6 +8363,8 @@ ScanResponse::kvs() const {
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
 #endif  // !PROTOBUF_INLINE_NOT_IN_HEADERS
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

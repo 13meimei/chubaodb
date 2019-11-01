@@ -47,12 +47,11 @@ WorkThread::WorkThread(RaftServerImpl* server, size_t queue_capcity,
 
 WorkThread::~WorkThread() { shutdown(); }
 
-bool WorkThread::submit(uint64_t owner, std::atomic<bool>* stopped,
-                        const std::function<void(MessagePtr&)>& f1,
-                        std::string& cmd) {
-    MessagePtr msg(new pb::Message);
-    msg->set_type(pb::LOCAL_MSG_PROP);
-
+bool WorkThread::submit(uint64_t owner, std::atomic<bool>* stopped, uint64_t unique_sequence,
+                            uint16_t rw_flag, const std::function<void(MessagePtr&)>& handle,
+                            std::string& cmd)
+{
+    decltype(write_batch_pos_.begin()) it;
     bool notify = false;
     {
         std::lock_guard<std::mutex> lock(mu_);
@@ -60,28 +59,52 @@ bool WorkThread::submit(uint64_t owner, std::atomic<bool>* stopped,
             return false;
         }
 
-        auto it = batch_pos_.find(owner);
-        if (it != batch_pos_.end() &&
-            it->second->entries_size() < kMaxBatchSize) {
-            auto entry = it->second->add_entries();
-            entry->set_type(pb::ENTRY_NORMAL);
-            entry->mutable_data()->swap(cmd);
-        } else if (queue_.size() >= capacity_) {
+        if (rw_flag == chubaodb::raft::WRITE_FLAG) {
+            it = write_batch_pos_.find(owner);
+            if (it != write_batch_pos_.end() && it->second->entries_size() < kMaxBatchSize) {
+                //merge
+                auto entry = it->second->add_entries();
+                entry->set_type(pb::ENTRY_NORMAL);
+                entry->mutable_data()->swap(cmd); //set entry->data by cmd
+                return true;
+            }
+        } else {
+            it = read_batch_pos_.find(owner);
+            if (it != read_batch_pos_.end() && it->second->entries_size() < kMaxBatchSize) {
+                auto entry = it->second->add_entries();
+                entry->set_type(pb::ENTRY_NORMAL);
+                entry->set_index(unique_sequence);
+                entry->mutable_data()->swap(cmd); //set entry->data by cmd
+                return true;
+            }
+        }
+
+        if (queue_.size() >= capacity_) {
             return false;
         } else {
+            // can't merge new message
+            MessagePtr msg(new pb::Message);
             auto entry = msg->add_entries();
             entry->set_type(pb::ENTRY_NORMAL);
             entry->mutable_data()->swap(cmd); //set entry->data by cmd
+            if (rw_flag == chubaodb::raft::WRITE_FLAG) {
+                msg->set_type(pb::LOCAL_MSG_PROP);
+                write_batch_pos_[owner] = msg;
+            } else {
+                msg->set_type(pb::LOCAL_MSG_READ);
+                entry->set_index(unique_sequence);
+                read_batch_pos_[owner] = msg;
+            }
             Work w;
             w.owner = owner;
             w.stopped = stopped;
-            w.f1 = f1;
+            w.f1 = handle;
             w.msg = msg;
             queue_.push(w);
-            batch_pos_[owner] = msg;
             notify = true;
         }
     }
+
     if (notify) {
         cv_.notify_one();
     }
@@ -138,44 +161,58 @@ void WorkThread::shutdown() {
     thr_->join();
 }
 
-bool WorkThread::pull(Work* w) {
-    std::unique_lock<std::mutex> lock(mu_);
-
-    while (queue_.empty() && running_) {
-        cv_.wait(lock);
-    }
-    if (!running_) return false;
-    *w = queue_.front();
-    queue_.pop();
-
-    if (w->msg != nullptr && w->msg->type() == pb::LOCAL_MSG_PROP) {
-        assert(w->owner != 0);
-        auto it = batch_pos_.find(w->owner);
-        if (it != batch_pos_.end() && it->second == w->msg) {
-            assert(it->second->type() == pb::LOCAL_MSG_PROP);
-            batch_pos_.erase(it);
-        }
-    }
-
-    lock.unlock();
-    cv_.notify_one();
-    return true;
-}
-
 void WorkThread::run() {
-    while (true) {
-        Work work;
-        if (pull(&work)) {
-            try {
-                work.Do();
-            } catch (RaftException& e) {
-                assert(work.owner > 0);
-                FLOG_ERROR("raft[{}] throw an exception: {}. removed.", work.owner, e.what());
-                server_->RemoveRaft(work.owner);
+    std::queue<Work> work_queue;
+    decltype(write_batch_pos_) write_batch_pos;
+    decltype(write_batch_pos_) read_batch_pos;
+    decltype(write_batch_pos_.begin()) it;
+
+    while (running_) {
+        std::unique_lock<std::mutex> lock(mu_);
+
+        if (queue_.empty()) {
+            cv_.wait(lock);
+        }
+
+        work_queue.swap(queue_);
+        write_batch_pos.swap(write_batch_pos_);
+        read_batch_pos.swap(read_batch_pos_);
+        lock.unlock();
+        cv_.notify_one();
+
+        while(!work_queue.empty()) {
+            Work w = work_queue.front();
+            work_queue.pop();
+
+            if (w.msg != nullptr) {
+                switch (w.msg->type()) {
+                case pb::LOCAL_MSG_PROP:
+                    assert(w.owner != 0);
+                    it = write_batch_pos.find(w.owner);
+                    if (it != write_batch_pos.end() && it->second == w.msg) {
+                        assert(it->second->type() == pb::LOCAL_MSG_PROP);
+                        write_batch_pos.erase(it);
+                    }
+                    break;
+                case pb::LOCAL_MSG_READ:
+                    assert(w.owner != 0);
+                    it = read_batch_pos.find(w.owner);
+                    if (it != read_batch_pos.end() && it->second == w.msg) {
+                        assert(it->second->type() == pb::LOCAL_MSG_READ);
+                        read_batch_pos.erase(it);
+                    }
+                    break;
+                default:
+                    FLOG_WARN("ignore message type: {}", w.msg->type());
+                }
             }
-        } else {
-            // shutdown
-            return;
+            try {
+                w.Do();
+            } catch (RaftException& e) {
+                assert(w.owner > 0);
+                FLOG_ERROR("raft[{}] throw an exception: {}. removed.", w.owner, e.what());
+                server_->RemoveRaft(w.owner);
+            }
         }
     }
 }

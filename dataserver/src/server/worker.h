@@ -70,7 +70,6 @@ private:
     private:
         bool running_ = true;
         WorkThreadGroup* parent_group_ = nullptr;
-        const size_t capacity_ = 0;
         tbb::concurrent_queue<RPCRequest*> que_;
         std::thread thr_;
     };

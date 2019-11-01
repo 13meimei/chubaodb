@@ -300,6 +300,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RangeStats, read_bytess_per_sec_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RangeStats, read_keys_per_sec_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RangeStats, approximate_size_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RangeStats, kv_count_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RangeInfo, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -366,11 +367,11 @@ static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_ATTR
   { 96, -1, sizeof(IsAliveResponse)},
   { 102, -1, sizeof(NodeInfoRequest)},
   { 107, -1, sizeof(RangeStats)},
-  { 117, -1, sizeof(RangeInfo)},
-  { 126, -1, sizeof(NodeStats)},
-  { 142, -1, sizeof(NodeInfoResponse)},
-  { 151, -1, sizeof(ChangeRaftMemberRequest)},
-  { 160, -1, sizeof(ChangeRaftMemberResponse)},
+  { 118, -1, sizeof(RangeInfo)},
+  { 127, -1, sizeof(NodeStats)},
+  { 143, -1, sizeof(NodeInfoResponse)},
+  { 152, -1, sizeof(ChangeRaftMemberRequest)},
+  { 161, -1, sizeof(ChangeRaftMemberResponse)},
 };
 
 static ::google::protobuf::Message const * const file_default_instances[] = {
@@ -562,34 +563,35 @@ void AddDescriptorsImpl() {
       "Replica\022\r\n\005index\030\002 \001(\004\022\014\n\004term\030\003 \001(\004\022\016\n\006"
       "commit\030\004 \001(\004\"\020\n\016IsAliveRequest\" \n\017IsAliv"
       "eResponse\022\r\n\005alive\030\001 \001(\010\"\021\n\017NodeInfoRequ"
-      "est\"\227\001\n\nRangeStats\022\033\n\023write_bytes_per_se"
+      "est\"\251\001\n\nRangeStats\022\033\n\023write_bytes_per_se"
       "c\030\001 \001(\004\022\032\n\022write_keys_per_sec\030\002 \001(\004\022\033\n\023r"
       "ead_bytess_per_sec\030\003 \001(\004\022\031\n\021read_keys_pe"
-      "r_sec\030\004 \001(\004\022\030\n\020approximate_size\030\005 \001(\004\"\202\001"
-      "\n\tRangeInfo\022\034\n\005range\030\001 \001(\0132\r.basepb.Rang"
-      "e\022\037\n\005stats\030\002 \001(\0132\020.dspb.RangeStats\022\014\n\004te"
-      "rm\030\003 \001(\004\022(\n\014peers_status\030\004 \003(\0132\022.basepb."
-      "PeerStatus\"\246\002\n\tNodeStats\022\023\n\013range_count\030"
-      "\001 \001(\r\022\031\n\021range_split_count\030\002 \001(\r\022\032\n\022snap"
-      "_sending_count\030\003 \001(\r\022\033\n\023snap_applying_co"
-      "unt\030\004 \001(\r\022\032\n\022range_leader_count\030\006 \001(\r\022\020\n"
-      "\010capacity\030\007 \001(\004\022\021\n\tused_size\030\010 \001(\004\022\033\n\023wr"
-      "ite_bytes_per_sec\030\n \001(\004\022\032\n\022write_keys_pe"
-      "r_sec\030\013 \001(\004\022\033\n\023read_bytess_per_sec\030\014 \001(\004"
-      "\022\031\n\021read_keys_per_sec\030\r \001(\004\"\204\001\n\020NodeInfo"
-      "Response\022\017\n\007node_id\030\001 \001(\004\022\036\n\005stats\030\002 \001(\013"
-      "2\017.dspb.NodeStats\022\031\n\021isolated_replicas\030\003"
-      " \003(\004\022$\n\013range_infos\030\004 \003(\0132\017.dspb.RangeIn"
-      "fo\"\357\001\n\027ChangeRaftMemberRequest\022\020\n\010range_"
-      "id\030\001 \001(\004\022\'\n\013range_epoch\030\002 \001(\0132\022.basepb.R"
-      "angeEpoch\022=\n\013change_type\030\003 \001(\0162(.dspb.Ch"
-      "angeRaftMemberRequest.ChangeType\022!\n\013targ"
-      "et_peer\030\004 \001(\0132\014.basepb.Peer\"7\n\nChangeTyp"
-      "e\022\016\n\nCT_INVALID\020\000\022\n\n\006CT_ADD\020\001\022\r\n\tCT_REMO"
-      "VE\020\002\"\032\n\030ChangeRaftMemberResponseb\006proto3"
+      "r_sec\030\004 \001(\004\022\030\n\020approximate_size\030\005 \001(\004\022\020\n"
+      "\010kv_count\030\006 \001(\004\"\202\001\n\tRangeInfo\022\034\n\005range\030\001"
+      " \001(\0132\r.basepb.Range\022\037\n\005stats\030\002 \001(\0132\020.dsp"
+      "b.RangeStats\022\014\n\004term\030\003 \001(\004\022(\n\014peers_stat"
+      "us\030\004 \003(\0132\022.basepb.PeerStatus\"\246\002\n\tNodeSta"
+      "ts\022\023\n\013range_count\030\001 \001(\r\022\031\n\021range_split_c"
+      "ount\030\002 \001(\r\022\032\n\022snap_sending_count\030\003 \001(\r\022\033"
+      "\n\023snap_applying_count\030\004 \001(\r\022\032\n\022range_lea"
+      "der_count\030\006 \001(\r\022\020\n\010capacity\030\007 \001(\004\022\021\n\tuse"
+      "d_size\030\010 \001(\004\022\033\n\023write_bytes_per_sec\030\n \001("
+      "\004\022\032\n\022write_keys_per_sec\030\013 \001(\004\022\033\n\023read_by"
+      "tess_per_sec\030\014 \001(\004\022\031\n\021read_keys_per_sec\030"
+      "\r \001(\004\"\204\001\n\020NodeInfoResponse\022\017\n\007node_id\030\001 "
+      "\001(\004\022\036\n\005stats\030\002 \001(\0132\017.dspb.NodeStats\022\031\n\021i"
+      "solated_replicas\030\003 \003(\004\022$\n\013range_infos\030\004 "
+      "\003(\0132\017.dspb.RangeInfo\"\357\001\n\027ChangeRaftMembe"
+      "rRequest\022\020\n\010range_id\030\001 \001(\004\022\'\n\013range_epoc"
+      "h\030\002 \001(\0132\022.basepb.RangeEpoch\022=\n\013change_ty"
+      "pe\030\003 \001(\0162(.dspb.ChangeRaftMemberRequest."
+      "ChangeType\022!\n\013target_peer\030\004 \001(\0132\014.basepb"
+      ".Peer\"7\n\nChangeType\022\016\n\nCT_INVALID\020\000\022\n\n\006C"
+      "T_ADD\020\001\022\r\n\tCT_REMOVE\020\002\"\032\n\030ChangeRaftMemb"
+      "erResponseb\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 2480);
+      descriptor, 2498);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "dspb/schedule.proto", &protobuf_RegisterTypes);
   ::basepb::protobuf_basepb_2fbasepb_2eproto::AddDescriptors();
@@ -6045,6 +6047,7 @@ const int RangeStats::kWriteKeysPerSecFieldNumber;
 const int RangeStats::kReadBytessPerSecFieldNumber;
 const int RangeStats::kReadKeysPerSecFieldNumber;
 const int RangeStats::kApproximateSizeFieldNumber;
+const int RangeStats::kKvCountFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 RangeStats::RangeStats()
@@ -6061,15 +6064,15 @@ RangeStats::RangeStats(const RangeStats& from)
       _cached_size_(0) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
   ::memcpy(&write_bytes_per_sec_, &from.write_bytes_per_sec_,
-    static_cast<size_t>(reinterpret_cast<char*>(&approximate_size_) -
-    reinterpret_cast<char*>(&write_bytes_per_sec_)) + sizeof(approximate_size_));
+    static_cast<size_t>(reinterpret_cast<char*>(&kv_count_) -
+    reinterpret_cast<char*>(&write_bytes_per_sec_)) + sizeof(kv_count_));
   // @@protoc_insertion_point(copy_constructor:dspb.RangeStats)
 }
 
 void RangeStats::SharedCtor() {
   ::memset(&write_bytes_per_sec_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&approximate_size_) -
-      reinterpret_cast<char*>(&write_bytes_per_sec_)) + sizeof(approximate_size_));
+      reinterpret_cast<char*>(&kv_count_) -
+      reinterpret_cast<char*>(&write_bytes_per_sec_)) + sizeof(kv_count_));
   _cached_size_ = 0;
 }
 
@@ -6111,8 +6114,8 @@ void RangeStats::Clear() {
   (void) cached_has_bits;
 
   ::memset(&write_bytes_per_sec_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&approximate_size_) -
-      reinterpret_cast<char*>(&write_bytes_per_sec_)) + sizeof(approximate_size_));
+      reinterpret_cast<char*>(&kv_count_) -
+      reinterpret_cast<char*>(&write_bytes_per_sec_)) + sizeof(kv_count_));
   _internal_metadata_.Clear();
 }
 
@@ -6196,6 +6199,20 @@ bool RangeStats::MergePartialFromCodedStream(
         break;
       }
 
+      // uint64 kv_count = 6;
+      case 6: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(48u /* 48 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
+                 input, &kv_count_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
       default: {
       handle_unusual:
         if (tag == 0) {
@@ -6247,6 +6264,11 @@ void RangeStats::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteUInt64(5, this->approximate_size(), output);
   }
 
+  // uint64 kv_count = 6;
+  if (this->kv_count() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt64(6, this->kv_count(), output);
+  }
+
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
@@ -6284,6 +6306,11 @@ void RangeStats::SerializeWithCachedSizes(
   // uint64 approximate_size = 5;
   if (this->approximate_size() != 0) {
     target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(5, this->approximate_size(), target);
+  }
+
+  // uint64 kv_count = 6;
+  if (this->kv_count() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(6, this->kv_count(), target);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -6338,6 +6365,13 @@ size_t RangeStats::ByteSizeLong() const {
         this->approximate_size());
   }
 
+  // uint64 kv_count = 6;
+  if (this->kv_count() != 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::UInt64Size(
+        this->kv_count());
+  }
+
   int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
   GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
   _cached_size_ = cached_size;
@@ -6382,6 +6416,9 @@ void RangeStats::MergeFrom(const RangeStats& from) {
   if (from.approximate_size() != 0) {
     set_approximate_size(from.approximate_size());
   }
+  if (from.kv_count() != 0) {
+    set_kv_count(from.kv_count());
+  }
 }
 
 void RangeStats::CopyFrom(const ::google::protobuf::Message& from) {
@@ -6413,6 +6450,7 @@ void RangeStats::InternalSwap(RangeStats* other) {
   swap(read_bytess_per_sec_, other->read_bytess_per_sec_);
   swap(read_keys_per_sec_, other->read_keys_per_sec_);
   swap(approximate_size_, other->approximate_size_);
+  swap(kv_count_, other->kv_count_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   swap(_cached_size_, other->_cached_size_);
 }
@@ -6493,6 +6531,20 @@ void RangeStats::set_approximate_size(::google::protobuf::uint64 value) {
   
   approximate_size_ = value;
   // @@protoc_insertion_point(field_set:dspb.RangeStats.approximate_size)
+}
+
+// uint64 kv_count = 6;
+void RangeStats::clear_kv_count() {
+  kv_count_ = GOOGLE_ULONGLONG(0);
+}
+::google::protobuf::uint64 RangeStats::kv_count() const {
+  // @@protoc_insertion_point(field_get:dspb.RangeStats.kv_count)
+  return kv_count_;
+}
+void RangeStats::set_kv_count(::google::protobuf::uint64 value) {
+  
+  kv_count_ = value;
+  // @@protoc_insertion_point(field_set:dspb.RangeStats.kv_count)
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS

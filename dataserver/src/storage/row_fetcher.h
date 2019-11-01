@@ -25,6 +25,12 @@ namespace storage {
 class RowFetcher {
 public:
     RowFetcher(Store& s, const dspb::SelectRequest& req);
+    RowFetcher(Store& s, const dspb::TableRead& req,
+            const std::string & start_key, const std::string & end_key);
+    RowFetcher(Store& s, const dspb::IndexRead& req,
+            const std::string & start_key, const std::string & end_key);
+    RowFetcher(Store& s, const dspb::DataSample& req,
+               const std::string & start_key, const std::string & end_key);
 
     ~RowFetcher();
 
@@ -45,7 +51,7 @@ private:
 private:
     Store& store_;
 
-    RowDecoder decoder_;
+    std::unique_ptr<Decoder> decoder_;
     std::unique_ptr<KvFetcher> kv_fetcher_;
     size_t iter_count_ = 0;
 };

@@ -60,7 +60,7 @@ func ArrayToString(array []int) string {
 	return strings.Join(strArray, ", ")
 }
 
-//将对象转为指针
+//set value to point
 func PStr(v string) *string {
 	return &v
 }

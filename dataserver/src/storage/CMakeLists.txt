@@ -10,6 +10,14 @@ set(storage_SOURCES
     store.cpp
     store_txn.cpp
     util.cpp
+    processor.cpp
+    processor_table_read.cpp
+    processor_index_read.cpp
+    processor_limit.cpp
+    processor_selection.cpp
+    processor_agg.cpp
+    processor_order_by.cpp
+    processor_data_sample.cpp
     )
 
 foreach(f IN LISTS storage_SOURCES)

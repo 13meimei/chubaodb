@@ -16,6 +16,7 @@ _Pragma("once");
 
 #include "raft/raft.h"
 #include "raft/server.h"
+#include "raft/options.h"
 
 using namespace chubaodb;
 using namespace chubaodb::raft;
@@ -37,14 +38,18 @@ public:
     }
 
     bool IsLeader() const override {
-        // local node is 1
+        // current node is 1
         return leader_ == 1;
     }
 
     Status TryToLeader() override { return Status::OK(); }
 
-    Status Submit(std::string& cmd) override {
-        ops_.statemachine->Apply(cmd, 1);
+    Status Submit(std::string& cmd, uint64_t unique_seq, uint16_t rw_flag) override {
+        if (rw_flag == chubaodb::raft::WRITE_FLAG) {
+            ops_.statemachine->Apply(cmd, 1);
+        } else {
+            ops_.statemachine->Read(cmd, chubaodb::raft::READ_SUCCESS);
+        }
         return Status::OK();
     }
 

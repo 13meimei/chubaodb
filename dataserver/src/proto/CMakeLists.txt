@@ -8,6 +8,7 @@ set (proto_SOURCES
     gen/dspb/raft_internal.pb.cc
     gen/dspb/schedule.pb.cc
     gen/dspb/txn.pb.cc
+    gen/dspb/processorpb.pb.cc
     gen/basepb/basepb.pb.cc
     gen/mspb/mspb.pb.cc
 )

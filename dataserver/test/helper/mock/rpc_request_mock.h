@@ -46,7 +46,7 @@ private:
     RPCFuturePtr future_;
 };
 
-// return one RPCRequest and one RPCFuture to fetch result
+// return a RPCRequest and a RPCFuture for fetching result
 std::pair<RPCRequestPtr, RPCFuturePtr> NewMockRPCRequest(
         const google::protobuf::Message& proto_req,
         dspb::FunctionID func_id = dspb::kFuncRangeRequest);

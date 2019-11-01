@@ -35,10 +35,10 @@ int pid_fd = -1;
 void printUsage(char *name) {
     std::cout << name << " Usage: " << std::endl;
     std::cout << "\t--conf=<config file>: required, configure file" << std::endl;
+    std::cout << "\t--test: test scene" << std::endl;
     std::cout << "\t--debug: non-daemon processes for debugging" << std::endl;
     std::cout << "\t--version: print version info" << std::endl;
 }
-
 
 void daemonInit() {
     pid_t pid;
@@ -203,9 +203,9 @@ bool setSignalHandler() {
     return true;
 }
 
-void runServer(const std::string &server_name, const std::string& conf_file, bool daemon) {
+void runServer(const std::string &server_name, const std::string& conf_file, bool daemon, bool btest = false) {
     // load config file
-    if (!ds_config.LoadFromFile(conf_file)) {
+    if (!ds_config.LoadFromFile(conf_file, btest)) {
         exit(EXIT_FAILURE);
     }
 
@@ -233,7 +233,9 @@ void runServer(const std::string &server_name, const std::string& conf_file, boo
     }
 
     while (true) {
-        DataServer::Instance().ServerCron();
+        if (!ds_config.b_test) {
+            DataServer::Instance().ServerCron();
+        }
         // use node heartbeat interval to trigger server cron jobs
         sleep(ds_config.cluster_config.node_interval_secs);
     }
@@ -244,16 +246,18 @@ int main(int argc, char *argv[]) {
         { "conf",      optional_argument,   NULL,   'c' },
         { "version",   no_argument,         NULL,   'v' },
         { "debug",     no_argument,         NULL,   'd' },
+        { "test",      no_argument,         NULL,   't' },
         { "help",      no_argument,         NULL,   'h' },
         { NULL,        0,                   NULL,    0  }
     };
 
     int ch = 0;
     bool daemon = true;
+    bool btest = false;
     std::string server_name = argv[0];
     std::string conf_file;
 
-    while ((ch = getopt_long(argc, argv, "c:vdh", longopts, NULL)) != -1) {
+    while ((ch = getopt_long(argc, argv, "c:vdth", longopts, NULL)) != -1) {
         switch (ch) {
             case 'v':
                 std::cout << GetVersionInfo() << std::endl;
@@ -264,12 +268,15 @@ int main(int argc, char *argv[]) {
             case 'd':
                 daemon = false;
                 break;
+            case 't':
+                btest = true;
+                break;
             default:
                 printUsage(argv[0]);
                 return 0;
         }
     }
-    runServer(server_name, conf_file, daemon);
+    runServer(server_name, conf_file, daemon, btest);
 
     return 0;
 }

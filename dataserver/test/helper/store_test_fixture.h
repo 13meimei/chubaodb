@@ -44,6 +44,10 @@ protected:
     Status testSelect(const std::function<void(SelectRequestBuilder&)>& build_func,
                       const std::vector<std::vector<std::string>>& expected_rows);
 
+    // sql test flows
+    Status testSelectFlow(const std::function<void(SelectFlowRequestBuilder&)>& build_func,
+                      const std::vector<std::vector<std::string>>& expected_rows);
+
     Status testInsert(const std::vector<std::vector<std::string>> &rows, uint64_t *insert_bytes= 0);
 
     Status testDelete(const std::function<void(DeleteRequestBuilder&)>& build_func,

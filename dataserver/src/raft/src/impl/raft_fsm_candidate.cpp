@@ -56,6 +56,10 @@ void RaftFsm::stepCandidate(MessagePtr& msg) {
             FLOG_DEBUG("node_id: {} raft[{}] no leader at term {}; dropping proposal.", node_id_, id_, term_);
             return;
 
+        case pb::LOCAL_MSG_READ:
+            FLOG_DEBUG("node_id: {} raft[{}] no leader at term {}; dropping read request.", node_id_, id_, term_);
+            return;
+
         case pb::APPEND_ENTRIES_REQUEST:
             becomeFollower(term_, msg->from());
             handleAppendEntries(msg);

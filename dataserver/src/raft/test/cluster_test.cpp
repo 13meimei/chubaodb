@@ -87,7 +87,7 @@ void run_node(uint64_t node_id) {
 
     r->Truncate(3);
 
-    // local node finished
+    // current node complete
     {
         std::lock_guard<std::mutex> lock(g_mu);
         ++g_finish_count;
@@ -100,6 +100,12 @@ void run_node(uint64_t node_id) {
         g_cv.wait(lock);
     }
 };
+
+// five nodes cluster test
+//
+// 1) start two normal nodes and one learner
+// 2) wait replication and then compact log
+// 3) start another normal node and another learner, check snapshot flow
 
 int main(int argc, char* argv[]) {
     LoggerConfig config;
@@ -131,14 +137,14 @@ int main(int argc, char* argv[]) {
         threads.push_back(std::thread(std::bind(&run_node, i)));
     }
 
-    // wait replication & log truncate
+    // wait replication and log compaction
     {
         std::unique_lock<std::mutex> lock(g_mu);
         while (g_finish_count < kNodeNum - 2) {
             g_cv.wait(lock);
         }
     }
-    // start one normal and one learner
+    // start two remain node, check snapshot flow
     threads.push_back(std::thread(std::bind(&run_node, kNodeNum - 1)));
     threads.push_back(std::thread(std::bind(&run_node, kNodeNum)));
 

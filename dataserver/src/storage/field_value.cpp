@@ -49,14 +49,14 @@ bool compareUInt(const FieldValue& lh, const FieldValue& rh, CompareOp op) {
     }
 }
 
-bool compareFloat(const FieldValue& lh, const FieldValue& rh, CompareOp op) {
+bool compareDouble(const FieldValue& lh, const FieldValue& rh, CompareOp op) {
     switch (op) {
         case CompareOp::kLess:
-            return lh.Float() < rh.Float();
+            return lh.Double() < rh.Double();
         case CompareOp::kEqual:
-            return lh.Float() == rh.Float();
+            return lh.Double() == rh.Double();
         case CompareOp::kGreater:
-            return lh.Float() > rh.Float();
+            return lh.Double() > rh.Double();
         default:
             return false;
     }
@@ -85,8 +85,8 @@ bool fcompare(const FieldValue& lh, const FieldValue& rh, CompareOp op) {
             return compareInt(lh, rh, op);
         case FieldType::kUInt:
             return compareUInt(lh, rh, op);
-        case FieldType::kFloat:
-            return compareFloat(lh, rh, op);
+        case FieldType::kDouble:
+            return compareDouble(lh, rh, op);
         case FieldType::kBytes:
             return compareBytes(lh, rh, op);
         default:
@@ -100,8 +100,8 @@ FieldValue* CopyValue(const FieldValue& v) {
             return new FieldValue(v.Int());
         case FieldType::kUInt:
             return new FieldValue(v.UInt());
-        case FieldType::kFloat:
-            return new FieldValue(v.Float());
+        case FieldType::kDouble:
+            return new FieldValue(v.Double());
         case FieldType::kBytes:
             return new FieldValue(v.Bytes());
     }
@@ -121,8 +121,8 @@ void EncodeFieldValue(std::string* buf, FieldValue* v) {
         case FieldType::kUInt:
             EncodeIntValue(buf, kNoColumnID, static_cast<int64_t>(v->UInt()));
             break;
-        case FieldType::kFloat:
-            EncodeFloatValue(buf, kNoColumnID, v->Float());
+        case FieldType::kDouble:
+            EncodeFloatValue(buf, kNoColumnID, v->Double());
             break;
         case FieldType::kBytes:
             EncodeBytesValue(buf, kNoColumnID, v->Bytes().c_str(), v->Bytes().size());
@@ -143,8 +143,8 @@ void EncodeFieldValue(std::string* buf, FieldValue* v, uint32_t col_id) {
         case FieldType::kUInt:
             EncodeIntValue(buf, col_id, static_cast<int64_t>(v->UInt()));
             break;
-        case FieldType::kFloat:
-            EncodeFloatValue(buf, col_id, v->Float());
+        case FieldType::kDouble:
+            EncodeFloatValue(buf, col_id, v->Double());
             break;
         case FieldType::kBytes:
             EncodeBytesValue(buf, col_id, v->Bytes().c_str(), v->Bytes().size());
@@ -160,6 +160,8 @@ std::unique_ptr<FieldValue> arithCalc(const FieldValue* l, const FieldValue* r, 
     std::unique_ptr<FieldValue> result;
     switch (type) {
     case dspb::Plus:
+    case dspb::PlusInt:
+    case dspb::PlusReal:
         switch (l->Type()) {
         case FieldType::kInt:
             result.reset(new FieldValue(l->Int() + r->Int()));
@@ -167,14 +169,20 @@ std::unique_ptr<FieldValue> arithCalc(const FieldValue* l, const FieldValue* r, 
         case FieldType::kUInt:
             result.reset(new FieldValue(l->UInt() + r->UInt()));
             break;
-        case FieldType::kFloat:
-            result.reset(new FieldValue(l->Float() + r->Float()));
+        case FieldType::kDouble:
+            if (type == dspb::PlusInt) {
+                result.reset(new FieldValue(int64_t(l->Double() + r->Double())));
+            } else {
+                result.reset(new FieldValue(l->Double() + r->Double()));
+            }
             break;
         default:
             break;
         }
         break;
     case dspb::Minus:
+    case dspb::MinusInt:
+    case dspb::MinusReal:
         switch (l->Type()) {
         case FieldType::kInt:
             result.reset(new FieldValue(l->Int() - r->Int()));
@@ -182,14 +190,20 @@ std::unique_ptr<FieldValue> arithCalc(const FieldValue* l, const FieldValue* r, 
         case FieldType::kUInt:
             result.reset(new FieldValue(l->UInt() - r->UInt()));
             break;
-        case FieldType::kFloat:
-            result.reset(new FieldValue(l->Float() - r->Float()));
+        case FieldType::kDouble:
+            if (type == dspb::MinusInt) {
+                result.reset(new FieldValue(int64_t(l->Double() - r->Double())));
+            } else {
+                result.reset(new FieldValue(l->Double() - r->Double()));
+            }
             break;
         default:
             break;
         }
         break;
     case dspb::Mult:
+    case dspb::MultInt:
+    case dspb::MultReal:
         switch (l->Type()) {
         case FieldType::kInt:
             result.reset(new FieldValue(l->Int() * r->Int()));
@@ -197,8 +211,12 @@ std::unique_ptr<FieldValue> arithCalc(const FieldValue* l, const FieldValue* r, 
         case FieldType::kUInt:
             result.reset(new FieldValue(l->UInt() * r->UInt()));
             break;
-        case FieldType::kFloat:
-            result.reset(new FieldValue(l->Float() * r->Float()));
+        case FieldType::kDouble:
+            if (type == dspb::MultInt) {
+                result.reset(new FieldValue(int64_t(l->Double() * r->Double())));
+            } else {
+                result.reset(new FieldValue(l->Double() * r->Double()));
+            }
             break;
         default:
             break;
@@ -206,27 +224,56 @@ std::unique_ptr<FieldValue> arithCalc(const FieldValue* l, const FieldValue* r, 
         break;
 
     case dspb::Div:
+    case dspb::DivReal:
+    case dspb::IntDivInt:
+    case dspb::IntDivDecimal:
         switch (l->Type()) {
         case FieldType::kInt:
             if (r->Int() != 0) {
                 result.reset(new FieldValue(l->Int() / r->Int()));
+            } else {
+                result.reset(nullptr);
             }
             break;
         case FieldType::kUInt:
             if (r->UInt() != 0) {
                 result.reset(new FieldValue(l->UInt() / r->UInt()));
+            } else {
+                result.reset(nullptr);
             }
             break;
-        case FieldType::kFloat:
-            if (r->Float() != 0) {
-                result.reset(new FieldValue(l->Float() / r->Float()));
+        case FieldType::kDouble:
+            if (r->Double() != 0) {
+                if (type == dspb::IntDivInt) {
+                    result.reset(new FieldValue(int64_t(l->Double() / r->Double())));
+                } else {
+                    result.reset(new FieldValue(l->Double() / r->Double()));
+                }
+            } else {
+                result.reset(nullptr);
             }
             break;
         default:
             break;
         }
         break;
-
+    case dspb::Mod:
+    case dspb::ModInt:
+    case dspb::ModReal:
+        switch (l->Type()) {
+        case FieldType::kInt:
+            result.reset(new FieldValue(l->Int() % r->Int()));
+            break;
+        case FieldType::kUInt:
+            result.reset(new FieldValue(l->UInt() % r->UInt()));
+            break;
+        case FieldType::kDouble:
+            result.reset(new FieldValue(fmod(l->Double(), r->Double())));
+            break;
+        default:
+            break;
+        }
+        break;
     default:
         return result;
     }

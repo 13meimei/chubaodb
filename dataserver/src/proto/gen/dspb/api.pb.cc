@@ -33,6 +33,7 @@ public:
   const ::dspb::GetLockInfoRequest* get_lock_info_;
   const ::dspb::SelectRequest* select_;
   const ::dspb::ScanRequest* scan_;
+  const ::dspb::SelectFlowRequest* select_flow_;
   const ::dspb::KvGetRequest* kv_get_;
   const ::dspb::KvPutRequest* kv_put_;
   const ::dspb::KvDeleteRequest* kv_delete_;
@@ -52,6 +53,7 @@ public:
   const ::dspb::GetLockInfoResponse* get_lock_info_;
   const ::dspb::SelectResponse* select_;
   const ::dspb::ScanResponse* scan_;
+  const ::dspb::SelectFlowResponse* select_flow_;
   const ::dspb::KvGetResponse* kv_get_;
   const ::dspb::KvPutResponse* kv_put_;
   const ::dspb::KvDeleteResponse* kv_delete_;
@@ -105,6 +107,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   offsetof(RangeRequestDefaultTypeInternal, get_lock_info_),
   offsetof(RangeRequestDefaultTypeInternal, select_),
   offsetof(RangeRequestDefaultTypeInternal, scan_),
+  offsetof(RangeRequestDefaultTypeInternal, select_flow_),
   offsetof(RangeRequestDefaultTypeInternal, kv_get_),
   offsetof(RangeRequestDefaultTypeInternal, kv_put_),
   offsetof(RangeRequestDefaultTypeInternal, kv_delete_),
@@ -129,6 +132,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   offsetof(RangeResponseDefaultTypeInternal, get_lock_info_),
   offsetof(RangeResponseDefaultTypeInternal, select_),
   offsetof(RangeResponseDefaultTypeInternal, scan_),
+  offsetof(RangeResponseDefaultTypeInternal, select_flow_),
   offsetof(RangeResponseDefaultTypeInternal, kv_get_),
   offsetof(RangeResponseDefaultTypeInternal, kv_put_),
   offsetof(RangeResponseDefaultTypeInternal, kv_delete_),
@@ -137,8 +141,8 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
 static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
   { 0, -1, sizeof(RangeRequest_Header)},
   { 9, -1, sizeof(RangeRequest)},
-  { 25, -1, sizeof(RangeResponse_Header)},
-  { 33, -1, sizeof(RangeResponse)},
+  { 26, -1, sizeof(RangeResponse_Header)},
+  { 34, -1, sizeof(RangeResponse)},
 };
 
 static ::google::protobuf::Message const * const file_default_instances[] = {
@@ -202,6 +206,8 @@ void TableStruct::InitDefaultsImpl() {
       ::dspb::SelectRequest::internal_default_instance());
   _RangeRequest_default_instance_.scan_ = const_cast< ::dspb::ScanRequest*>(
       ::dspb::ScanRequest::internal_default_instance());
+  _RangeRequest_default_instance_.select_flow_ = const_cast< ::dspb::SelectFlowRequest*>(
+      ::dspb::SelectFlowRequest::internal_default_instance());
   _RangeRequest_default_instance_.kv_get_ = const_cast< ::dspb::KvGetRequest*>(
       ::dspb::KvGetRequest::internal_default_instance());
   _RangeRequest_default_instance_.kv_put_ = const_cast< ::dspb::KvPutRequest*>(
@@ -224,6 +230,8 @@ void TableStruct::InitDefaultsImpl() {
       ::dspb::SelectResponse::internal_default_instance());
   _RangeResponse_default_instance_.scan_ = const_cast< ::dspb::ScanResponse*>(
       ::dspb::ScanResponse::internal_default_instance());
+  _RangeResponse_default_instance_.select_flow_ = const_cast< ::dspb::SelectFlowResponse*>(
+      ::dspb::SelectFlowResponse::internal_default_instance());
   _RangeResponse_default_instance_.kv_get_ = const_cast< ::dspb::KvGetResponse*>(
       ::dspb::KvGetResponse::internal_default_instance());
   _RangeResponse_default_instance_.kv_put_ = const_cast< ::dspb::KvPutResponse*>(
@@ -242,7 +250,7 @@ void AddDescriptorsImpl() {
   static const char descriptor[] GOOGLE_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
       "\n\016dspb/api.proto\022\004dspb\032\023basepb/basepb.pr"
       "oto\032\020dspb/error.proto\032\rdspb/kv.proto\032\016ds"
-      "pb/txn.proto\"\232\004\n\014RangeRequest\022)\n\006header\030"
+      "pb/txn.proto\"\312\004\n\014RangeRequest\022)\n\006header\030"
       "\001 \001(\0132\031.dspb.RangeRequest.Header\022\'\n\007prep"
       "are\030\002 \001(\0132\024.dspb.PrepareRequestH\000\022%\n\006dec"
       "ide\030\003 \001(\0132\023.dspb.DecideRequestH\000\022(\n\010clea"
@@ -250,29 +258,31 @@ void AddDescriptorsImpl() {
       "t_lock_info\030\005 \001(\0132\030.dspb.GetLockInfoRequ"
       "estH\000\022%\n\006select\030\006 \001(\0132\023.dspb.SelectReque"
       "stH\000\022!\n\004scan\030\007 \001(\0132\021.dspb.ScanRequestH\000\022"
-      "$\n\006kv_get\030\024 \001(\0132\022.dspb.KvGetRequestH\000\022$\n"
-      "\006kv_put\030\025 \001(\0132\022.dspb.KvPutRequestH\000\022*\n\tk"
-      "v_delete\030\026 \001(\0132\025.dspb.KvDeleteRequestH\000\032"
-      "i\n\006Header\022\022\n\ncluster_id\030\001 \001(\004\022\020\n\010trace_i"
-      "d\030\002 \001(\004\022\020\n\010range_id\030\003 \001(\004\022\'\n\013range_epoch"
-      "\030\004 \001(\0132\022.basepb.RangeEpochB\005\n\003req\"\207\004\n\rRa"
-      "ngeResponse\022*\n\006header\030\001 \001(\0132\032.dspb.Range"
-      "Response.Header\022(\n\007prepare\030\002 \001(\0132\025.dspb."
-      "PrepareResponseH\000\022&\n\006decide\030\003 \001(\0132\024.dspb"
-      ".DecideResponseH\000\022)\n\010clear_up\030\004 \001(\0132\025.ds"
-      "pb.ClearupResponseH\000\0222\n\rget_lock_info\030\005 "
-      "\001(\0132\031.dspb.GetLockInfoResponseH\000\022&\n\006sele"
-      "ct\030\006 \001(\0132\024.dspb.SelectResponseH\000\022\"\n\004scan"
-      "\030\007 \001(\0132\022.dspb.ScanResponseH\000\022%\n\006kv_get\030\024"
-      " \001(\0132\023.dspb.KvGetResponseH\000\022%\n\006kv_put\030\025 "
-      "\001(\0132\023.dspb.KvPutResponseH\000\022+\n\tkv_delete\030"
-      "\026 \001(\0132\026.dspb.KvDeleteResponseH\000\032J\n\006Heade"
-      "r\022\022\n\ncluster_id\030\001 \001(\004\022\020\n\010trace_id\030\002 \001(\004\022"
-      "\032\n\005error\030\003 \001(\0132\013.dspb.ErrorB\006\n\004respb\006pro"
-      "to3"
+      ".\n\013select_flow\030\010 \001(\0132\027.dspb.SelectFlowRe"
+      "questH\000\022$\n\006kv_get\030\024 \001(\0132\022.dspb.KvGetRequ"
+      "estH\000\022$\n\006kv_put\030\025 \001(\0132\022.dspb.KvPutReques"
+      "tH\000\022*\n\tkv_delete\030\026 \001(\0132\025.dspb.KvDeleteRe"
+      "questH\000\032i\n\006Header\022\022\n\ncluster_id\030\001 \001(\004\022\020\n"
+      "\010trace_id\030\002 \001(\004\022\020\n\010range_id\030\003 \001(\004\022\'\n\013ran"
+      "ge_epoch\030\004 \001(\0132\022.basepb.RangeEpochB\005\n\003re"
+      "q\"\270\004\n\rRangeResponse\022*\n\006header\030\001 \001(\0132\032.ds"
+      "pb.RangeResponse.Header\022(\n\007prepare\030\002 \001(\013"
+      "2\025.dspb.PrepareResponseH\000\022&\n\006decide\030\003 \001("
+      "\0132\024.dspb.DecideResponseH\000\022)\n\010clear_up\030\004 "
+      "\001(\0132\025.dspb.ClearupResponseH\000\0222\n\rget_lock"
+      "_info\030\005 \001(\0132\031.dspb.GetLockInfoResponseH\000"
+      "\022&\n\006select\030\006 \001(\0132\024.dspb.SelectResponseH\000"
+      "\022\"\n\004scan\030\007 \001(\0132\022.dspb.ScanResponseH\000\022/\n\013"
+      "select_flow\030\010 \001(\0132\030.dspb.SelectFlowRespo"
+      "nseH\000\022%\n\006kv_get\030\024 \001(\0132\023.dspb.KvGetRespon"
+      "seH\000\022%\n\006kv_put\030\025 \001(\0132\023.dspb.KvPutRespons"
+      "eH\000\022+\n\tkv_delete\030\026 \001(\0132\026.dspb.KvDeleteRe"
+      "sponseH\000\032J\n\006Header\022\022\n\ncluster_id\030\001 \001(\004\022\020"
+      "\n\010trace_id\030\002 \001(\004\022\032\n\005error\030\003 \001(\0132\013.dspb.E"
+      "rrorB\006\n\004respb\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 1163);
+      descriptor, 1260);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "dspb/api.proto", &protobuf_RegisterTypes);
   ::basepb::protobuf_basepb_2fbasepb_2eproto::AddDescriptors();
@@ -753,6 +763,7 @@ const int RangeRequest::kClearUpFieldNumber;
 const int RangeRequest::kGetLockInfoFieldNumber;
 const int RangeRequest::kSelectFieldNumber;
 const int RangeRequest::kScanFieldNumber;
+const int RangeRequest::kSelectFlowFieldNumber;
 const int RangeRequest::kKvGetFieldNumber;
 const int RangeRequest::kKvPutFieldNumber;
 const int RangeRequest::kKvDeleteFieldNumber;
@@ -800,6 +811,10 @@ RangeRequest::RangeRequest(const RangeRequest& from)
     }
     case kScan: {
       mutable_scan()->::dspb::ScanRequest::MergeFrom(from.scan());
+      break;
+    }
+    case kSelectFlow: {
+      mutable_select_flow()->::dspb::SelectFlowRequest::MergeFrom(from.select_flow());
       break;
     }
     case kKvGet: {
@@ -887,6 +902,10 @@ void RangeRequest::clear_req() {
     }
     case kScan: {
       delete req_.scan_;
+      break;
+    }
+    case kSelectFlow: {
+      delete req_.select_flow_;
       break;
     }
     case kKvGet: {
@@ -1017,6 +1036,18 @@ bool RangeRequest::MergePartialFromCodedStream(
         break;
       }
 
+      // .dspb.SelectFlowRequest select_flow = 8;
+      case 8: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(66u /* 66 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+               input, mutable_select_flow()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
       // .dspb.KvGetRequest kv_get = 20;
       case 20: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
@@ -1121,6 +1152,12 @@ void RangeRequest::SerializeWithCachedSizes(
       7, *req_.scan_, output);
   }
 
+  // .dspb.SelectFlowRequest select_flow = 8;
+  if (has_select_flow()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      8, *req_.select_flow_, output);
+  }
+
   // .dspb.KvGetRequest kv_get = 20;
   if (has_kv_get()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
@@ -1200,6 +1237,13 @@ void RangeRequest::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::
       InternalWriteMessageNoVirtualToArray(
         7, *req_.scan_, deterministic, target);
+  }
+
+  // .dspb.SelectFlowRequest select_flow = 8;
+  if (has_select_flow()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      InternalWriteMessageNoVirtualToArray(
+        8, *req_.select_flow_, deterministic, target);
   }
 
   // .dspb.KvGetRequest kv_get = 20;
@@ -1290,6 +1334,13 @@ size_t RangeRequest::ByteSizeLong() const {
           *req_.scan_);
       break;
     }
+    // .dspb.SelectFlowRequest select_flow = 8;
+    case kSelectFlow: {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+          *req_.select_flow_);
+      break;
+    }
     // .dspb.KvGetRequest kv_get = 20;
     case kKvGet: {
       total_size += 2 +
@@ -1370,6 +1421,10 @@ void RangeRequest::MergeFrom(const RangeRequest& from) {
     }
     case kScan: {
       mutable_scan()->::dspb::ScanRequest::MergeFrom(from.scan());
+      break;
+    }
+    case kSelectFlow: {
+      mutable_select_flow()->::dspb::SelectFlowRequest::MergeFrom(from.select_flow());
       break;
     }
     case kKvGet: {
@@ -1755,6 +1810,54 @@ void RangeRequest::set_allocated_scan(::dspb::ScanRequest* scan) {
     req_.scan_ = scan;
   }
   // @@protoc_insertion_point(field_set_allocated:dspb.RangeRequest.scan)
+}
+
+// .dspb.SelectFlowRequest select_flow = 8;
+bool RangeRequest::has_select_flow() const {
+  return req_case() == kSelectFlow;
+}
+void RangeRequest::set_has_select_flow() {
+  _oneof_case_[0] = kSelectFlow;
+}
+void RangeRequest::clear_select_flow() {
+  if (has_select_flow()) {
+    delete req_.select_flow_;
+    clear_has_req();
+  }
+}
+ const ::dspb::SelectFlowRequest& RangeRequest::select_flow() const {
+  // @@protoc_insertion_point(field_get:dspb.RangeRequest.select_flow)
+  return has_select_flow()
+      ? *req_.select_flow_
+      : ::dspb::SelectFlowRequest::default_instance();
+}
+::dspb::SelectFlowRequest* RangeRequest::mutable_select_flow() {
+  if (!has_select_flow()) {
+    clear_req();
+    set_has_select_flow();
+    req_.select_flow_ = new ::dspb::SelectFlowRequest;
+  }
+  // @@protoc_insertion_point(field_mutable:dspb.RangeRequest.select_flow)
+  return req_.select_flow_;
+}
+::dspb::SelectFlowRequest* RangeRequest::release_select_flow() {
+  // @@protoc_insertion_point(field_release:dspb.RangeRequest.select_flow)
+  if (has_select_flow()) {
+    clear_has_req();
+    ::dspb::SelectFlowRequest* temp = req_.select_flow_;
+    req_.select_flow_ = NULL;
+    return temp;
+  } else {
+    return NULL;
+  }
+}
+void RangeRequest::set_allocated_select_flow(::dspb::SelectFlowRequest* select_flow) {
+  clear_req();
+  if (select_flow) {
+    set_has_select_flow();
+    req_.select_flow_ = select_flow;
+  }
+  // @@protoc_insertion_point(field_set_allocated:dspb.RangeRequest.select_flow)
 }
 
 // .dspb.KvGetRequest kv_get = 20;
@@ -2319,6 +2422,7 @@ const int RangeResponse::kClearUpFieldNumber;
 const int RangeResponse::kGetLockInfoFieldNumber;
 const int RangeResponse::kSelectFieldNumber;
 const int RangeResponse::kScanFieldNumber;
+const int RangeResponse::kSelectFlowFieldNumber;
 const int RangeResponse::kKvGetFieldNumber;
 const int RangeResponse::kKvPutFieldNumber;
 const int RangeResponse::kKvDeleteFieldNumber;
@@ -2366,6 +2470,10 @@ RangeResponse::RangeResponse(const RangeResponse& from)
     }
     case kScan: {
       mutable_scan()->::dspb::ScanResponse::MergeFrom(from.scan());
+      break;
+    }
+    case kSelectFlow: {
+      mutable_select_flow()->::dspb::SelectFlowResponse::MergeFrom(from.select_flow());
       break;
     }
     case kKvGet: {
@@ -2453,6 +2561,10 @@ void RangeResponse::clear_resp() {
     }
     case kScan: {
       delete resp_.scan_;
+      break;
+    }
+    case kSelectFlow: {
+      delete resp_.select_flow_;
       break;
     }
     case kKvGet: {
@@ -2583,6 +2695,18 @@ bool RangeResponse::MergePartialFromCodedStream(
         break;
       }
 
+      // .dspb.SelectFlowResponse select_flow = 8;
+      case 8: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(66u /* 66 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+               input, mutable_select_flow()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
       // .dspb.KvGetResponse kv_get = 20;
       case 20: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
@@ -2687,6 +2811,12 @@ void RangeResponse::SerializeWithCachedSizes(
       7, *resp_.scan_, output);
   }
 
+  // .dspb.SelectFlowResponse select_flow = 8;
+  if (has_select_flow()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      8, *resp_.select_flow_, output);
+  }
+
   // .dspb.KvGetResponse kv_get = 20;
   if (has_kv_get()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
@@ -2766,6 +2896,13 @@ void RangeResponse::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::
       InternalWriteMessageNoVirtualToArray(
         7, *resp_.scan_, deterministic, target);
+  }
+
+  // .dspb.SelectFlowResponse select_flow = 8;
+  if (has_select_flow()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      InternalWriteMessageNoVirtualToArray(
+        8, *resp_.select_flow_, deterministic, target);
   }
 
   // .dspb.KvGetResponse kv_get = 20;
@@ -2856,6 +2993,13 @@ size_t RangeResponse::ByteSizeLong() const {
           *resp_.scan_);
       break;
     }
+    // .dspb.SelectFlowResponse select_flow = 8;
+    case kSelectFlow: {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+          *resp_.select_flow_);
+      break;
+    }
     // .dspb.KvGetResponse kv_get = 20;
     case kKvGet: {
       total_size += 2 +
@@ -2936,6 +3080,10 @@ void RangeResponse::MergeFrom(const RangeResponse& from) {
     }
     case kScan: {
       mutable_scan()->::dspb::ScanResponse::MergeFrom(from.scan());
+      break;
+    }
+    case kSelectFlow: {
+      mutable_select_flow()->::dspb::SelectFlowResponse::MergeFrom(from.select_flow());
       break;
     }
     case kKvGet: {
@@ -3321,6 +3469,54 @@ void RangeResponse::set_allocated_scan(::dspb::ScanResponse* scan) {
     resp_.scan_ = scan;
   }
   // @@protoc_insertion_point(field_set_allocated:dspb.RangeResponse.scan)
+}
+
+// .dspb.SelectFlowResponse select_flow = 8;
+bool RangeResponse::has_select_flow() const {
+  return resp_case() == kSelectFlow;
+}
+void RangeResponse::set_has_select_flow() {
+  _oneof_case_[0] = kSelectFlow;
+}
+void RangeResponse::clear_select_flow() {
+  if (has_select_flow()) {
+    delete resp_.select_flow_;
+    clear_has_resp();
+  }
+}
+ const ::dspb::SelectFlowResponse& RangeResponse::select_flow() const {
+  // @@protoc_insertion_point(field_get:dspb.RangeResponse.select_flow)
+  return has_select_flow()
+      ? *resp_.select_flow_
+      : ::dspb::SelectFlowResponse::default_instance();
+}
+::dspb::SelectFlowResponse* RangeResponse::mutable_select_flow() {
+  if (!has_select_flow()) {
+    clear_resp();
+    set_has_select_flow();
+    resp_.select_flow_ = new ::dspb::SelectFlowResponse;
+  }
+  // @@protoc_insertion_point(field_mutable:dspb.RangeResponse.select_flow)
+  return resp_.select_flow_;
+}
+::dspb::SelectFlowResponse* RangeResponse::release_select_flow() {
+  // @@protoc_insertion_point(field_release:dspb.RangeResponse.select_flow)
+  if (has_select_flow()) {
+    clear_has_resp();
+    ::dspb::SelectFlowResponse* temp = resp_.select_flow_;
+    resp_.select_flow_ = NULL;
+    return temp;
+  } else {
+    return NULL;
+  }
+}
+void RangeResponse::set_allocated_select_flow(::dspb::SelectFlowResponse* select_flow) {
+  clear_resp();
+  if (select_flow) {
+    set_has_select_flow();
+    resp_.select_flow_ = select_flow;
+  }
+  // @@protoc_insertion_point(field_set_allocated:dspb.RangeResponse.select_flow)
 }
 
 // .dspb.KvGetResponse kv_get = 20;

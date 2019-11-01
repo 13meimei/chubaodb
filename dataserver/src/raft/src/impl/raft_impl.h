@@ -45,7 +45,7 @@ public:
 
     Status TryToLeader() override;
 
-    Status Submit(std::string& cmd) override;
+    Status Submit(std::string& cmd, uint64_t unique_seq, uint16_t rw_flag) override;
     Status ChangeMemeber(const ConfChange& conf) override;
 
     bool IsLeader() const override { return sops_.node_id == bulletin_board_.Leader(); }

@@ -34,6 +34,9 @@ struct ServerConfig {
     // write pid and lock file for exclusively running
     std::string pid_file;
 
+    // server run in test mode
+    bool b_test = false;
+
     // server run on docker
     bool docker = false;
 
@@ -57,6 +60,17 @@ struct ServerConfig {
         int node_interval_secs = 10;   // node heartbeat interval
         int range_interval_secs = 10;  // range heartbeat interval, in seconds
     } cluster_config;
+
+    struct {
+        uint64_t node_id;
+        uint64_t range_id;
+        bool is_leader;
+        std::map<uint64_t, std::string> nodes;
+        std::string start_key;
+        std::string end_key;
+        uint64_t conf_id;
+        uint64_t version;
+    } test_config;
 
     // logging configs
     LoggerConfig logger_config;
@@ -87,6 +101,7 @@ struct ServerConfig {
         bool disabled = false;
         std::string ip_addr = "0.0.0.0";
         uint16_t port = 0;  // raft server port
+        uint16_t read_option = chubaodb::raft::READ_UNSAFE;
         bool in_memory_log = false;
         std::string log_path; // default: {data_path}/raft
         uint64_t log_file_size = 16 * 1024 * 1024; // default: 16MB
@@ -112,11 +127,11 @@ struct ServerConfig {
     } manager_config;
 
 public:
-    bool LoadFromFile(const std::string& conf_file);
+    bool LoadFromFile(const std::string& conf_file, bool btest);
     void Print() const;
 
 private:
-    bool load(const INIReader& reader);
+    bool load(const INIReader& reader, bool btest);
     bool loadLoggerConfig(const INIReader& reader);
     bool loadRPCConfig(const INIReader& reader);
     bool loadEngineConfig(const INIReader& reader);
@@ -125,6 +140,7 @@ private:
     bool loadRangeConfig(const INIReader& reader);
     bool loadRaftConfig(const INIReader& reader);
     bool loadManagerConfig(const INIReader& reader);
+    bool loadTestConfig(const INIReader& reader);
 };
 
 extern ServerConfig ds_config;

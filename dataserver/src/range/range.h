@@ -24,7 +24,6 @@ _Pragma("once");
 #include "common/logger.h"
 #include "common/ds_encoding.h"
 #include "common/rpc_request.h"
-#include "common/proto_utils.h"
 
 #include "storage/store.h"
 #include "storage/meta_store.h"
@@ -73,6 +72,7 @@ public:
     // from raft::StateMachine
     Status Apply(const std::string &cmd, uint64_t index) override;
     Status ApplyMemberChange(const raft::ConfChange &cc, uint64_t index) override;
+    Status Read(const std::string& cmd, uint16_t verify_result) override;
     uint64_t PersistApplied() override;
     void OnReplicateError(const std::string &cmd, const Status &status) override;
     void OnLeaderChange(uint64_t leader, uint64_t term) override;
@@ -97,6 +97,11 @@ public:
     void ResetStatisSize();
     void ResetStatisSize(uint64_t split_size, uint64_t max_size);
     void SetRealSize(uint64_t rsize) { real_size_ = rsize; }
+    void SetKvCount(uint64_t kv_count) {
+        kv_count_1_ = kv_count;
+        kv_count_2_ = 0;
+        store_->SetKvCount(kv_count);
+    }
 
     // create a new range for split
     Status Split(const dspb::SplitCommand& req, uint64_t raft_index,
@@ -126,12 +131,13 @@ private:
     void txnGetLockInfo(RPCRequestPtr rpc, dspb::RangeRequest& req);
     void txnSelect(RPCRequestPtr rpc, dspb::RangeRequest& req);
     void txnScan(RPCRequestPtr rpc, dspb::RangeRequest& req);
+    void txnSelectFlow(RPCRequestPtr rpc, dspb::RangeRequest& req);
 
     void sendResponse(RPCRequestPtr& rpc, const dspb::RangeRequest_Header& req_header,
                       dspb::RangeResponse& resp, ErrorPtr ptr = nullptr);
 
-    Status submit(const dspb::Command &cmd);
-    void submitCmd(RPCRequestPtr rpc, dspb::RangeRequest_Header& header,
+    Status submit(const dspb::Command &cmd, uint16_t rw_flag);
+    void submitCmd(RPCRequestPtr rpc, dspb::RangeRequest_Header& header, uint16_t rw_flag,
                    const std::function<void(dspb::Command &cmd)> &init);
     void replySubmit(const dspb::Command& cmd, dspb::RangeResponse& resp,
                      ErrorPtr err, int64_t apply_time);
@@ -201,6 +207,9 @@ private:
     std::atomic<bool> is_leader_ = {false};
 
     uint64_t real_size_ = 0;
+    uint64_t kv_count_1_ = 0;
+    uint64_t kv_count_2_ = 0;
+
     std::atomic<bool> statis_flag_ = {false};
     std::atomic<uint64_t> statis_size_ = {0};
     uint64_t split_range_id_ = 0;

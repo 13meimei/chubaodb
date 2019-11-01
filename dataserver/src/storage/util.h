@@ -30,7 +30,22 @@ bool isExpired(uint64_t expired_at);
 Status decodePK(const std::string& key, size_t& offset, const basepb::Column& col,
         std::unique_ptr<FieldValue>* field);
 
+Status decodePK(const std::string& key, size_t& offset, const dspb::ColumnInfo& col,
+        std::unique_ptr<FieldValue>* field);
+
 Status decodeField(const std::string& buf, size_t& offset, const dspb::ColumnInfo& col,
+        std::unique_ptr<FieldValue>& field);
+
+Status decodeIndexUniqueKey(const std::string& key, size_t& offset, const dspb::ColumnInfo& col,
+        std::unique_ptr<FieldValue>* field, bool &hav_null);
+
+Status decodeIndexUniqueField(const std::string& buf, size_t& offset, const dspb::ColumnInfo& col,
+        std::unique_ptr<FieldValue>& field);
+
+Status decodeIndexNonUniqueKey(const std::string& key, size_t& offset, const dspb::ColumnInfo& col,
+        std::unique_ptr<FieldValue>* field);
+
+Status decodeIndexNonUniqueField(const std::string& buf, size_t& offset, const dspb::ColumnInfo& col,
         std::unique_ptr<FieldValue>& field);
 
 void fillColumnInfo(const basepb::Column& col, dspb::ColumnInfo* info);

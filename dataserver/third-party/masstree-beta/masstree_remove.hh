@@ -47,7 +47,7 @@ bool tcursor<P>::gc_layer(threadinfo& ti)
 
     // remove redundant internode layers
     node_type *layer;
-    while (1) {
+    while (true) {
         layer = n_->lv_[kx_.p].layer();
         if (!layer->is_root()) {
             n_->lv_[kx_.p] = layer->maybe_parent();
@@ -201,7 +201,7 @@ bool tcursor<P>::remove_leaf(leaf_type* leaf, node_type* root,
     node_type* n = leaf;
     node_type* replacement = nullptr;
 
-    while (1) {
+    while (true) {
         internode_type *p = n->locked_parent(ti);
         p->mark_insert();
         masstree_invariant(!p->deleted());
@@ -225,19 +225,20 @@ bool tcursor<P>::remove_leaf(leaf_type* leaf, node_type* root,
         }
 
         n->unlock();
+        n = p;
 
-        if (p->nkeys_ > (p->child_[0] == nullptr)
-            || p->is_root()) {
-            p->unlock();
-            return true;
+        if (p->nkeys_ || p->is_root()) {
+            break;
         }
 
         p->mark_deleted();
         p->deallocate_rcu(ti);
-        n = p;
-        replacement = p->child_[p->nkeys_];
-        p->child_[p->nkeys_] = nullptr;
+        replacement = p->child_[0];
+        p->child_[0] = nullptr;
     }
+
+    n->unlock();
+    return true;
 }
 
 template <typename P>
@@ -247,14 +248,16 @@ void tcursor<P>::redirect(internode_type* n, ikey_type ikey,
     int kp = -1;
     do {
         internode_type* p = n->locked_parent(ti);
-        if (kp >= 0)
+        if (kp >= 0) {
             n->unlock();
-        n = p;
-        kp = internode_type::bound_type::upper(ikey, *n);
-        if (kp > 0) {
-            // NB n->ikey0_[kp - 1] might not equal ikey
-            n->ikey0_[kp - 1] = replacement_ikey;
         }
+        kp = internode_type::bound_type::upper(ikey, *p);
+        masstree_invariant(p->child_[kp] == n);
+        if (kp > 0) {
+            // NB p->ikey0_[kp - 1] might not equal ikey
+            p->ikey0_[kp - 1] = replacement_ikey;
+        }
+        n = p;
     } while (kp == 0 || (kp == 1 && !n->child_[0]));
     n->unlock();
 }

@@ -35,7 +35,7 @@ public:
 
     virtual Status TryToLeader() = 0;
 
-    virtual Status Submit(std::string& cmd) = 0;
+    virtual Status Submit(std::string& cmd, uint64_t unique_seq, uint16_t rw_flag) = 0;
     virtual Status ChangeMemeber(const ConfChange& conf) = 0;
 
     virtual void GetStatus(RaftStatus* status) const = 0;

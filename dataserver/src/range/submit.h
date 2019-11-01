@@ -21,7 +21,6 @@ _Pragma("once");
 
 #include "dspb/raft_internal.pb.h"
 #include "common/rpc_request.h"
-#include "common/proto_utils.h"
 
 namespace chubaodb {
 namespace ds {

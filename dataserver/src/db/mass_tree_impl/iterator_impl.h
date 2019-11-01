@@ -31,7 +31,7 @@ class MasstreeWrapper;
 
 class MassIterator : public Iterator {
 public:
-    MassIterator(MasstreeWrapper* tree, const std::string& vbegin, const std::string& vend, size_t max_rows = 100);
+    MassIterator(MasstreeWrapper* tree, const std::string& vbegin, const std::string& vend, size_t max_per_scan = 128);
 
     template<typename SS, typename K>
     void visit_leaf(const SS &, const K &, threadinfo &) {}
@@ -56,7 +56,8 @@ private:
     using KVPair = std::pair<std::string, std::string>;
     using KVPairVector = std::vector<std::pair<std::string, std::string>>;
 
-    const size_t batch_size_ = 100;
+    size_t batch_size_ = 2;
+    const size_t batch_max_size_ = 128;
     const std::string end_key_;
 
     MasstreeWrapper* tree_ = nullptr;

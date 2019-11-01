@@ -24,6 +24,18 @@ _Pragma("once");
 namespace chubaodb {
 namespace raft {
 
+const uint16_t LEASE_ONLY = 1;
+const uint16_t READ_SAFE = 2;
+const uint16_t READ_UNSAFE = 3;
+
+const uint16_t READ_SUCCESS = 0; //read verify success, majority followers return success
+const uint16_t READ_FAILURE = 1; //read verify failed, majority followers return failed
+const uint16_t READ_WAIT = 2;    //verify wait, return number less than majority
+
+const uint16_t READ_FLAG = 1;
+
+const uint16_t WRITE_FLAG = 2;
+
 struct TransportOptions {
     bool use_inprocess_transport = false;
 
@@ -58,7 +70,7 @@ struct RaftServerOptions {
     uint64_t node_id = 0;
 
     bool enable_pre_vote = true;
-
+    uint16_t read_option = LEASE_ONLY;
     bool auto_promote_learner = true;
     uint64_t promote_gap_threshold = 500;
     uint64_t promote_gap_percent = 5;
@@ -107,7 +119,7 @@ struct RaftOptions {
     uint64_t initial_first_index = 0;
 
     uint64_t applied = 0;
-
+    bool has_campaign = true;
     uint64_t leader = 0;
     uint64_t term = 0;
 

@@ -122,6 +122,49 @@ void SelectRequestBuilder::SetSQL(const std::string& query) {
     }
 }
 
+void SelectFlowRequestBuilder::SetSQL(const std::string& query) {
+    hsql::SQLParserResult result;
+    auto ret = hsql::SQLParser::parse(query, &result);
+    if (!ret || !result.isValid() || result.size() != 1) {
+        std::ostringstream ss;
+        ss << "parse sql [" << query << "] failed: " << result.errorMsg() << std::endl;
+        ss << "column: " << result.errorColumn()  << query[result.errorColumn()]<< std::endl;
+        throw std::runtime_error(ss.str());
+    }
+    auto statement = result.getStatement(0);
+    if (!statement->isType(hsql::kStmtSelect)) {
+        throw std::runtime_error(std::string("not select sql: ") + query);
+    }
+    auto select = (const hsql::SelectStatement*)statement;
+
+    try {
+        std::cout << "parseFieldList:" << query << std::endl;
+        // field list
+        parseFieldList(*table_, select, &req_);
+
+        // where
+        if (select->whereClause != nullptr) {
+            parseExpr(*table_, select->whereClause, &req_);
+        }
+        // order by
+        if (select->order != nullptr) {
+            parseOrder(*table_, select->order, &req_);
+        }
+
+        // group by todo
+        
+        // limit
+        if (select->limit != nullptr) {
+            parseLimit(select->limit, &req_);
+        }
+    } catch (std::exception& e) {
+        hsql::printStatementInfo(statement);
+        std::ostringstream ss;
+        ss << "parse sql [" << query << "] failed: " << e.what() << std::endl;
+        throw std::runtime_error(ss.str());
+    }
+}
+
 LocalPrepareBuilder::LocalPrepareBuilder(Table *t) : table_(t) {
     pk_columns_ = t->GetPKs();
     non_pk_columns_ = t->GetNonPkColumns();

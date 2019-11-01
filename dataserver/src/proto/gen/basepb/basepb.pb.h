@@ -74,6 +74,9 @@ extern TableDefaultTypeInternal _Table_default_instance_;
 class TableEpoch;
 class TableEpochDefaultTypeInternal;
 extern TableEpochDefaultTypeInternal _TableEpoch_default_instance_;
+class WatcherEvent;
+class WatcherEventDefaultTypeInternal;
+extern WatcherEventDefaultTypeInternal _WatcherEvent_default_instance_;
 }  // namespace basepb
 
 namespace basepb {
@@ -134,18 +137,84 @@ inline bool DataType_Parse(
   return ::google::protobuf::internal::ParseNamedEnum<DataType>(
     DataType_descriptor(), name, value);
 }
+enum StoreType {
+  Store_Invalid = 0,
+  Store_Hot = 1,
+  Store_Warm = 2,
+  Store_Mix = 3,
+  StoreType_INT_MIN_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32min,
+  StoreType_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
+};
+bool StoreType_IsValid(int value);
+const StoreType StoreType_MIN = Store_Invalid;
+const StoreType StoreType_MAX = Store_Mix;
+const int StoreType_ARRAYSIZE = StoreType_MAX + 1;
+
+const ::google::protobuf::EnumDescriptor* StoreType_descriptor();
+inline const ::std::string& StoreType_Name(StoreType value) {
+  return ::google::protobuf::internal::NameOfEnum(
+    StoreType_descriptor(), value);
+}
+inline bool StoreType_Parse(
+    const ::std::string& name, StoreType* value) {
+  return ::google::protobuf::internal::ParseNamedEnum<StoreType>(
+    StoreType_descriptor(), name, value);
+}
+enum RangeType {
+  RNG_Invalid = 0,
+  RNG_Index = 1,
+  RNG_Data = 2,
+  RangeType_INT_MIN_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32min,
+  RangeType_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
+};
+bool RangeType_IsValid(int value);
+const RangeType RangeType_MIN = RNG_Invalid;
+const RangeType RangeType_MAX = RNG_Data;
+const int RangeType_ARRAYSIZE = RangeType_MAX + 1;
+
+const ::google::protobuf::EnumDescriptor* RangeType_descriptor();
+inline const ::std::string& RangeType_Name(RangeType value) {
+  return ::google::protobuf::internal::NameOfEnum(
+    RangeType_descriptor(), value);
+}
+inline bool RangeType_Parse(
+    const ::std::string& name, RangeType* value) {
+  return ::google::protobuf::internal::ParseNamedEnum<RangeType>(
+    RangeType_descriptor(), name, value);
+}
+enum ColumnType {
+  COL_Common = 0,
+  COL_System = 1,
+  ColumnType_INT_MIN_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32min,
+  ColumnType_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
+};
+bool ColumnType_IsValid(int value);
+const ColumnType ColumnType_MIN = COL_Common;
+const ColumnType ColumnType_MAX = COL_System;
+const int ColumnType_ARRAYSIZE = ColumnType_MAX + 1;
+
+const ::google::protobuf::EnumDescriptor* ColumnType_descriptor();
+inline const ::std::string& ColumnType_Name(ColumnType value) {
+  return ::google::protobuf::internal::NameOfEnum(
+    ColumnType_descriptor(), value);
+}
+inline bool ColumnType_Parse(
+    const ::std::string& name, ColumnType* value) {
+  return ::google::protobuf::internal::ParseNamedEnum<ColumnType>(
+    ColumnType_descriptor(), name, value);
+}
 enum NodeState {
   N_Invalid = 0,
-  N_Login = 1,
-  N_Logout = 2,
-  N_Offline = 3,
-  N_Initial = 6,
+  N_Online = 1,
+  N_Offline = 2,
+  N_Updating = 3,
+  N_Offlining = 4,
   NodeState_INT_MIN_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32min,
   NodeState_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
 };
 bool NodeState_IsValid(int value);
 const NodeState NodeState_MIN = N_Invalid;
-const NodeState NodeState_MAX = N_Initial;
+const NodeState NodeState_MAX = N_Offlining;
 const int NodeState_ARRAYSIZE = NodeState_MAX + 1;
 
 const ::google::protobuf::EnumDescriptor* NodeState_descriptor();
@@ -245,6 +314,52 @@ inline bool IndexType_Parse(
     const ::std::string& name, IndexType* value) {
   return ::google::protobuf::internal::ParseNamedEnum<IndexType>(
     IndexType_descriptor(), name, value);
+}
+enum EventType {
+  Event_Type_Invalid = 0,
+  Event_Type_PUT = 1,
+  Event_Type_DELETE = 2,
+  EventType_INT_MIN_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32min,
+  EventType_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
+};
+bool EventType_IsValid(int value);
+const EventType EventType_MIN = Event_Type_Invalid;
+const EventType EventType_MAX = Event_Type_DELETE;
+const int EventType_ARRAYSIZE = EventType_MAX + 1;
+
+const ::google::protobuf::EnumDescriptor* EventType_descriptor();
+inline const ::std::string& EventType_Name(EventType value) {
+  return ::google::protobuf::internal::NameOfEnum(
+    EventType_descriptor(), value);
+}
+inline bool EventType_Parse(
+    const ::std::string& name, EventType* value) {
+  return ::google::protobuf::internal::ParseNamedEnum<EventType>(
+    EventType_descriptor(), name, value);
+}
+enum WatcherType {
+  Watcher_Type_Invalid = 0,
+  Watcher_Type_Node = 1,
+  Watcher_Type_Database = 2,
+  Watcher_Type_Table = 3,
+  Watcher_Type_Range = 4,
+  WatcherType_INT_MIN_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32min,
+  WatcherType_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
+};
+bool WatcherType_IsValid(int value);
+const WatcherType WatcherType_MIN = Watcher_Type_Invalid;
+const WatcherType WatcherType_MAX = Watcher_Type_Range;
+const int WatcherType_ARRAYSIZE = WatcherType_MAX + 1;
+
+const ::google::protobuf::EnumDescriptor* WatcherType_descriptor();
+inline const ::std::string& WatcherType_Name(WatcherType value) {
+  return ::google::protobuf::internal::NameOfEnum(
+    WatcherType_descriptor(), value);
+}
+inline bool WatcherType_Parse(
+    const ::std::string& name, WatcherType* value) {
+  return ::google::protobuf::internal::ParseNamedEnum<WatcherType>(
+    WatcherType_descriptor(), name, value);
 }
 // ===================================================================
 
@@ -508,6 +623,12 @@ class Node : public ::google::protobuf::Message /* @@protoc_insertion_point(clas
   ::google::protobuf::int64 last_update_time() const;
   void set_last_update_time(::google::protobuf::int64 value);
 
+  // .basepb.StoreType type = 10;
+  void clear_type();
+  static const int kTypeFieldNumber = 10;
+  ::basepb::StoreType type() const;
+  void set_type(::basepb::StoreType value);
+
   // @@protoc_insertion_point(class_scope:basepb.Node)
  private:
 
@@ -521,6 +642,7 @@ class Node : public ::google::protobuf::Message /* @@protoc_insertion_point(clas
   int state_;
   ::google::protobuf::int64 version_;
   ::google::protobuf::int64 last_update_time_;
+  int type_;
   mutable int _cached_size_;
   friend struct protobuf_basepb_2fbasepb_2eproto::TableStruct;
 };
@@ -607,20 +729,6 @@ class Peer : public ::google::protobuf::Message /* @@protoc_insertion_point(clas
 
   // accessors -------------------------------------------------------
 
-  // string raft_addr = 4;
-  void clear_raft_addr();
-  static const int kRaftAddrFieldNumber = 4;
-  const ::std::string& raft_addr() const;
-  void set_raft_addr(const ::std::string& value);
-  #if LANG_CXX11
-  void set_raft_addr(::std::string&& value);
-  #endif
-  void set_raft_addr(const char* value);
-  void set_raft_addr(const char* value, size_t size);
-  ::std::string* mutable_raft_addr();
-  ::std::string* release_raft_addr();
-  void set_allocated_raft_addr(::std::string* raft_addr);
-
   // uint64 id = 1;
   void clear_id();
   static const int kIdFieldNumber = 1;
@@ -643,7 +751,6 @@ class Peer : public ::google::protobuf::Message /* @@protoc_insertion_point(clas
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  ::google::protobuf::internal::ArenaStringPtr raft_addr_;
   ::google::protobuf::uint64 id_;
   ::google::protobuf::uint64 node_id_;
   int type_;
@@ -1194,6 +1301,30 @@ class Range : public ::google::protobuf::Message /* @@protoc_insertion_point(cla
   ::google::protobuf::uint64 leader() const;
   void set_leader(::google::protobuf::uint64 value);
 
+  // .basepb.RangeType range_type = 10;
+  void clear_range_type();
+  static const int kRangeTypeFieldNumber = 10;
+  ::basepb::RangeType range_type() const;
+  void set_range_type(::basepb::RangeType value);
+
+  // .basepb.StoreType store_type = 11;
+  void clear_store_type();
+  static const int kStoreTypeFieldNumber = 11;
+  ::basepb::StoreType store_type() const;
+  void set_store_type(::basepb::StoreType value);
+
+  // uint64 term = 12;
+  void clear_term();
+  static const int kTermFieldNumber = 12;
+  ::google::protobuf::uint64 term() const;
+  void set_term(::google::protobuf::uint64 value);
+
+  // uint64 parent_range_id = 13;
+  void clear_parent_range_id();
+  static const int kParentRangeIdFieldNumber = 13;
+  ::google::protobuf::uint64 parent_range_id() const;
+  void set_parent_range_id(::google::protobuf::uint64 value);
+
   // @@protoc_insertion_point(class_scope:basepb.Range)
  private:
 
@@ -1207,6 +1338,10 @@ class Range : public ::google::protobuf::Message /* @@protoc_insertion_point(cla
   ::google::protobuf::uint64 db_id_;
   ::google::protobuf::uint64 table_id_;
   ::google::protobuf::uint64 leader_;
+  int range_type_;
+  int store_type_;
+  ::google::protobuf::uint64 term_;
+  ::google::protobuf::uint64 parent_range_id_;
   mutable int _cached_size_;
   friend struct protobuf_basepb_2fbasepb_2eproto::TableStruct;
 };
@@ -1646,6 +1781,12 @@ class Column : public ::google::protobuf::Message /* @@protoc_insertion_point(cl
   bool unique() const;
   void set_unique(bool value);
 
+  // .basepb.ColumnType col_type = 15;
+  void clear_col_type();
+  static const int kColTypeFieldNumber = 15;
+  ::basepb::ColumnType col_type() const;
+  void set_col_type(::basepb::ColumnType value);
+
   // @@protoc_insertion_point(class_scope:basepb.Column)
  private:
 
@@ -1664,6 +1805,7 @@ class Column : public ::google::protobuf::Message /* @@protoc_insertion_point(cl
   bool auto_increment_;
   ::google::protobuf::int32 ordinal_;
   bool unique_;
+  int col_type_;
   mutable int _cached_size_;
   friend struct protobuf_basepb_2fbasepb_2eproto::TableStruct;
 };
@@ -2246,6 +2388,24 @@ class Table : public ::google::protobuf::Message /* @@protoc_insertion_point(cla
   ::basepb::TableStatus status() const;
   void set_status(::basepb::TableStatus value);
 
+  // .basepb.StoreType type = 12;
+  void clear_type();
+  static const int kTypeFieldNumber = 12;
+  ::basepb::StoreType type() const;
+  void set_type(::basepb::StoreType value);
+
+  // uint64 replica_num = 13;
+  void clear_replica_num();
+  static const int kReplicaNumFieldNumber = 13;
+  ::google::protobuf::uint64 replica_num() const;
+  void set_replica_num(::google::protobuf::uint64 value);
+
+  // uint64 data_range_num = 14;
+  void clear_data_range_num();
+  static const int kDataRangeNumFieldNumber = 14;
+  ::google::protobuf::uint64 data_range_num() const;
+  void set_data_range_num(::google::protobuf::uint64 value);
+
   // @@protoc_insertion_point(class_scope:basepb.Table)
  private:
 
@@ -2261,6 +2421,163 @@ class Table : public ::google::protobuf::Message /* @@protoc_insertion_point(cla
   ::google::protobuf::uint64 id_;
   ::google::protobuf::int64 create_time_;
   int status_;
+  int type_;
+  ::google::protobuf::uint64 replica_num_;
+  ::google::protobuf::uint64 data_range_num_;
+  mutable int _cached_size_;
+  friend struct protobuf_basepb_2fbasepb_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class WatcherEvent : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:basepb.WatcherEvent) */ {
+ public:
+  WatcherEvent();
+  virtual ~WatcherEvent();
+
+  WatcherEvent(const WatcherEvent& from);
+
+  inline WatcherEvent& operator=(const WatcherEvent& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  WatcherEvent(WatcherEvent&& from) noexcept
+    : WatcherEvent() {
+    *this = ::std::move(from);
+  }
+
+  inline WatcherEvent& operator=(WatcherEvent&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const WatcherEvent& default_instance();
+
+  static inline const WatcherEvent* internal_default_instance() {
+    return reinterpret_cast<const WatcherEvent*>(
+               &_WatcherEvent_default_instance_);
+  }
+  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
+    14;
+
+  void Swap(WatcherEvent* other);
+  friend void swap(WatcherEvent& a, WatcherEvent& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline WatcherEvent* New() const PROTOBUF_FINAL { return New(NULL); }
+
+  WatcherEvent* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void CopyFrom(const WatcherEvent& from);
+  void MergeFrom(const WatcherEvent& from);
+  void Clear() PROTOBUF_FINAL;
+  bool IsInitialized() const PROTOBUF_FINAL;
+
+  size_t ByteSizeLong() const PROTOBUF_FINAL;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
+  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const PROTOBUF_FINAL;
+  void InternalSwap(WatcherEvent* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // bytes value = 7;
+  void clear_value();
+  static const int kValueFieldNumber = 7;
+  const ::std::string& value() const;
+  void set_value(const ::std::string& value);
+  #if LANG_CXX11
+  void set_value(::std::string&& value);
+  #endif
+  void set_value(const char* value);
+  void set_value(const void* value, size_t size);
+  ::std::string* mutable_value();
+  ::std::string* release_value();
+  void set_allocated_value(::std::string* value);
+
+  // .basepb.WatcherType watcher_type = 1;
+  void clear_watcher_type();
+  static const int kWatcherTypeFieldNumber = 1;
+  ::basepb::WatcherType watcher_type() const;
+  void set_watcher_type(::basepb::WatcherType value);
+
+  // .basepb.EventType event_type = 2;
+  void clear_event_type();
+  static const int kEventTypeFieldNumber = 2;
+  ::basepb::EventType event_type() const;
+  void set_event_type(::basepb::EventType value);
+
+  // uint64 node_id = 3;
+  void clear_node_id();
+  static const int kNodeIdFieldNumber = 3;
+  ::google::protobuf::uint64 node_id() const;
+  void set_node_id(::google::protobuf::uint64 value);
+
+  // uint64 db_id = 4;
+  void clear_db_id();
+  static const int kDbIdFieldNumber = 4;
+  ::google::protobuf::uint64 db_id() const;
+  void set_db_id(::google::protobuf::uint64 value);
+
+  // uint64 table_id = 5;
+  void clear_table_id();
+  static const int kTableIdFieldNumber = 5;
+  ::google::protobuf::uint64 table_id() const;
+  void set_table_id(::google::protobuf::uint64 value);
+
+  // uint64 range_id = 6;
+  void clear_range_id();
+  static const int kRangeIdFieldNumber = 6;
+  ::google::protobuf::uint64 range_id() const;
+  void set_range_id(::google::protobuf::uint64 value);
+
+  // uint64 version = 8;
+  void clear_version();
+  static const int kVersionFieldNumber = 8;
+  ::google::protobuf::uint64 version() const;
+  void set_version(::google::protobuf::uint64 value);
+
+  // @@protoc_insertion_point(class_scope:basepb.WatcherEvent)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::internal::ArenaStringPtr value_;
+  int watcher_type_;
+  int event_type_;
+  ::google::protobuf::uint64 node_id_;
+  ::google::protobuf::uint64 db_id_;
+  ::google::protobuf::uint64 table_id_;
+  ::google::protobuf::uint64 range_id_;
+  ::google::protobuf::uint64 version_;
   mutable int _cached_size_;
   friend struct protobuf_basepb_2fbasepb_2eproto::TableStruct;
 };
@@ -2503,6 +2820,20 @@ inline void Node::set_last_update_time(::google::protobuf::int64 value) {
   // @@protoc_insertion_point(field_set:basepb.Node.last_update_time)
 }
 
+// .basepb.StoreType type = 10;
+inline void Node::clear_type() {
+  type_ = 0;
+}
+inline ::basepb::StoreType Node::type() const {
+  // @@protoc_insertion_point(field_get:basepb.Node.type)
+  return static_cast< ::basepb::StoreType >(type_);
+}
+inline void Node::set_type(::basepb::StoreType value) {
+  
+  type_ = value;
+  // @@protoc_insertion_point(field_set:basepb.Node.type)
+}
+
 // -------------------------------------------------------------------
 
 // Peer
@@ -2547,59 +2878,6 @@ inline void Peer::set_type(::basepb::PeerType value) {
   
   type_ = value;
   // @@protoc_insertion_point(field_set:basepb.Peer.type)
-}
-
-// string raft_addr = 4;
-inline void Peer::clear_raft_addr() {
-  raft_addr_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline const ::std::string& Peer::raft_addr() const {
-  // @@protoc_insertion_point(field_get:basepb.Peer.raft_addr)
-  return raft_addr_.GetNoArena();
-}
-inline void Peer::set_raft_addr(const ::std::string& value) {
-  
-  raft_addr_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:basepb.Peer.raft_addr)
-}
-#if LANG_CXX11
-inline void Peer::set_raft_addr(::std::string&& value) {
-  
-  raft_addr_.SetNoArena(
-    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:basepb.Peer.raft_addr)
-}
-#endif
-inline void Peer::set_raft_addr(const char* value) {
-  GOOGLE_DCHECK(value != NULL);
-  
-  raft_addr_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:basepb.Peer.raft_addr)
-}
-inline void Peer::set_raft_addr(const char* value, size_t size) {
-  
-  raft_addr_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-      ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:basepb.Peer.raft_addr)
-}
-inline ::std::string* Peer::mutable_raft_addr() {
-  
-  // @@protoc_insertion_point(field_mutable:basepb.Peer.raft_addr)
-  return raft_addr_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline ::std::string* Peer::release_raft_addr() {
-  // @@protoc_insertion_point(field_release:basepb.Peer.raft_addr)
-  
-  return raft_addr_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline void Peer::set_allocated_raft_addr(::std::string* raft_addr) {
-  if (raft_addr != NULL) {
-    
-  } else {
-    
-  }
-  raft_addr_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), raft_addr);
-  // @@protoc_insertion_point(field_set_allocated:basepb.Peer.raft_addr)
 }
 
 // -------------------------------------------------------------------
@@ -3178,6 +3456,62 @@ inline void Range::set_leader(::google::protobuf::uint64 value) {
   // @@protoc_insertion_point(field_set:basepb.Range.leader)
 }
 
+// .basepb.RangeType range_type = 10;
+inline void Range::clear_range_type() {
+  range_type_ = 0;
+}
+inline ::basepb::RangeType Range::range_type() const {
+  // @@protoc_insertion_point(field_get:basepb.Range.range_type)
+  return static_cast< ::basepb::RangeType >(range_type_);
+}
+inline void Range::set_range_type(::basepb::RangeType value) {
+  
+  range_type_ = value;
+  // @@protoc_insertion_point(field_set:basepb.Range.range_type)
+}
+
+// .basepb.StoreType store_type = 11;
+inline void Range::clear_store_type() {
+  store_type_ = 0;
+}
+inline ::basepb::StoreType Range::store_type() const {
+  // @@protoc_insertion_point(field_get:basepb.Range.store_type)
+  return static_cast< ::basepb::StoreType >(store_type_);
+}
+inline void Range::set_store_type(::basepb::StoreType value) {
+  
+  store_type_ = value;
+  // @@protoc_insertion_point(field_set:basepb.Range.store_type)
+}
+
+// uint64 term = 12;
+inline void Range::clear_term() {
+  term_ = GOOGLE_ULONGLONG(0);
+}
+inline ::google::protobuf::uint64 Range::term() const {
+  // @@protoc_insertion_point(field_get:basepb.Range.term)
+  return term_;
+}
+inline void Range::set_term(::google::protobuf::uint64 value) {
+  
+  term_ = value;
+  // @@protoc_insertion_point(field_set:basepb.Range.term)
+}
+
+// uint64 parent_range_id = 13;
+inline void Range::clear_parent_range_id() {
+  parent_range_id_ = GOOGLE_ULONGLONG(0);
+}
+inline ::google::protobuf::uint64 Range::parent_range_id() const {
+  // @@protoc_insertion_point(field_get:basepb.Range.parent_range_id)
+  return parent_range_id_;
+}
+inline void Range::set_parent_range_id(::google::protobuf::uint64 value) {
+  
+  parent_range_id_ = value;
+  // @@protoc_insertion_point(field_set:basepb.Range.parent_range_id)
+}
+
 // -------------------------------------------------------------------
 
 // Leader
@@ -3677,6 +4011,20 @@ inline void Column::set_unique(bool value) {
   
   unique_ = value;
   // @@protoc_insertion_point(field_set:basepb.Column.unique)
+}
+
+// .basepb.ColumnType col_type = 15;
+inline void Column::clear_col_type() {
+  col_type_ = 0;
+}
+inline ::basepb::ColumnType Column::col_type() const {
+  // @@protoc_insertion_point(field_get:basepb.Column.col_type)
+  return static_cast< ::basepb::ColumnType >(col_type_);
+}
+inline void Column::set_col_type(::basepb::ColumnType value) {
+  
+  col_type_ = value;
+  // @@protoc_insertion_point(field_set:basepb.Column.col_type)
 }
 
 // -------------------------------------------------------------------
@@ -4401,10 +4749,209 @@ Table::indexes() const {
   return indexes_;
 }
 
+// .basepb.StoreType type = 12;
+inline void Table::clear_type() {
+  type_ = 0;
+}
+inline ::basepb::StoreType Table::type() const {
+  // @@protoc_insertion_point(field_get:basepb.Table.type)
+  return static_cast< ::basepb::StoreType >(type_);
+}
+inline void Table::set_type(::basepb::StoreType value) {
+  
+  type_ = value;
+  // @@protoc_insertion_point(field_set:basepb.Table.type)
+}
+
+// uint64 replica_num = 13;
+inline void Table::clear_replica_num() {
+  replica_num_ = GOOGLE_ULONGLONG(0);
+}
+inline ::google::protobuf::uint64 Table::replica_num() const {
+  // @@protoc_insertion_point(field_get:basepb.Table.replica_num)
+  return replica_num_;
+}
+inline void Table::set_replica_num(::google::protobuf::uint64 value) {
+  
+  replica_num_ = value;
+  // @@protoc_insertion_point(field_set:basepb.Table.replica_num)
+}
+
+// uint64 data_range_num = 14;
+inline void Table::clear_data_range_num() {
+  data_range_num_ = GOOGLE_ULONGLONG(0);
+}
+inline ::google::protobuf::uint64 Table::data_range_num() const {
+  // @@protoc_insertion_point(field_get:basepb.Table.data_range_num)
+  return data_range_num_;
+}
+inline void Table::set_data_range_num(::google::protobuf::uint64 value) {
+  
+  data_range_num_ = value;
+  // @@protoc_insertion_point(field_set:basepb.Table.data_range_num)
+}
+
+// -------------------------------------------------------------------
+
+// WatcherEvent
+
+// .basepb.WatcherType watcher_type = 1;
+inline void WatcherEvent::clear_watcher_type() {
+  watcher_type_ = 0;
+}
+inline ::basepb::WatcherType WatcherEvent::watcher_type() const {
+  // @@protoc_insertion_point(field_get:basepb.WatcherEvent.watcher_type)
+  return static_cast< ::basepb::WatcherType >(watcher_type_);
+}
+inline void WatcherEvent::set_watcher_type(::basepb::WatcherType value) {
+  
+  watcher_type_ = value;
+  // @@protoc_insertion_point(field_set:basepb.WatcherEvent.watcher_type)
+}
+
+// .basepb.EventType event_type = 2;
+inline void WatcherEvent::clear_event_type() {
+  event_type_ = 0;
+}
+inline ::basepb::EventType WatcherEvent::event_type() const {
+  // @@protoc_insertion_point(field_get:basepb.WatcherEvent.event_type)
+  return static_cast< ::basepb::EventType >(event_type_);
+}
+inline void WatcherEvent::set_event_type(::basepb::EventType value) {
+  
+  event_type_ = value;
+  // @@protoc_insertion_point(field_set:basepb.WatcherEvent.event_type)
+}
+
+// uint64 node_id = 3;
+inline void WatcherEvent::clear_node_id() {
+  node_id_ = GOOGLE_ULONGLONG(0);
+}
+inline ::google::protobuf::uint64 WatcherEvent::node_id() const {
+  // @@protoc_insertion_point(field_get:basepb.WatcherEvent.node_id)
+  return node_id_;
+}
+inline void WatcherEvent::set_node_id(::google::protobuf::uint64 value) {
+  
+  node_id_ = value;
+  // @@protoc_insertion_point(field_set:basepb.WatcherEvent.node_id)
+}
+
+// uint64 db_id = 4;
+inline void WatcherEvent::clear_db_id() {
+  db_id_ = GOOGLE_ULONGLONG(0);
+}
+inline ::google::protobuf::uint64 WatcherEvent::db_id() const {
+  // @@protoc_insertion_point(field_get:basepb.WatcherEvent.db_id)
+  return db_id_;
+}
+inline void WatcherEvent::set_db_id(::google::protobuf::uint64 value) {
+  
+  db_id_ = value;
+  // @@protoc_insertion_point(field_set:basepb.WatcherEvent.db_id)
+}
+
+// uint64 table_id = 5;
+inline void WatcherEvent::clear_table_id() {
+  table_id_ = GOOGLE_ULONGLONG(0);
+}
+inline ::google::protobuf::uint64 WatcherEvent::table_id() const {
+  // @@protoc_insertion_point(field_get:basepb.WatcherEvent.table_id)
+  return table_id_;
+}
+inline void WatcherEvent::set_table_id(::google::protobuf::uint64 value) {
+  
+  table_id_ = value;
+  // @@protoc_insertion_point(field_set:basepb.WatcherEvent.table_id)
+}
+
+// uint64 range_id = 6;
+inline void WatcherEvent::clear_range_id() {
+  range_id_ = GOOGLE_ULONGLONG(0);
+}
+inline ::google::protobuf::uint64 WatcherEvent::range_id() const {
+  // @@protoc_insertion_point(field_get:basepb.WatcherEvent.range_id)
+  return range_id_;
+}
+inline void WatcherEvent::set_range_id(::google::protobuf::uint64 value) {
+  
+  range_id_ = value;
+  // @@protoc_insertion_point(field_set:basepb.WatcherEvent.range_id)
+}
+
+// bytes value = 7;
+inline void WatcherEvent::clear_value() {
+  value_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& WatcherEvent::value() const {
+  // @@protoc_insertion_point(field_get:basepb.WatcherEvent.value)
+  return value_.GetNoArena();
+}
+inline void WatcherEvent::set_value(const ::std::string& value) {
+  
+  value_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:basepb.WatcherEvent.value)
+}
+#if LANG_CXX11
+inline void WatcherEvent::set_value(::std::string&& value) {
+  
+  value_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:basepb.WatcherEvent.value)
+}
+#endif
+inline void WatcherEvent::set_value(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  value_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:basepb.WatcherEvent.value)
+}
+inline void WatcherEvent::set_value(const void* value, size_t size) {
+  
+  value_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:basepb.WatcherEvent.value)
+}
+inline ::std::string* WatcherEvent::mutable_value() {
+  
+  // @@protoc_insertion_point(field_mutable:basepb.WatcherEvent.value)
+  return value_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* WatcherEvent::release_value() {
+  // @@protoc_insertion_point(field_release:basepb.WatcherEvent.value)
+  
+  return value_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void WatcherEvent::set_allocated_value(::std::string* value) {
+  if (value != NULL) {
+    
+  } else {
+    
+  }
+  value_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set_allocated:basepb.WatcherEvent.value)
+}
+
+// uint64 version = 8;
+inline void WatcherEvent::clear_version() {
+  version_ = GOOGLE_ULONGLONG(0);
+}
+inline ::google::protobuf::uint64 WatcherEvent::version() const {
+  // @@protoc_insertion_point(field_get:basepb.WatcherEvent.version)
+  return version_;
+}
+inline void WatcherEvent::set_version(::google::protobuf::uint64 value) {
+  
+  version_ = value;
+  // @@protoc_insertion_point(field_set:basepb.WatcherEvent.version)
+}
+
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
 #endif  // !PROTOBUF_INLINE_NOT_IN_HEADERS
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------
@@ -4445,6 +4992,21 @@ template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::basepb::DataType>() {
   return ::basepb::DataType_descriptor();
 }
+template <> struct is_proto_enum< ::basepb::StoreType> : ::google::protobuf::internal::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor< ::basepb::StoreType>() {
+  return ::basepb::StoreType_descriptor();
+}
+template <> struct is_proto_enum< ::basepb::RangeType> : ::google::protobuf::internal::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor< ::basepb::RangeType>() {
+  return ::basepb::RangeType_descriptor();
+}
+template <> struct is_proto_enum< ::basepb::ColumnType> : ::google::protobuf::internal::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor< ::basepb::ColumnType>() {
+  return ::basepb::ColumnType_descriptor();
+}
 template <> struct is_proto_enum< ::basepb::NodeState> : ::google::protobuf::internal::true_type {};
 template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::basepb::NodeState>() {
@@ -4469,6 +5031,16 @@ template <> struct is_proto_enum< ::basepb::IndexType> : ::google::protobuf::int
 template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::basepb::IndexType>() {
   return ::basepb::IndexType_descriptor();
+}
+template <> struct is_proto_enum< ::basepb::EventType> : ::google::protobuf::internal::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor< ::basepb::EventType>() {
+  return ::basepb::EventType_descriptor();
+}
+template <> struct is_proto_enum< ::basepb::WatcherType> : ::google::protobuf::internal::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor< ::basepb::WatcherType>() {
+  return ::basepb::WatcherType_descriptor();
 }
 
 }  // namespace protobuf

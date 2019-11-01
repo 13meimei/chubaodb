@@ -30,8 +30,30 @@ static const size_t kIteratorTooManyKeys = 1000;
 
 RowFetcher::RowFetcher(Store& s, const dspb::SelectRequest& req) :
     store_(s),
-    decoder_(s.GetPrimaryKeys(), req),
+    decoder_(Decoder::CreateDecoder(s.GetPrimaryKeys(), req)),
     kv_fetcher_(KvFetcher::Create(s, req)) {
+}
+
+RowFetcher::RowFetcher(Store& s, const dspb::TableRead & req,
+        const std::string & start_key, const std::string & end_key) :
+    store_(s),
+    decoder_(Decoder::CreateDecoder(s.GetPrimaryKeys(), req)),
+    kv_fetcher_(KvFetcher::Create(s, req, start_key, end_key)) {
+
+}
+
+RowFetcher::RowFetcher(Store& s, const dspb::IndexRead & req,
+        const std::string & start_key, const std::string & end_key) :
+    store_(s),
+    decoder_(Decoder::CreateDecoder(s.GetPrimaryKeys(), req)),
+    kv_fetcher_(KvFetcher::Create(s, req, start_key, end_key)) {
+}
+
+RowFetcher::RowFetcher(Store& s, const dspb::DataSample & req,
+        const std::string & start_key, const std::string & end_key) :
+    store_(s),
+    decoder_(Decoder::CreateDecoder(s.GetPrimaryKeys(), req)),
+    kv_fetcher_(KvFetcher::Create(s, req, start_key, end_key)) {
 }
 
 RowFetcher::~RowFetcher() = default;
@@ -39,6 +61,11 @@ RowFetcher::~RowFetcher() = default;
 Status RowFetcher::Next(RowResult& row, bool &over) {
     Status s;
     KvRecord kv;
+    if (kv_fetcher_ == nullptr ) {
+        over = true;
+        return Status( Status::kNoMoreData, "RowFetcher kv_fetcher_ is null.", "");
+    }
+
     bool matched = false;
     while (true) {
         kv.Clear();
@@ -54,9 +81,10 @@ Status RowFetcher::Next(RowResult& row, bool &over) {
 
         matched = false;
         row.Reset();
-        s = decoder_.DecodeAndFilter(kv.key, kv.value, row, matched);
+        s = decoder_->DecodeAndFilter(kv.key, kv.value, row, matched);
         if (!s.ok() || matched) {
             over = !s.ok();
+            FLOG_DEBUG("RowFetche Next over status info: {} ", s.ToString());
             break;
         }
     }
@@ -66,6 +94,11 @@ Status RowFetcher::Next(RowResult& row, bool &over) {
 Status RowFetcher::Next(const dspb::SelectRequest& req, dspb::Row& row, bool& over) {
     Status s;
     KvRecord kv;
+
+    if (kv_fetcher_ == nullptr ) {
+        over = true;
+        return Status( Status::kNoMoreData, "RowFetcher kv_fetcher_ is null.", "");
+    }
     bool found = false;
     while (true) {
         kv.Clear();
@@ -93,7 +126,7 @@ void RowFetcher::addMetric(const KvRecord& kv) {
     ++iter_count_;
     if (iter_count_ % kIteratorTooManyKeys == kIteratorTooManyKeys - 1) {
         FLOG_WARN("range[{}] iterator too many keys({}), filters: {}",
-                store_.GetRangeID(), iter_count_, decoder_.DebugString());
+                store_.GetRangeID(), iter_count_, decoder_->DebugString());
     }
 }
 
@@ -105,7 +138,7 @@ Status RowFetcher::addIntent(const dspb::SelectRequest& req, dspb::TxnValue& val
     if (intent.typ() == dspb::INSERT) {
         RowResult result;
         bool matched = false;
-        auto s = decoder_.DecodeAndFilter(intent.key(), intent.value(), result, matched);
+        auto s = decoder_->DecodeAndFilter(intent.key(), intent.value(), result, matched);
         if (!s.ok()) {
             return s;
         }
@@ -138,7 +171,7 @@ Status RowFetcher::getTxnRow(const dspb::SelectRequest& req, const KvRecord& kv,
     if (kv.HasValue()) {
         bool matched = false;
         RowResult result;
-        s = decoder_.DecodeAndFilter(kv.key, kv.value, result, matched);
+        s = decoder_->DecodeAndFilter(kv.key, kv.value, result, matched);
         if (!s.ok()) {
             return s;
         }

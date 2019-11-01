@@ -328,7 +328,7 @@ Status DiskStorage::Term(uint64_t index, uint64_t* term, bool* is_compacted) con
     } else {
         *is_compacted = false;
         auto it = std::lower_bound(log_files_.cbegin(), log_files_.cend(), index,
-                                   [](LogFile* f, uint64_t index) { return f->LastIndex() < index; });
+                                   [](LogFile* f, uint64_t index) { return f->LogSize() > 0 && f->LastIndex() < index; });
         if (it == log_files_.cend()) {
             return Status(Status::kNotFound, "locate term log file", std::to_string(index));
         }
@@ -359,7 +359,7 @@ Status DiskStorage::Entries(uint64_t lo, uint64_t hi, uint64_t max_size,
 
     // search start file
     auto it = std::lower_bound(log_files_.cbegin(), log_files_.cend(), lo,
-            [](LogFile* f, uint64_t index) { return f->LastIndex() < index; });
+            [](LogFile* f, uint64_t index) { return f->LogSize() > 0 && f->LastIndex() < index; });
     if (it == log_files_.cend()) {
         return Status(Status::kNotFound, "locate file", std::to_string(lo));
     }

@@ -24,6 +24,7 @@ void Range::kvGet(RPCRequestPtr rpc, dspb::RangeRequest &req) {
     RLOG_DEBUG("RawGet begin");
 
     ErrorPtr err;
+
     dspb::RangeResponse resp;
     do {
         auto& get_req = req.kv_get();
@@ -31,12 +32,20 @@ void Range::kvGet(RPCRequestPtr rpc, dspb::RangeRequest &req) {
         if (!verifyKeyInBound(get_req.key(), &err)) {
             break;
         }
-
-        auto get_resp = resp.mutable_kv_get();
-        auto btime = NowMicros();
-        auto ret = store_->Get(get_req.key(), get_resp->mutable_value());
-        context_->Statistics()->PushTime(HistogramType::kStore, NowMicros() - btime);
-        get_resp->set_code(ret.code());
+        if (ds_config.raft_config.read_option == chubaodb::raft::READ_UNSAFE) {
+            auto get_resp = resp.mutable_kv_get();
+            auto btime = NowMicros();
+            auto ret = store_->Get(get_req.key(), get_resp->mutable_value());
+            context_->Statistics()->PushTime(HistogramType::kStore, NowMicros() - btime);
+            get_resp->set_code(static_cast<int>(ret.code()));
+        } else {
+            submitCmd(std::move(rpc), *req.mutable_header(), chubaodb::raft::READ_FLAG,
+                  [&req](dspb::Command &cmd) {
+                      cmd.set_cmd_type(dspb::CmdType::KvGet);
+                      cmd.set_allocated_kv_get_req(req.release_kv_get());
+                  });
+            return;
+        }
     } while (false);
 
     if (err != nullptr) {
@@ -59,7 +68,7 @@ void Range::kvPut(RPCRequestPtr rpc, dspb::RangeRequest &req) {
             break;
         }
 
-        submitCmd(std::move(rpc), *req.mutable_header(),
+        submitCmd(std::move(rpc), *req.mutable_header(), chubaodb::raft::WRITE_FLAG,
                   [&req](dspb::Command &cmd) {
                       cmd.set_cmd_type(dspb::CmdType::KvPut);
                       cmd.set_allocated_kv_put_req(req.release_kv_put());
@@ -127,7 +136,7 @@ void Range::kvDelete(RPCRequestPtr rpc, dspb::RangeRequest &req) {
             break;
         }
 
-        submitCmd(std::move(rpc), *req.mutable_header(),
+        submitCmd(std::move(rpc), *req.mutable_header(), chubaodb::raft::WRITE_FLAG,
                   [&req](dspb::Command &cmd) {
                       cmd.set_cmd_type(dspb::CmdType::KvDelete);
                       cmd.set_allocated_kv_delete_req(req.release_kv_delete());

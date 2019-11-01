@@ -27,7 +27,7 @@ namespace storage {
 enum class FieldType : char {
     kInt,
     kUInt,
-    kFloat,
+    kDouble,
     kBytes,
 };
 
@@ -39,7 +39,7 @@ public:
     explicit FieldValue(uint64_t val) : type_(FieldType::kUInt) {
         value_.uval = val;
     }
-    explicit FieldValue(double val) : type_(FieldType::kFloat) {
+    explicit FieldValue(double val) : type_(FieldType::kDouble) {
         value_.fval = val;
     }
     explicit FieldValue(std::string* val) : type_(FieldType::kBytes) {
@@ -61,6 +61,33 @@ public:
 
     FieldType Type() const { return type_; }
 
+    const std::string TypeString() {
+        std::string str;
+        switch (type_) {
+            case FieldType::kInt: {
+                str = "kInt";
+                break;
+            }
+            case FieldType::kUInt: {
+                str = "kUInt";
+                break;
+            }
+            case FieldType::kDouble: {
+                str = "kDouble";
+                break;
+            }
+            case FieldType::kBytes: {
+                str = "kBytes";
+                break;
+            }
+            default: {
+                str = "Type Error.";
+            }
+        }
+
+        return str;
+    }
+
     int64_t Int() const {
         if (type_ != FieldType::kInt) return 0;
         return value_.ival;
@@ -71,8 +98,8 @@ public:
         return value_.uval;
     }
 
-    double Float() const {
-        if (type_ != FieldType::kFloat) return 0;
+    double Double() const {
+        if (type_ != FieldType::kDouble) return 0;
         return value_.fval;
     }
 
@@ -87,7 +114,7 @@ public:
             return std::to_string(value_.ival);
         } else if (type_ == FieldType::kUInt) {
             return std::to_string(value_.uval);
-        } else if (type_ == FieldType::kFloat) {
+        } else if (type_ == FieldType::kDouble) {
             return std::to_string(value_.fval);
         } else if (type_ == FieldType::kBytes) {
             return *value_.sval;

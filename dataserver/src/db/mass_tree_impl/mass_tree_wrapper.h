@@ -57,7 +57,7 @@ public:
     template <typename F>
     int Scan(const std::string& begin, F& scanner);
 
-    std::unique_ptr<Iterator> NewIterator(const std::string& start, const std::string& limit, size_t max_per_scan = 100);
+    std::unique_ptr<Iterator> NewIterator(const std::string& start, const std::string& limit, size_t max_per_scan = 128);
 
     std::string CollectTreeCouter();
     std::string TreeStat();

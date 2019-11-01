@@ -26,6 +26,7 @@ public:
     virtual ~NodeResolver() = default;
 
     virtual std::string GetNodeAddress(uint64_t node_id) = 0;
+    virtual bool AddNodeAddress(uint64_t node_id, std::string address) = 0;
 };
 
 } /* namespace raft */

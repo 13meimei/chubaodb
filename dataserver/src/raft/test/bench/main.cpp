@@ -86,6 +86,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    // start
 #ifdef USE_GPERF
     ProfilerStart("./bench.prof");
 #endif
@@ -100,6 +101,7 @@ int main(int argc, char *argv[]) {
         t.join();
     }
 
+    // end
     gettimeofday(&end, NULL);
     timersub(&end, &start, &taken);
 #ifdef USE_GPERF

@@ -35,6 +35,7 @@ RaftFsm::RaftFsm(const RaftServerOptions& sops, ServerMutableOptions* mutable_so
     node_id_(sops.node_id),
     id_(ops.id),
     sm_(ops.statemachine) {
+    read_context_ = std::unique_ptr<ReadIndexContext>(new ReadIndexContext(this));
     auto s = start();
     if (!s.ok()) {
         throw RaftException(s);
@@ -248,7 +249,9 @@ bool RaftFsm::stepIgnoreTerm(MessagePtr& msg) {
         case pb::LOCAL_MSG_PROP:
             step_func_(msg);
             return true;
-
+        case pb::LOCAL_MSG_READ:
+            step_func_(msg);
+            return true;
         case pb::HEARTBEAT_REQUEST:
             if (msg->from() == leader_ && msg->from() != node_id_) {
                 step_func_(msg);
@@ -505,6 +508,23 @@ Status RaftFsm::smApply(const EntryPtr& entry) {
     return s;
 }
 
+Status RaftFsm::ReadProcess(const EntryPtr& entry, uint16_t verify_result) {
+    if (!entry->data().empty()) {
+        return sm_->Read(entry->data(), verify_result);
+    }
+    return Status(Status::kInvalidArgument, "read unknown raft entry type",
+                  std::to_string(static_cast<int>(entry->type())));
+}
+
+void RaftFsm::readErrorProcess() {
+    std::deque<uint64_t> err_seqs;
+    std::map<uint64_t, std::shared_ptr<ReadIndexState> > err_reqs;
+    read_context_->savePendingRequest(err_seqs, err_reqs);
+    for (auto it=err_reqs.begin(); it != err_reqs.end(); it++) {
+        ReadProcess(it->second->Entry(), chubaodb::raft::READ_FAILURE);
+    }
+}
+
 Status RaftFsm::applyConfChange(const EntryPtr& e) {
     assert(e->type() == pb::ENTRY_CONF_CHANGE);
 
@@ -673,6 +693,12 @@ void RaftFsm::send(MessagePtr& msg) {
     sending_msgs_.push_back(msg);
 }
 
+void RaftFsm::resetAlive() {
+    for (auto it = replicas_.begin(); it != replicas_.end(); it++) {
+        it->second->setAlive(false);
+    }
+}
+
 void RaftFsm::reset(uint64_t term, bool is_leader) {
     if (term_ != term) {
         term_ = term;
@@ -690,7 +716,7 @@ void RaftFsm::reset(uint64_t term, bool is_leader) {
         failed_entries_ = std::move(pending_entries_);
         pending_entries_.clear();
     }
-
+    readErrorProcess();
     abortSendSnap();
     abortApplySnap();
 

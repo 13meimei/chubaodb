@@ -18,7 +18,7 @@ _Pragma("once");
 #include <google/protobuf/message.h>
 
 #include "net/message.h"
-#include "proto_utils.h"
+#include "dspb/api.pb.h"
 
 namespace chubaodb {
 
@@ -37,13 +37,19 @@ struct RPCRequest {
     uint64_t MsgID() const { return msg->head.msg_id; }
     std::string FuncName() const;
 
-    // Parse to request proto msg
+    // parse to request protobuf msg
     bool ParseTo(google::protobuf::Message& proto_req, bool zero_copy = true);
 
-    // Send response
+    // reply response to client, declare virtual for mock
     virtual void Reply(const google::protobuf::Message& proto_resp);
 };
 
 using RPCRequestPtr = std::unique_ptr<RPCRequest>;
+
+using ErrorPtr = std::unique_ptr<dspb::Error>;
+
+// set RangeResponse_Header from RangeRequest_Header
+void SetResponseHeader(dspb::RangeResponse_Header* resp,
+                       const dspb::RangeRequest_Header &req, ErrorPtr err = nullptr);
 
 }  // namespace chubaodb

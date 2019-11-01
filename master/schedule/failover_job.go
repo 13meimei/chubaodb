@@ -15,17 +15,11 @@
 package schedule
 
 import (
-	"context"
 	"fmt"
 	"github.com/chubaodb/chubaodb/master/entity"
-	"github.com/chubaodb/chubaodb/master/entity/errs"
 	"github.com/chubaodb/chubaodb/master/entity/pkg/basepb"
-	"github.com/chubaodb/chubaodb/master/entity/pkg/dspb"
-	"github.com/chubaodb/chubaodb/master/entity/pkg/mspb"
 	"github.com/chubaodb/chubaodb/master/service"
-	"github.com/chubaodb/chubaodb/master/utils"
 	"github.com/chubaodb/chubaodb/master/utils/log"
-	"math"
 )
 
 var _ ProcessJob = &FailoverJob{}
@@ -35,166 +29,128 @@ type FailoverJob struct {
 	service *service.BaseService
 }
 
-func (gc *FailoverJob) process(ctx context.Context, stop *bool, nodeMap map[uint64]*basepb.Node, nodeInfoMap map[uint64]*dspb.NodeInfoResponse, nodeRangeNum map[uint64]int, ranges []*basepb.Range, rangeGroup map[[2]uint64][]*basepb.Range, tableMap map[uint64]*basepb.Table, dbMap map[uint64]*basepb.DataBase) {
-	if len(nodeInfoMap) <= 2 || !gc.service.ConfigFailOver(ctx) {
+func (fj *FailoverJob) process(ctx *processContext) {
+	if len(ctx.nodeHandlerMap) <= 2 || !fj.service.ConfigFailOver(ctx) {
 		return
 	}
 
-	if *stop {
+	if ctx.stop {
 		log.Info("got stop so skip FailoverJob")
 		return
 	}
 
 	log.Info("start FailoverJob begin")
-
-	if gc.deleteDwonPeer(ctx, nodeInfoMap, nodeMap) {
-		*stop = true
+    m := entity.Monitor()
+	fj.deleteDownPeer(ctx)
+	if ctx.stop {
 		return
 	}
 
 	//add range if rng.Peers < table.replicaNum or rng.Peers > table.replicaNum
-	for dbTableID, rngs := range rangeGroup {
-		table := tableMap[dbTableID[1]]
+	for _, rng := range ctx.rangeMap {
+		table := ctx.tableMap[rng.TableId]
 		if table == nil || table.Status != basepb.TableStatus_TableRunning {
 			log.Info("table[%v] status is not Not sure")
-			*stop = true
+			ctx.stop = true
 			continue
 		}
-		property, err := utils.ParseTableProperties(table.Properties)
-		if err != nil {
-			log.Error("parse table properties err:[%s] content:[%s]", err.Error(), table.Properties)
-			continue
-		}
-		for _, rng := range rngs {
-			if len(rng.Peers) < property.ReplicaNum {
-				log.Info("db:[%d] table:[%d] replica[ %d / %d ] not enough so create ", rng.DbId, rng.TableId, len(rng.Peers), property.ReplicaNum)
-				if err := gc.createRangeToNode(ctx, rng, nodeMap, nodeInfoMap, nodeRangeNum); err != nil {
-					log.Info("add range err :[%s]", err.Error())
+		if len(rng.Peers) < int(table.ReplicaNum) {
+			log.Info("db:[%d] table:[%d] replica[ %d / %d ] not enough so create ", rng.DbId, rng.TableId, len(rng.Peers), table.ReplicaNum)
+			if err := fj.createRangeToNode(ctx, rng); err != nil {
+				log.Info("add range err :[%s]", err.Error())
+				if m != nil {
+					m.GetGauge(m.GetCluster(), "schedule", "event", "create_range", "fail").Add(1)
 				}
-				*stop = true
-			} else if len(rng.Peers) > property.ReplicaNum {
-				log.Info("db:[%d] table:[%d] replica[%d/%d] so much so delete ", rng.DbId, rng.TableId, len(rng.Peers), property.ReplicaNum)
-				if err := gc.deleteRangeToNode(ctx, rng, nodeInfoMap, nodeMap, nodeRangeNum); err != nil {
-					log.Info("add range err :[%s]", err.Error())
-				} else {
-					*stop = true
+			} else {
+				ctx.stop = true
+				if m != nil {
+					m.GetGauge(m.GetCluster(), "schedule", "event", "create_range", "success").Add(1)
+				}
+			}
+
+		} else if len(rng.Peers) > int(table.ReplicaNum) {
+			log.Info("db:[%d] table:[%d] range:[%d] replica[%d/%d] so much so delete ", rng.DbId, rng.TableId, rng.Id, len(rng.Peers), table.ReplicaNum)
+			if err := fj.deleteRangeToNode(ctx, rng); err != nil {
+				log.Info("delete range err :[%s]", err.Error())
+				if m != nil {
+					m.GetGauge(m.GetCluster(), "schedule", "event", "delete_range", "fail").Add(1)
+				}
+			} else {
+				ctx.stop = true
+				if m != nil {
+					m.GetGauge(m.GetCluster(), "schedule", "event", "delete_range", "success").Add(1)
 				}
 			}
 		}
 	}
-
 }
 
-func (gc *FailoverJob) deleteDwonPeer(ctx context.Context, nodeInfoMap map[uint64]*dspb.NodeInfoResponse, nodeMap map[uint64]*basepb.Node) bool {
-	flag := false
-	for nodeID, info := range nodeInfoMap {
-		for _, ri := range info.RangeInfos {
-
-			if ri.Range.Leader != nodeID {
+func (fj *FailoverJob) deleteDownPeer(ctx *processContext) {
+	m := entity.Monitor()
+	for _, nh := range ctx.nodeHandlerMap {
+		for _, rh := range nh.RangeHanders {
+			if !rh.IsLeader {
 				continue
 			}
-
-			for _, ps := range ri.PeersStatus {
+			for _, ps := range rh.PeersStatus {
 				if ps.DownSeconds > uint64(entity.Conf().Global.PeerDownSecond) {
-					log.Warn("to delete node:[%d] range:[%d] peer:[%d] because it DownSeconds:[%ds]", ps.Peer.NodeId, ri.Range.Id, ps.Peer.Id, ps.DownSeconds)
-					if err := gc.service.SyncDeleteRangeToNode(ctx, ri.Range, ps.Peer.Id, ps.Peer.NodeId); err != nil {
+					log.Warn("to delete node:[%d] range:[%d] peer:[%d] because it DownSeconds:[%ds]", ps.Peer.NodeId, rh.Id, ps.Peer.Id, ps.DownSeconds)
+					if err := fj.service.SyncDeleteRangeToNode(ctx, rh.Range, ps.Peer.Id, ps.Peer.NodeId); err != nil {
 						log.Error("delete range to node err :[%s]", err.Error())
+						if m != nil {
+							m.GetGauge(m.GetCluster(), "schedule", "event", "delete_range", "fail").Add(1)
+						}
 					} else {
-						flag = true
+						ctx.stop = true
+						if m != nil {
+							m.GetGauge(m.GetCluster(), "schedule", "event", "delete_range", "success").Add(1)
+						}
 					}
 				}
 			}
 		}
 	}
-	return flag
 }
 
-func (gc *FailoverJob) createRangeToNode(ctx context.Context, rng *basepb.Range, nodeMap map[uint64]*basepb.Node, nodeInfoMap map[uint64]*dspb.NodeInfoResponse, nodeRangeNum map[uint64]int) error {
-	var minNodeID uint64 = 0
-	var nodeInfo *dspb.NodeInfoResponse
-	minNodeNum := math.MaxInt32
+func (fj *FailoverJob) createRangeToNode(ctx *processContext, rng *basepb.Range) error {
 
-	for nodeID, num := range nodeRangeNum {
-		for _, peer := range rng.Peers {
-			if peer.NodeId == nodeID {
-				goto next
-			}
-		}
-
-		//check memory size
-		nodeInfo = nodeInfoMap[nodeID]
-		if float64(nodeInfo.Stats.UsedSize)/float64(nodeInfo.Stats.Capacity) >= entity.Conf().Global.MemoryRatio {
-			log.Error("node:[%d] used memory:[%d] gather config memory_ration[%d] so skip check", nodeID, float64(nodeInfo.Stats.UsedSize)/float64(nodeInfo.Stats.Capacity), entity.Conf().Global.MemoryRatio)
-			continue
-		}
-
-		if minNodeNum > num {
-			minNodeNum = num
-			minNodeID = nodeID
-		}
-	next:
+	nh, err := ctx.nodeHandlerMap.MinArriveNodeByRange(ctx.tableMap[rng.TableId].Type, rng)
+	if err != nil {
+		return err
 	}
 
-	if minNodeID == 0 {
-		return errs.Error(mspb.ErrorType_NodeNotEnough)
-	}
-
-	err := gc.service.CreateRangeToNode(ctx, nodeMap[minNodeID], rng)
+	err = fj.service.CreateRangeToNode(ctx, nh.Node, rng)
 	if err == nil {
-		nodeRangeNum[minNodeID] = minNodeNum + 1
+		nh.RangeNum = nh.RangeNum + 1
 	}
 	return err
 }
 
 //if use this , means the node.Replica > table.Replica
-func (gc *FailoverJob) deleteRangeToNode(ctx context.Context, rng *basepb.Range, nodeInfoMap map[uint64]*dspb.NodeInfoResponse, nodeMap map[uint64]*basepb.Node, nodeRangeNum map[uint64]int) (err error) {
+func (fj *FailoverJob) deleteRangeToNode(ctx *processContext, rng *basepb.Range) (err error) {
 
-	nodeInfo := nodeInfoMap[rng.Leader]
-	if nodeInfo == nil {
+	nh := ctx.nodeHandlerMap[rng.Leader]
+	if nh == nil {
 		return fmt.Errorf("leader[%d] not found In nodeMap so skip ", rng.Leader)
 	}
 
-	for _, ri := range nodeInfo.RangeInfos {
-		if ri.Range.Id == rng.Id {
-			if ri.Range.Leader != nodeInfo.NodeId {
-				return fmt.Errorf("leader has changed rangeLeader:[%d] rangeInfoLeader:[%s] ", rng.Leader, ri.Range.Leader)
-			}
-			for _, pr := range ri.PeersStatus {
-				if pr.Snapshotting || pr.Peer.Type != basepb.PeerType_PeerType_Normal || pr.DownSeconds > 0 {
-					return fmt.Errorf("range:[%d] has down or snapshotting peer so skip del ", rng.Id)
-				}
-			}
-		}
+	rh := nh.GetRH(rng.Id)
+
+	if rh == nil {
+		return fmt.Errorf("range[%d] not found In node so skip ", rng.Id, nh.Id)
 	}
 
-	var maxPeer, minPeer *basepb.Peer
-	maxNodeNum := -1
-	minNodeNum := math.MaxInt32
-
-	for _, peer := range rng.Peers {
-		num, found := nodeRangeNum[peer.NodeId]
-		if !found {
-			return errs.Error(mspb.ErrorType_NodeStateConfused)
-		}
-		if num > maxNodeNum {
-			maxNodeNum = num
-			maxPeer = peer
-		}
-
-		if num < minNodeNum {
-			minNodeNum = num
-			minPeer = peer
-		}
-
+	if err := rh.CanDeleteRange(ctx.nodeHandlerMap); err != nil {
+		return err
 	}
 
-	if maxPeer == nil || minPeer == nil || maxPeer.NodeId == minPeer.NodeId {
-		log.Error("maxPeer:[%v] minPeer:[%v] , Impossible err", maxPeer, minPeer)
-		return errs.Error(mspb.ErrorType_NodeNotEnough) // Impossible
+	peer, err := rh.MaxNumberPeer(ctx.nodeHandlerMap)
+	if err != nil {
+		return err
 	}
 
-	if err = gc.service.SyncDeleteRangeToNode(ctx, rng, maxPeer.Id, maxPeer.NodeId); err == nil {
-		nodeRangeNum[maxPeer.NodeId] = maxNodeNum - 1
+	if err = fj.service.SyncDeleteRangeToNode(ctx, rng, peer.Id, peer.NodeId); err == nil {
+		nh.RangeNum = nh.RangeNum - 1
 	}
 
 	return

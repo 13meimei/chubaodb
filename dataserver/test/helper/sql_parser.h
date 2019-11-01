@@ -24,8 +24,12 @@ namespace test {
 namespace helper {
 
 void parseExpr(const Table& t, hsql::Expr* from, dspb::Expr* to);
+void parseExpr(const Table& t, hsql::Expr* from, dspb::SelectFlowRequest* req);
 void parseLimit(hsql::LimitDescription* from, dspb::Limit* to);
+void parseLimit(hsql::LimitDescription* from, dspb::SelectFlowRequest* req);
 void parseFieldList(const Table& t, const hsql::SelectStatement* sel, dspb::SelectRequest* req);
+void parseFieldList(const Table& t, const hsql::SelectStatement* sel, dspb::SelectFlowRequest* req);
+void parseOrder(const Table& t, const std::vector<hsql::OrderDescription*>* orders, dspb::SelectFlowRequest* req);
 
 } /* namespace helper */
 } /* namespace test */

@@ -14,16 +14,19 @@
 
 #include "iterator_impl.h"
 
-#include "masstree-beta/config.h"
 #include "mass_tree_wrapper.h"
 
 namespace chubaodb {
 namespace ds {
 namespace db {
 
-MassIterator::MassIterator(MasstreeWrapper* tree, const std::string& vbegin, const std::string& vend, size_t max_rows):
-    batch_size_(max_rows), end_key_(vend), tree_(tree), next_scan_key_(vbegin) {
-    assert(batch_size_ != 0);
+MassIterator::MassIterator(MasstreeWrapper* tree, const std::string& vbegin,
+        const std::string& vend, size_t max_per_scan) :
+    batch_max_size_(max_per_scan),
+    end_key_(vend),
+    tree_(tree),
+    next_scan_key_(vbegin) {
+    batch_size_ = 2;
     scan_buffer_.reserve(batch_size_);
 }
 
@@ -96,6 +99,9 @@ void MassIterator::doScan() {
     iter_cursor_ = 0;
     scan_buffer_.clear();
     scannable_ = false;
+    batch_size_=batch_size_*2;
+    batch_size_= (batch_size_>batch_max_size_)?batch_max_size_:batch_size_;
+    scan_buffer_.reserve( batch_size_);
 
     tree_->Scan(next_scan_key_, *this);
 }

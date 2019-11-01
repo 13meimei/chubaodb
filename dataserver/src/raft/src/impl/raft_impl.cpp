@@ -76,15 +76,15 @@ bool RaftImpl::tryPost(const std::function<void()>& f) {
     return ctx_.consensus_thread->tryPost(w);
 }
 
-Status RaftImpl::Submit(std::string& cmd) {
+Status RaftImpl::Submit(std::string& cmd, uint64_t unique_seq, uint16_t rw_flag) {
     if (stopped_) {
         return Status(Status::kShutdownInProgress, "raft is removed",
                 std::to_string(ops_.id));
     }
 
-    if (ctx_.consensus_thread->submit(
-                ops_.id, &stopped_,
-                std::bind(&RaftImpl::Step, shared_from_this(), std::placeholders::_1), cmd)) {
+    if (ctx_.consensus_thread->submit(ops_.id, &stopped_, unique_seq, rw_flag,
+            std::bind(&RaftImpl::Step, shared_from_this(), std::placeholders::_1), cmd))
+    {
         return Status::OK();
     } else {
         return Status(Status::kBusy);

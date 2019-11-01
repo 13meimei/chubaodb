@@ -16,10 +16,10 @@
 
 namespace chubaodb {
 namespace test {
-namespace helper  {
+namespace helper {
 
 Table::Table(const std::string& table_name, uint32_t table_id) {
-    meta_.set_db_id(1);
+    meta_.set_db_id(default_db_id);
     meta_.set_db_name("shark_test_db");
     meta_.set_name(table_name);
     meta_.set_id(table_id);
@@ -107,9 +107,15 @@ std::unique_ptr<Table> CreateAccountTable(uint32_t tid) {
     return t;
 }
 
-std::unique_ptr<Table> CreateAccountTable() {
-    return CreateAccountTable(1);
+std::unique_ptr<Table> CreatePersonTable(uint32_t tid) {
+    std::unique_ptr<Table> t(new Table("person", tid));
+    t->AddColumn("id", basepb::BigInt, true);
+    t->AddColumn("name", basepb::Varchar);
+    t->AddColumn("age", basepb::Smallint);
+    t->AddColumn("height", basepb::Double);
+    return t;
 }
+
 
 std::unique_ptr<Table> CreateUserTable(uint32_t tid) {
     std::unique_ptr<Table> t(new Table("user", tid));
@@ -119,8 +125,16 @@ std::unique_ptr<Table> CreateUserTable(uint32_t tid) {
     return t;
 }
 
+std::unique_ptr<Table> CreateAccountTable() {
+    return CreateAccountTable(default_table_id);
+}
+
+std::unique_ptr<Table> CreatePersonTable() {
+    return CreatePersonTable(default_person_table_id);
+}
+
 std::unique_ptr<Table> CreateUserTable() {
-    return CreateUserTable(2);
+    return CreateUserTable(default_user_table_id);
 }
 
 std::unique_ptr<Table> CreateHashUserTable(uint32_t tid) {
@@ -133,9 +147,8 @@ std::unique_ptr<Table> CreateHashUserTable(uint32_t tid) {
 }
 
 std::unique_ptr<Table> CreateHashUserTable() {
-    return CreateHashUserTable(3);
+    return CreateHashUserTable(default_hashuser_table_id);
 }
-
 
 } /* namespace helper */
 } /* namespace test */

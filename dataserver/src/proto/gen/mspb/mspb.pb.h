@@ -40,6 +40,39 @@ extern AskSplitRequestDefaultTypeInternal _AskSplitRequest_default_instance_;
 class AskSplitResponse;
 class AskSplitResponseDefaultTypeInternal;
 extern AskSplitResponseDefaultTypeInternal _AskSplitResponse_default_instance_;
+class ChangeNodeStateRequest;
+class ChangeNodeStateRequestDefaultTypeInternal;
+extern ChangeNodeStateRequestDefaultTypeInternal _ChangeNodeStateRequest_default_instance_;
+class ChangeNodeStateResponse;
+class ChangeNodeStateResponseDefaultTypeInternal;
+extern ChangeNodeStateResponseDefaultTypeInternal _ChangeNodeStateResponse_default_instance_;
+class ChangeRangeStoreTypeRequest;
+class ChangeRangeStoreTypeRequestDefaultTypeInternal;
+extern ChangeRangeStoreTypeRequestDefaultTypeInternal _ChangeRangeStoreTypeRequest_default_instance_;
+class ChangeRangeStoreTypeResponse;
+class ChangeRangeStoreTypeResponseDefaultTypeInternal;
+extern ChangeRangeStoreTypeResponseDefaultTypeInternal _ChangeRangeStoreTypeResponse_default_instance_;
+class CheckNodeStateRequest;
+class CheckNodeStateRequestDefaultTypeInternal;
+extern CheckNodeStateRequestDefaultTypeInternal _CheckNodeStateRequest_default_instance_;
+class CheckNodeStateResponse;
+class CheckNodeStateResponseDefaultTypeInternal;
+extern CheckNodeStateResponseDefaultTypeInternal _CheckNodeStateResponse_default_instance_;
+class ClusterInfoRequest;
+class ClusterInfoRequestDefaultTypeInternal;
+extern ClusterInfoRequestDefaultTypeInternal _ClusterInfoRequest_default_instance_;
+class ClusterInfoResponse;
+class ClusterInfoResponseDefaultTypeInternal;
+extern ClusterInfoResponseDefaultTypeInternal _ClusterInfoResponse_default_instance_;
+class CountTableRequest;
+class CountTableRequestDefaultTypeInternal;
+extern CountTableRequestDefaultTypeInternal _CountTableRequest_default_instance_;
+class CountTableResponse;
+class CountTableResponseDefaultTypeInternal;
+extern CountTableResponseDefaultTypeInternal _CountTableResponse_default_instance_;
+class Counter;
+class CounterDefaultTypeInternal;
+extern CounterDefaultTypeInternal _Counter_default_instance_;
 class CreateDatabaseRequest;
 class CreateDatabaseRequestDefaultTypeInternal;
 extern CreateDatabaseRequestDefaultTypeInternal _CreateDatabaseRequest_default_instance_;
@@ -133,12 +166,24 @@ extern GetTablesRequestDefaultTypeInternal _GetTablesRequest_default_instance_;
 class GetTablesResponse;
 class GetTablesResponseDefaultTypeInternal;
 extern GetTablesResponseDefaultTypeInternal _GetTablesResponse_default_instance_;
+class IdPair;
+class IdPairDefaultTypeInternal;
+extern IdPairDefaultTypeInternal _IdPair_default_instance_;
 class NodeHeartbeatRequest;
 class NodeHeartbeatRequestDefaultTypeInternal;
 extern NodeHeartbeatRequestDefaultTypeInternal _NodeHeartbeatRequest_default_instance_;
 class NodeHeartbeatResponse;
 class NodeHeartbeatResponseDefaultTypeInternal;
 extern NodeHeartbeatResponseDefaultTypeInternal _NodeHeartbeatResponse_default_instance_;
+class PeerMoveRequest;
+class PeerMoveRequestDefaultTypeInternal;
+extern PeerMoveRequestDefaultTypeInternal _PeerMoveRequest_default_instance_;
+class PeerMoveResponse;
+class PeerMoveResponseDefaultTypeInternal;
+extern PeerMoveResponseDefaultTypeInternal _PeerMoveResponse_default_instance_;
+class RangeFingerprint;
+class RangeFingerprintDefaultTypeInternal;
+extern RangeFingerprintDefaultTypeInternal _RangeFingerprint_default_instance_;
 class RangeHeartbeatRequest;
 class RangeHeartbeatRequestDefaultTypeInternal;
 extern RangeHeartbeatRequestDefaultTypeInternal _RangeHeartbeatRequest_default_instance_;
@@ -157,6 +202,12 @@ extern RequestHeaderDefaultTypeInternal _RequestHeader_default_instance_;
 class ResponseHeader;
 class ResponseHeaderDefaultTypeInternal;
 extern ResponseHeaderDefaultTypeInternal _ResponseHeader_default_instance_;
+class WatcherEventRequest;
+class WatcherEventRequestDefaultTypeInternal;
+extern WatcherEventRequestDefaultTypeInternal _WatcherEventRequest_default_instance_;
+class WatcherEventResponse;
+class WatcherEventResponseDefaultTypeInternal;
+extern WatcherEventResponseDefaultTypeInternal _WatcherEventResponse_default_instance_;
 }  // namespace mspb
 
 namespace mspb {
@@ -220,12 +271,14 @@ enum ErrorType {
   NotAllowDelete = 40,
   ClientIPNotSet = 41,
   DatabaseNotEmpty = 42,
+  NodeStateNotExpected = 43,
+  WatcherMasterHashErr = 44,
   ErrorType_INT_MIN_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32min,
   ErrorType_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
 };
 bool ErrorType_IsValid(int value);
 const ErrorType ErrorType_MIN = No;
-const ErrorType ErrorType_MAX = DatabaseNotEmpty;
+const ErrorType ErrorType_MAX = WatcherMasterHashErr;
 const int ErrorType_ARRAYSIZE = ErrorType_MAX + 1;
 
 const ::google::protobuf::EnumDescriptor* ErrorType_descriptor();
@@ -238,7 +291,274 @@ inline bool ErrorType_Parse(
   return ::google::protobuf::internal::ParseNamedEnum<ErrorType>(
     ErrorType_descriptor(), name, value);
 }
+enum StorageEngine {
+  STE_Invalid = 0,
+  STE_MassTree = 1,
+  STE_RocksDB = 2,
+  StorageEngine_INT_MIN_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32min,
+  StorageEngine_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
+};
+bool StorageEngine_IsValid(int value);
+const StorageEngine StorageEngine_MIN = STE_Invalid;
+const StorageEngine StorageEngine_MAX = STE_RocksDB;
+const int StorageEngine_ARRAYSIZE = StorageEngine_MAX + 1;
+
+const ::google::protobuf::EnumDescriptor* StorageEngine_descriptor();
+inline const ::std::string& StorageEngine_Name(StorageEngine value) {
+  return ::google::protobuf::internal::NameOfEnum(
+    StorageEngine_descriptor(), value);
+}
+inline bool StorageEngine_Parse(
+    const ::std::string& name, StorageEngine* value) {
+  return ::google::protobuf::internal::ParseNamedEnum<StorageEngine>(
+    StorageEngine_descriptor(), name, value);
+}
 // ===================================================================
+
+class ClusterInfoRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:mspb.ClusterInfoRequest) */ {
+ public:
+  ClusterInfoRequest();
+  virtual ~ClusterInfoRequest();
+
+  ClusterInfoRequest(const ClusterInfoRequest& from);
+
+  inline ClusterInfoRequest& operator=(const ClusterInfoRequest& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  ClusterInfoRequest(ClusterInfoRequest&& from) noexcept
+    : ClusterInfoRequest() {
+    *this = ::std::move(from);
+  }
+
+  inline ClusterInfoRequest& operator=(ClusterInfoRequest&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const ClusterInfoRequest& default_instance();
+
+  static inline const ClusterInfoRequest* internal_default_instance() {
+    return reinterpret_cast<const ClusterInfoRequest*>(
+               &_ClusterInfoRequest_default_instance_);
+  }
+  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
+    0;
+
+  void Swap(ClusterInfoRequest* other);
+  friend void swap(ClusterInfoRequest& a, ClusterInfoRequest& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline ClusterInfoRequest* New() const PROTOBUF_FINAL { return New(NULL); }
+
+  ClusterInfoRequest* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void CopyFrom(const ClusterInfoRequest& from);
+  void MergeFrom(const ClusterInfoRequest& from);
+  void Clear() PROTOBUF_FINAL;
+  bool IsInitialized() const PROTOBUF_FINAL;
+
+  size_t ByteSizeLong() const PROTOBUF_FINAL;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
+  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const PROTOBUF_FINAL;
+  void InternalSwap(ClusterInfoRequest* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // .mspb.RequestHeader header = 1;
+  bool has_header() const;
+  void clear_header();
+  static const int kHeaderFieldNumber = 1;
+  const ::mspb::RequestHeader& header() const;
+  ::mspb::RequestHeader* mutable_header();
+  ::mspb::RequestHeader* release_header();
+  void set_allocated_header(::mspb::RequestHeader* header);
+
+  // @@protoc_insertion_point(class_scope:mspb.ClusterInfoRequest)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::mspb::RequestHeader* header_;
+  mutable int _cached_size_;
+  friend struct protobuf_mspb_2fmspb_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class ClusterInfoResponse : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:mspb.ClusterInfoResponse) */ {
+ public:
+  ClusterInfoResponse();
+  virtual ~ClusterInfoResponse();
+
+  ClusterInfoResponse(const ClusterInfoResponse& from);
+
+  inline ClusterInfoResponse& operator=(const ClusterInfoResponse& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  ClusterInfoResponse(ClusterInfoResponse&& from) noexcept
+    : ClusterInfoResponse() {
+    *this = ::std::move(from);
+  }
+
+  inline ClusterInfoResponse& operator=(ClusterInfoResponse&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const ClusterInfoResponse& default_instance();
+
+  static inline const ClusterInfoResponse* internal_default_instance() {
+    return reinterpret_cast<const ClusterInfoResponse*>(
+               &_ClusterInfoResponse_default_instance_);
+  }
+  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
+    1;
+
+  void Swap(ClusterInfoResponse* other);
+  friend void swap(ClusterInfoResponse& a, ClusterInfoResponse& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline ClusterInfoResponse* New() const PROTOBUF_FINAL { return New(NULL); }
+
+  ClusterInfoResponse* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void CopyFrom(const ClusterInfoResponse& from);
+  void MergeFrom(const ClusterInfoResponse& from);
+  void Clear() PROTOBUF_FINAL;
+  bool IsInitialized() const PROTOBUF_FINAL;
+
+  size_t ByteSizeLong() const PROTOBUF_FINAL;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
+  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const PROTOBUF_FINAL;
+  void InternalSwap(ClusterInfoResponse* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // string build_version = 2;
+  void clear_build_version();
+  static const int kBuildVersionFieldNumber = 2;
+  const ::std::string& build_version() const;
+  void set_build_version(const ::std::string& value);
+  #if LANG_CXX11
+  void set_build_version(::std::string&& value);
+  #endif
+  void set_build_version(const char* value);
+  void set_build_version(const char* value, size_t size);
+  ::std::string* mutable_build_version();
+  ::std::string* release_build_version();
+  void set_allocated_build_version(::std::string* build_version);
+
+  // string build_time = 3;
+  void clear_build_time();
+  static const int kBuildTimeFieldNumber = 3;
+  const ::std::string& build_time() const;
+  void set_build_time(const ::std::string& value);
+  #if LANG_CXX11
+  void set_build_time(::std::string&& value);
+  #endif
+  void set_build_time(const char* value);
+  void set_build_time(const char* value, size_t size);
+  ::std::string* mutable_build_time();
+  ::std::string* release_build_time();
+  void set_allocated_build_time(::std::string* build_time);
+
+  // string commit_id = 4;
+  void clear_commit_id();
+  static const int kCommitIdFieldNumber = 4;
+  const ::std::string& commit_id() const;
+  void set_commit_id(const ::std::string& value);
+  #if LANG_CXX11
+  void set_commit_id(::std::string&& value);
+  #endif
+  void set_commit_id(const char* value);
+  void set_commit_id(const char* value, size_t size);
+  ::std::string* mutable_commit_id();
+  ::std::string* release_commit_id();
+  void set_allocated_commit_id(::std::string* commit_id);
+
+  // .mspb.ResponseHeader header = 1;
+  bool has_header() const;
+  void clear_header();
+  static const int kHeaderFieldNumber = 1;
+  const ::mspb::ResponseHeader& header() const;
+  ::mspb::ResponseHeader* mutable_header();
+  ::mspb::ResponseHeader* release_header();
+  void set_allocated_header(::mspb::ResponseHeader* header);
+
+  // @@protoc_insertion_point(class_scope:mspb.ClusterInfoResponse)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::internal::ArenaStringPtr build_version_;
+  ::google::protobuf::internal::ArenaStringPtr build_time_;
+  ::google::protobuf::internal::ArenaStringPtr commit_id_;
+  ::mspb::ResponseHeader* header_;
+  mutable int _cached_size_;
+  friend struct protobuf_mspb_2fmspb_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
 
 class RangeHeartbeatRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:mspb.RangeHeartbeatRequest) */ {
  public:
@@ -274,7 +594,7 @@ class RangeHeartbeatRequest : public ::google::protobuf::Message /* @@protoc_ins
                &_RangeHeartbeatRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    0;
+    2;
 
   void Swap(RangeHeartbeatRequest* other);
   friend void swap(RangeHeartbeatRequest& a, RangeHeartbeatRequest& b) {
@@ -404,7 +724,7 @@ class RangeHeartbeatResponse : public ::google::protobuf::Message /* @@protoc_in
                &_RangeHeartbeatResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    1;
+    3;
 
   void Swap(RangeHeartbeatResponse* other);
   friend void swap(RangeHeartbeatResponse& a, RangeHeartbeatResponse& b) {
@@ -487,6 +807,448 @@ class RangeHeartbeatResponse : public ::google::protobuf::Message /* @@protoc_in
 };
 // -------------------------------------------------------------------
 
+class ChangeRangeStoreTypeRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:mspb.ChangeRangeStoreTypeRequest) */ {
+ public:
+  ChangeRangeStoreTypeRequest();
+  virtual ~ChangeRangeStoreTypeRequest();
+
+  ChangeRangeStoreTypeRequest(const ChangeRangeStoreTypeRequest& from);
+
+  inline ChangeRangeStoreTypeRequest& operator=(const ChangeRangeStoreTypeRequest& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  ChangeRangeStoreTypeRequest(ChangeRangeStoreTypeRequest&& from) noexcept
+    : ChangeRangeStoreTypeRequest() {
+    *this = ::std::move(from);
+  }
+
+  inline ChangeRangeStoreTypeRequest& operator=(ChangeRangeStoreTypeRequest&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const ChangeRangeStoreTypeRequest& default_instance();
+
+  static inline const ChangeRangeStoreTypeRequest* internal_default_instance() {
+    return reinterpret_cast<const ChangeRangeStoreTypeRequest*>(
+               &_ChangeRangeStoreTypeRequest_default_instance_);
+  }
+  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
+    4;
+
+  void Swap(ChangeRangeStoreTypeRequest* other);
+  friend void swap(ChangeRangeStoreTypeRequest& a, ChangeRangeStoreTypeRequest& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline ChangeRangeStoreTypeRequest* New() const PROTOBUF_FINAL { return New(NULL); }
+
+  ChangeRangeStoreTypeRequest* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void CopyFrom(const ChangeRangeStoreTypeRequest& from);
+  void MergeFrom(const ChangeRangeStoreTypeRequest& from);
+  void Clear() PROTOBUF_FINAL;
+  bool IsInitialized() const PROTOBUF_FINAL;
+
+  size_t ByteSizeLong() const PROTOBUF_FINAL;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
+  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const PROTOBUF_FINAL;
+  void InternalSwap(ChangeRangeStoreTypeRequest* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // .mspb.RequestHeader header = 1;
+  bool has_header() const;
+  void clear_header();
+  static const int kHeaderFieldNumber = 1;
+  const ::mspb::RequestHeader& header() const;
+  ::mspb::RequestHeader* mutable_header();
+  ::mspb::RequestHeader* release_header();
+  void set_allocated_header(::mspb::RequestHeader* header);
+
+  // uint64 table_id = 2;
+  void clear_table_id();
+  static const int kTableIdFieldNumber = 2;
+  ::google::protobuf::uint64 table_id() const;
+  void set_table_id(::google::protobuf::uint64 value);
+
+  // uint64 range_id = 3;
+  void clear_range_id();
+  static const int kRangeIdFieldNumber = 3;
+  ::google::protobuf::uint64 range_id() const;
+  void set_range_id(::google::protobuf::uint64 value);
+
+  // .basepb.StoreType store_type = 4;
+  void clear_store_type();
+  static const int kStoreTypeFieldNumber = 4;
+  ::basepb::StoreType store_type() const;
+  void set_store_type(::basepb::StoreType value);
+
+  // @@protoc_insertion_point(class_scope:mspb.ChangeRangeStoreTypeRequest)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::mspb::RequestHeader* header_;
+  ::google::protobuf::uint64 table_id_;
+  ::google::protobuf::uint64 range_id_;
+  int store_type_;
+  mutable int _cached_size_;
+  friend struct protobuf_mspb_2fmspb_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class ChangeRangeStoreTypeResponse : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:mspb.ChangeRangeStoreTypeResponse) */ {
+ public:
+  ChangeRangeStoreTypeResponse();
+  virtual ~ChangeRangeStoreTypeResponse();
+
+  ChangeRangeStoreTypeResponse(const ChangeRangeStoreTypeResponse& from);
+
+  inline ChangeRangeStoreTypeResponse& operator=(const ChangeRangeStoreTypeResponse& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  ChangeRangeStoreTypeResponse(ChangeRangeStoreTypeResponse&& from) noexcept
+    : ChangeRangeStoreTypeResponse() {
+    *this = ::std::move(from);
+  }
+
+  inline ChangeRangeStoreTypeResponse& operator=(ChangeRangeStoreTypeResponse&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const ChangeRangeStoreTypeResponse& default_instance();
+
+  static inline const ChangeRangeStoreTypeResponse* internal_default_instance() {
+    return reinterpret_cast<const ChangeRangeStoreTypeResponse*>(
+               &_ChangeRangeStoreTypeResponse_default_instance_);
+  }
+  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
+    5;
+
+  void Swap(ChangeRangeStoreTypeResponse* other);
+  friend void swap(ChangeRangeStoreTypeResponse& a, ChangeRangeStoreTypeResponse& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline ChangeRangeStoreTypeResponse* New() const PROTOBUF_FINAL { return New(NULL); }
+
+  ChangeRangeStoreTypeResponse* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void CopyFrom(const ChangeRangeStoreTypeResponse& from);
+  void MergeFrom(const ChangeRangeStoreTypeResponse& from);
+  void Clear() PROTOBUF_FINAL;
+  bool IsInitialized() const PROTOBUF_FINAL;
+
+  size_t ByteSizeLong() const PROTOBUF_FINAL;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
+  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const PROTOBUF_FINAL;
+  void InternalSwap(ChangeRangeStoreTypeResponse* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // .mspb.ResponseHeader header = 1;
+  bool has_header() const;
+  void clear_header();
+  static const int kHeaderFieldNumber = 1;
+  const ::mspb::ResponseHeader& header() const;
+  ::mspb::ResponseHeader* mutable_header();
+  ::mspb::ResponseHeader* release_header();
+  void set_allocated_header(::mspb::ResponseHeader* header);
+
+  // @@protoc_insertion_point(class_scope:mspb.ChangeRangeStoreTypeResponse)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::mspb::ResponseHeader* header_;
+  mutable int _cached_size_;
+  friend struct protobuf_mspb_2fmspb_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class PeerMoveRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:mspb.PeerMoveRequest) */ {
+ public:
+  PeerMoveRequest();
+  virtual ~PeerMoveRequest();
+
+  PeerMoveRequest(const PeerMoveRequest& from);
+
+  inline PeerMoveRequest& operator=(const PeerMoveRequest& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  PeerMoveRequest(PeerMoveRequest&& from) noexcept
+    : PeerMoveRequest() {
+    *this = ::std::move(from);
+  }
+
+  inline PeerMoveRequest& operator=(PeerMoveRequest&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const PeerMoveRequest& default_instance();
+
+  static inline const PeerMoveRequest* internal_default_instance() {
+    return reinterpret_cast<const PeerMoveRequest*>(
+               &_PeerMoveRequest_default_instance_);
+  }
+  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
+    6;
+
+  void Swap(PeerMoveRequest* other);
+  friend void swap(PeerMoveRequest& a, PeerMoveRequest& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline PeerMoveRequest* New() const PROTOBUF_FINAL { return New(NULL); }
+
+  PeerMoveRequest* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void CopyFrom(const PeerMoveRequest& from);
+  void MergeFrom(const PeerMoveRequest& from);
+  void Clear() PROTOBUF_FINAL;
+  bool IsInitialized() const PROTOBUF_FINAL;
+
+  size_t ByteSizeLong() const PROTOBUF_FINAL;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
+  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const PROTOBUF_FINAL;
+  void InternalSwap(PeerMoveRequest* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // .mspb.RequestHeader header = 1;
+  bool has_header() const;
+  void clear_header();
+  static const int kHeaderFieldNumber = 1;
+  const ::mspb::RequestHeader& header() const;
+  ::mspb::RequestHeader* mutable_header();
+  ::mspb::RequestHeader* release_header();
+  void set_allocated_header(::mspb::RequestHeader* header);
+
+  // uint64 table_id = 2;
+  void clear_table_id();
+  static const int kTableIdFieldNumber = 2;
+  ::google::protobuf::uint64 table_id() const;
+  void set_table_id(::google::protobuf::uint64 value);
+
+  // uint64 range_id = 3;
+  void clear_range_id();
+  static const int kRangeIdFieldNumber = 3;
+  ::google::protobuf::uint64 range_id() const;
+  void set_range_id(::google::protobuf::uint64 value);
+
+  // .basepb.StoreType store_type = 4;
+  void clear_store_type();
+  static const int kStoreTypeFieldNumber = 4;
+  ::basepb::StoreType store_type() const;
+  void set_store_type(::basepb::StoreType value);
+
+  // @@protoc_insertion_point(class_scope:mspb.PeerMoveRequest)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::mspb::RequestHeader* header_;
+  ::google::protobuf::uint64 table_id_;
+  ::google::protobuf::uint64 range_id_;
+  int store_type_;
+  mutable int _cached_size_;
+  friend struct protobuf_mspb_2fmspb_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class PeerMoveResponse : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:mspb.PeerMoveResponse) */ {
+ public:
+  PeerMoveResponse();
+  virtual ~PeerMoveResponse();
+
+  PeerMoveResponse(const PeerMoveResponse& from);
+
+  inline PeerMoveResponse& operator=(const PeerMoveResponse& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  PeerMoveResponse(PeerMoveResponse&& from) noexcept
+    : PeerMoveResponse() {
+    *this = ::std::move(from);
+  }
+
+  inline PeerMoveResponse& operator=(PeerMoveResponse&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const PeerMoveResponse& default_instance();
+
+  static inline const PeerMoveResponse* internal_default_instance() {
+    return reinterpret_cast<const PeerMoveResponse*>(
+               &_PeerMoveResponse_default_instance_);
+  }
+  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
+    7;
+
+  void Swap(PeerMoveResponse* other);
+  friend void swap(PeerMoveResponse& a, PeerMoveResponse& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline PeerMoveResponse* New() const PROTOBUF_FINAL { return New(NULL); }
+
+  PeerMoveResponse* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void CopyFrom(const PeerMoveResponse& from);
+  void MergeFrom(const PeerMoveResponse& from);
+  void Clear() PROTOBUF_FINAL;
+  bool IsInitialized() const PROTOBUF_FINAL;
+
+  size_t ByteSizeLong() const PROTOBUF_FINAL;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
+  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const PROTOBUF_FINAL;
+  void InternalSwap(PeerMoveResponse* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // .mspb.ResponseHeader header = 1;
+  bool has_header() const;
+  void clear_header();
+  static const int kHeaderFieldNumber = 1;
+  const ::mspb::ResponseHeader& header() const;
+  ::mspb::ResponseHeader* mutable_header();
+  ::mspb::ResponseHeader* release_header();
+  void set_allocated_header(::mspb::ResponseHeader* header);
+
+  // @@protoc_insertion_point(class_scope:mspb.PeerMoveResponse)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::mspb::ResponseHeader* header_;
+  mutable int _cached_size_;
+  friend struct protobuf_mspb_2fmspb_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
 class NodeHeartbeatRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:mspb.NodeHeartbeatRequest) */ {
  public:
   NodeHeartbeatRequest();
@@ -521,7 +1283,7 @@ class NodeHeartbeatRequest : public ::google::protobuf::Message /* @@protoc_inse
                &_NodeHeartbeatRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    2;
+    8;
 
   void Swap(NodeHeartbeatRequest* other);
   friend void swap(NodeHeartbeatRequest& a, NodeHeartbeatRequest& b) {
@@ -628,7 +1390,7 @@ class NodeHeartbeatResponse : public ::google::protobuf::Message /* @@protoc_ins
                &_NodeHeartbeatResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    3;
+    9;
 
   void Swap(NodeHeartbeatResponse* other);
   friend void swap(NodeHeartbeatResponse& a, NodeHeartbeatResponse& b) {
@@ -701,6 +1463,241 @@ class NodeHeartbeatResponse : public ::google::protobuf::Message /* @@protoc_ins
 };
 // -------------------------------------------------------------------
 
+class WatcherEventRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:mspb.WatcherEventRequest) */ {
+ public:
+  WatcherEventRequest();
+  virtual ~WatcherEventRequest();
+
+  WatcherEventRequest(const WatcherEventRequest& from);
+
+  inline WatcherEventRequest& operator=(const WatcherEventRequest& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  WatcherEventRequest(WatcherEventRequest&& from) noexcept
+    : WatcherEventRequest() {
+    *this = ::std::move(from);
+  }
+
+  inline WatcherEventRequest& operator=(WatcherEventRequest&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const WatcherEventRequest& default_instance();
+
+  static inline const WatcherEventRequest* internal_default_instance() {
+    return reinterpret_cast<const WatcherEventRequest*>(
+               &_WatcherEventRequest_default_instance_);
+  }
+  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
+    10;
+
+  void Swap(WatcherEventRequest* other);
+  friend void swap(WatcherEventRequest& a, WatcherEventRequest& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline WatcherEventRequest* New() const PROTOBUF_FINAL { return New(NULL); }
+
+  WatcherEventRequest* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void CopyFrom(const WatcherEventRequest& from);
+  void MergeFrom(const WatcherEventRequest& from);
+  void Clear() PROTOBUF_FINAL;
+  bool IsInitialized() const PROTOBUF_FINAL;
+
+  size_t ByteSizeLong() const PROTOBUF_FINAL;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
+  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const PROTOBUF_FINAL;
+  void InternalSwap(WatcherEventRequest* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // string master = 3;
+  void clear_master();
+  static const int kMasterFieldNumber = 3;
+  const ::std::string& master() const;
+  void set_master(const ::std::string& value);
+  #if LANG_CXX11
+  void set_master(::std::string&& value);
+  #endif
+  void set_master(const char* value);
+  void set_master(const char* value, size_t size);
+  ::std::string* mutable_master();
+  ::std::string* release_master();
+  void set_allocated_master(::std::string* master);
+
+  // .mspb.RequestHeader header = 1;
+  bool has_header() const;
+  void clear_header();
+  static const int kHeaderFieldNumber = 1;
+  const ::mspb::RequestHeader& header() const;
+  ::mspb::RequestHeader* mutable_header();
+  ::mspb::RequestHeader* release_header();
+  void set_allocated_header(::mspb::RequestHeader* header);
+
+  // uint64 version = 2;
+  void clear_version();
+  static const int kVersionFieldNumber = 2;
+  ::google::protobuf::uint64 version() const;
+  void set_version(::google::protobuf::uint64 value);
+
+  // @@protoc_insertion_point(class_scope:mspb.WatcherEventRequest)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::internal::ArenaStringPtr master_;
+  ::mspb::RequestHeader* header_;
+  ::google::protobuf::uint64 version_;
+  mutable int _cached_size_;
+  friend struct protobuf_mspb_2fmspb_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class WatcherEventResponse : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:mspb.WatcherEventResponse) */ {
+ public:
+  WatcherEventResponse();
+  virtual ~WatcherEventResponse();
+
+  WatcherEventResponse(const WatcherEventResponse& from);
+
+  inline WatcherEventResponse& operator=(const WatcherEventResponse& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  WatcherEventResponse(WatcherEventResponse&& from) noexcept
+    : WatcherEventResponse() {
+    *this = ::std::move(from);
+  }
+
+  inline WatcherEventResponse& operator=(WatcherEventResponse&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const WatcherEventResponse& default_instance();
+
+  static inline const WatcherEventResponse* internal_default_instance() {
+    return reinterpret_cast<const WatcherEventResponse*>(
+               &_WatcherEventResponse_default_instance_);
+  }
+  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
+    11;
+
+  void Swap(WatcherEventResponse* other);
+  friend void swap(WatcherEventResponse& a, WatcherEventResponse& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline WatcherEventResponse* New() const PROTOBUF_FINAL { return New(NULL); }
+
+  WatcherEventResponse* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void CopyFrom(const WatcherEventResponse& from);
+  void MergeFrom(const WatcherEventResponse& from);
+  void Clear() PROTOBUF_FINAL;
+  bool IsInitialized() const PROTOBUF_FINAL;
+
+  size_t ByteSizeLong() const PROTOBUF_FINAL;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
+  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const PROTOBUF_FINAL;
+  void InternalSwap(WatcherEventResponse* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // repeated .basepb.WatcherEvent events = 2;
+  int events_size() const;
+  void clear_events();
+  static const int kEventsFieldNumber = 2;
+  const ::basepb::WatcherEvent& events(int index) const;
+  ::basepb::WatcherEvent* mutable_events(int index);
+  ::basepb::WatcherEvent* add_events();
+  ::google::protobuf::RepeatedPtrField< ::basepb::WatcherEvent >*
+      mutable_events();
+  const ::google::protobuf::RepeatedPtrField< ::basepb::WatcherEvent >&
+      events() const;
+
+  // .mspb.ResponseHeader header = 1;
+  bool has_header() const;
+  void clear_header();
+  static const int kHeaderFieldNumber = 1;
+  const ::mspb::ResponseHeader& header() const;
+  ::mspb::ResponseHeader* mutable_header();
+  ::mspb::ResponseHeader* release_header();
+  void set_allocated_header(::mspb::ResponseHeader* header);
+
+  // @@protoc_insertion_point(class_scope:mspb.WatcherEventResponse)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::RepeatedPtrField< ::basepb::WatcherEvent > events_;
+  ::mspb::ResponseHeader* header_;
+  mutable int _cached_size_;
+  friend struct protobuf_mspb_2fmspb_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
 class AskSplitRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:mspb.AskSplitRequest) */ {
  public:
   AskSplitRequest();
@@ -735,7 +1732,7 @@ class AskSplitRequest : public ::google::protobuf::Message /* @@protoc_insertion
                &_AskSplitRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    4;
+    12;
 
   void Swap(AskSplitRequest* other);
   friend void swap(AskSplitRequest& a, AskSplitRequest& b) {
@@ -867,7 +1864,7 @@ class AskSplitResponse : public ::google::protobuf::Message /* @@protoc_insertio
                &_AskSplitResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    5;
+    13;
 
   void Swap(AskSplitResponse* other);
   friend void swap(AskSplitResponse& a, AskSplitResponse& b) {
@@ -979,6 +1976,134 @@ class AskSplitResponse : public ::google::protobuf::Message /* @@protoc_insertio
 };
 // -------------------------------------------------------------------
 
+class RangeFingerprint : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:mspb.RangeFingerprint) */ {
+ public:
+  RangeFingerprint();
+  virtual ~RangeFingerprint();
+
+  RangeFingerprint(const RangeFingerprint& from);
+
+  inline RangeFingerprint& operator=(const RangeFingerprint& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  RangeFingerprint(RangeFingerprint&& from) noexcept
+    : RangeFingerprint() {
+    *this = ::std::move(from);
+  }
+
+  inline RangeFingerprint& operator=(RangeFingerprint&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const RangeFingerprint& default_instance();
+
+  static inline const RangeFingerprint* internal_default_instance() {
+    return reinterpret_cast<const RangeFingerprint*>(
+               &_RangeFingerprint_default_instance_);
+  }
+  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
+    14;
+
+  void Swap(RangeFingerprint* other);
+  friend void swap(RangeFingerprint& a, RangeFingerprint& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline RangeFingerprint* New() const PROTOBUF_FINAL { return New(NULL); }
+
+  RangeFingerprint* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void CopyFrom(const RangeFingerprint& from);
+  void MergeFrom(const RangeFingerprint& from);
+  void Clear() PROTOBUF_FINAL;
+  bool IsInitialized() const PROTOBUF_FINAL;
+
+  size_t ByteSizeLong() const PROTOBUF_FINAL;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
+  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const PROTOBUF_FINAL;
+  void InternalSwap(RangeFingerprint* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // .basepb.RangeEpoch range_epoch = 2;
+  bool has_range_epoch() const;
+  void clear_range_epoch();
+  static const int kRangeEpochFieldNumber = 2;
+  const ::basepb::RangeEpoch& range_epoch() const;
+  ::basepb::RangeEpoch* mutable_range_epoch();
+  ::basepb::RangeEpoch* release_range_epoch();
+  void set_allocated_range_epoch(::basepb::RangeEpoch* range_epoch);
+
+  // uint64 range_id = 1;
+  void clear_range_id();
+  static const int kRangeIdFieldNumber = 1;
+  ::google::protobuf::uint64 range_id() const;
+  void set_range_id(::google::protobuf::uint64 value);
+
+  // uint64 db_id = 3;
+  void clear_db_id();
+  static const int kDbIdFieldNumber = 3;
+  ::google::protobuf::uint64 db_id() const;
+  void set_db_id(::google::protobuf::uint64 value);
+
+  // uint64 table_id = 4;
+  void clear_table_id();
+  static const int kTableIdFieldNumber = 4;
+  ::google::protobuf::uint64 table_id() const;
+  void set_table_id(::google::protobuf::uint64 value);
+
+  // uint64 peer_id = 5;
+  void clear_peer_id();
+  static const int kPeerIdFieldNumber = 5;
+  ::google::protobuf::uint64 peer_id() const;
+  void set_peer_id(::google::protobuf::uint64 value);
+
+  // @@protoc_insertion_point(class_scope:mspb.RangeFingerprint)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::basepb::RangeEpoch* range_epoch_;
+  ::google::protobuf::uint64 range_id_;
+  ::google::protobuf::uint64 db_id_;
+  ::google::protobuf::uint64 table_id_;
+  ::google::protobuf::uint64 peer_id_;
+  mutable int _cached_size_;
+  friend struct protobuf_mspb_2fmspb_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
 class RegisterNodeRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:mspb.RegisterNodeRequest) */ {
  public:
   RegisterNodeRequest();
@@ -1013,7 +2138,7 @@ class RegisterNodeRequest : public ::google::protobuf::Message /* @@protoc_inser
                &_RegisterNodeRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    6;
+    15;
 
   void Swap(RegisterNodeRequest* other);
   friend void swap(RegisterNodeRequest& a, RegisterNodeRequest& b) {
@@ -1060,6 +2185,18 @@ class RegisterNodeRequest : public ::google::protobuf::Message /* @@protoc_inser
 
   // accessors -------------------------------------------------------
 
+  // repeated .mspb.RangeFingerprint ranges = 7;
+  int ranges_size() const;
+  void clear_ranges();
+  static const int kRangesFieldNumber = 7;
+  const ::mspb::RangeFingerprint& ranges(int index) const;
+  ::mspb::RangeFingerprint* mutable_ranges(int index);
+  ::mspb::RangeFingerprint* add_ranges();
+  ::google::protobuf::RepeatedPtrField< ::mspb::RangeFingerprint >*
+      mutable_ranges();
+  const ::google::protobuf::RepeatedPtrField< ::mspb::RangeFingerprint >&
+      ranges() const;
+
   // string version = 5;
   void clear_version();
   static const int kVersionFieldNumber = 5;
@@ -1101,15 +2238,23 @@ class RegisterNodeRequest : public ::google::protobuf::Message /* @@protoc_inser
   ::google::protobuf::uint32 admin_port() const;
   void set_admin_port(::google::protobuf::uint32 value);
 
+  // .mspb.StorageEngine st_engine = 6;
+  void clear_st_engine();
+  static const int kStEngineFieldNumber = 6;
+  ::mspb::StorageEngine st_engine() const;
+  void set_st_engine(::mspb::StorageEngine value);
+
   // @@protoc_insertion_point(class_scope:mspb.RegisterNodeRequest)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::RepeatedPtrField< ::mspb::RangeFingerprint > ranges_;
   ::google::protobuf::internal::ArenaStringPtr version_;
   ::mspb::RequestHeader* header_;
   ::google::protobuf::uint32 server_port_;
   ::google::protobuf::uint32 raft_port_;
   ::google::protobuf::uint32 admin_port_;
+  int st_engine_;
   mutable int _cached_size_;
   friend struct protobuf_mspb_2fmspb_2eproto::TableStruct;
 };
@@ -1149,7 +2294,7 @@ class RegisterNodeResponse : public ::google::protobuf::Message /* @@protoc_inse
                &_RegisterNodeResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    7;
+    16;
 
   void Swap(RegisterNodeResponse* other);
   friend void swap(RegisterNodeResponse& a, RegisterNodeResponse& b) {
@@ -1196,6 +2341,18 @@ class RegisterNodeResponse : public ::google::protobuf::Message /* @@protoc_inse
 
   // accessors -------------------------------------------------------
 
+  // repeated uint64 invalid_ranges = 3;
+  int invalid_ranges_size() const;
+  void clear_invalid_ranges();
+  static const int kInvalidRangesFieldNumber = 3;
+  ::google::protobuf::uint64 invalid_ranges(int index) const;
+  void set_invalid_ranges(int index, ::google::protobuf::uint64 value);
+  void add_invalid_ranges(::google::protobuf::uint64 value);
+  const ::google::protobuf::RepeatedField< ::google::protobuf::uint64 >&
+      invalid_ranges() const;
+  ::google::protobuf::RepeatedField< ::google::protobuf::uint64 >*
+      mutable_invalid_ranges();
+
   // .mspb.ResponseHeader header = 1;
   bool has_header() const;
   void clear_header();
@@ -1215,6 +2372,8 @@ class RegisterNodeResponse : public ::google::protobuf::Message /* @@protoc_inse
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::RepeatedField< ::google::protobuf::uint64 > invalid_ranges_;
+  mutable int _invalid_ranges_cached_byte_size_;
   ::mspb::ResponseHeader* header_;
   ::google::protobuf::uint64 node_id_;
   mutable int _cached_size_;
@@ -1256,7 +2415,7 @@ class GetRouteRequest : public ::google::protobuf::Message /* @@protoc_insertion
                &_GetRouteRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    8;
+    17;
 
   void Swap(GetRouteRequest* other);
   friend void swap(GetRouteRequest& a, GetRouteRequest& b) {
@@ -1344,6 +2503,18 @@ class GetRouteRequest : public ::google::protobuf::Message /* @@protoc_insertion
   ::google::protobuf::uint32 max() const;
   void set_max(::google::protobuf::uint32 value);
 
+  // .basepb.RangeType rangeType = 6;
+  void clear_rangetype();
+  static const int kRangeTypeFieldNumber = 6;
+  ::basepb::RangeType rangetype() const;
+  void set_rangetype(::basepb::RangeType value);
+
+  // bool has_all = 7;
+  void clear_has_all();
+  static const int kHasAllFieldNumber = 7;
+  bool has_all() const;
+  void set_has_all(bool value);
+
   // @@protoc_insertion_point(class_scope:mspb.GetRouteRequest)
  private:
 
@@ -1353,6 +2524,8 @@ class GetRouteRequest : public ::google::protobuf::Message /* @@protoc_insertion
   ::google::protobuf::uint64 db_id_;
   ::google::protobuf::uint64 table_id_;
   ::google::protobuf::uint32 max_;
+  int rangetype_;
+  bool has_all_;
   mutable int _cached_size_;
   friend struct protobuf_mspb_2fmspb_2eproto::TableStruct;
 };
@@ -1392,7 +2565,7 @@ class GetRouteResponse : public ::google::protobuf::Message /* @@protoc_insertio
                &_GetRouteResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    9;
+    18;
 
   void Swap(GetRouteResponse* other);
   friend void swap(GetRouteResponse& a, GetRouteResponse& b) {
@@ -1451,6 +2624,20 @@ class GetRouteResponse : public ::google::protobuf::Message /* @@protoc_insertio
   const ::google::protobuf::RepeatedPtrField< ::basepb::Range >&
       routes() const;
 
+  // string master = 3;
+  void clear_master();
+  static const int kMasterFieldNumber = 3;
+  const ::std::string& master() const;
+  void set_master(const ::std::string& value);
+  #if LANG_CXX11
+  void set_master(::std::string&& value);
+  #endif
+  void set_master(const char* value);
+  void set_master(const char* value, size_t size);
+  ::std::string* mutable_master();
+  ::std::string* release_master();
+  void set_allocated_master(::std::string* master);
+
   // .mspb.ResponseHeader header = 1;
   bool has_header() const;
   void clear_header();
@@ -1460,12 +2647,20 @@ class GetRouteResponse : public ::google::protobuf::Message /* @@protoc_insertio
   ::mspb::ResponseHeader* release_header();
   void set_allocated_header(::mspb::ResponseHeader* header);
 
+  // uint64 version = 4;
+  void clear_version();
+  static const int kVersionFieldNumber = 4;
+  ::google::protobuf::uint64 version() const;
+  void set_version(::google::protobuf::uint64 value);
+
   // @@protoc_insertion_point(class_scope:mspb.GetRouteResponse)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::google::protobuf::RepeatedPtrField< ::basepb::Range > routes_;
+  ::google::protobuf::internal::ArenaStringPtr master_;
   ::mspb::ResponseHeader* header_;
+  ::google::protobuf::uint64 version_;
   mutable int _cached_size_;
   friend struct protobuf_mspb_2fmspb_2eproto::TableStruct;
 };
@@ -1505,7 +2700,7 @@ class GetNodesRequest : public ::google::protobuf::Message /* @@protoc_insertion
                &_GetNodesRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    10;
+    19;
 
   void Swap(GetNodesRequest* other);
   friend void swap(GetNodesRequest& a, GetNodesRequest& b) {
@@ -1605,7 +2800,7 @@ class GetNodesResponse : public ::google::protobuf::Message /* @@protoc_insertio
                &_GetNodesResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    11;
+    20;
 
   void Swap(GetNodesResponse* other);
   friend void swap(GetNodesResponse& a, GetNodesResponse& b) {
@@ -1718,7 +2913,7 @@ class GetNodeRequest : public ::google::protobuf::Message /* @@protoc_insertion_
                &_GetNodeRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    12;
+    21;
 
   void Swap(GetNodeRequest* other);
   friend void swap(GetNodeRequest& a, GetNodeRequest& b) {
@@ -1825,7 +3020,7 @@ class GetNodeResponse : public ::google::protobuf::Message /* @@protoc_insertion
                &_GetNodeResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    13;
+    22;
 
   void Swap(GetNodeResponse* other);
   friend void swap(GetNodeResponse& a, GetNodeResponse& b) {
@@ -1901,6 +3096,458 @@ class GetNodeResponse : public ::google::protobuf::Message /* @@protoc_insertion
 };
 // -------------------------------------------------------------------
 
+class ChangeNodeStateRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:mspb.ChangeNodeStateRequest) */ {
+ public:
+  ChangeNodeStateRequest();
+  virtual ~ChangeNodeStateRequest();
+
+  ChangeNodeStateRequest(const ChangeNodeStateRequest& from);
+
+  inline ChangeNodeStateRequest& operator=(const ChangeNodeStateRequest& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  ChangeNodeStateRequest(ChangeNodeStateRequest&& from) noexcept
+    : ChangeNodeStateRequest() {
+    *this = ::std::move(from);
+  }
+
+  inline ChangeNodeStateRequest& operator=(ChangeNodeStateRequest&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const ChangeNodeStateRequest& default_instance();
+
+  static inline const ChangeNodeStateRequest* internal_default_instance() {
+    return reinterpret_cast<const ChangeNodeStateRequest*>(
+               &_ChangeNodeStateRequest_default_instance_);
+  }
+  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
+    23;
+
+  void Swap(ChangeNodeStateRequest* other);
+  friend void swap(ChangeNodeStateRequest& a, ChangeNodeStateRequest& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline ChangeNodeStateRequest* New() const PROTOBUF_FINAL { return New(NULL); }
+
+  ChangeNodeStateRequest* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void CopyFrom(const ChangeNodeStateRequest& from);
+  void MergeFrom(const ChangeNodeStateRequest& from);
+  void Clear() PROTOBUF_FINAL;
+  bool IsInitialized() const PROTOBUF_FINAL;
+
+  size_t ByteSizeLong() const PROTOBUF_FINAL;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
+  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const PROTOBUF_FINAL;
+  void InternalSwap(ChangeNodeStateRequest* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // .mspb.RequestHeader header = 1;
+  bool has_header() const;
+  void clear_header();
+  static const int kHeaderFieldNumber = 1;
+  const ::mspb::RequestHeader& header() const;
+  ::mspb::RequestHeader* mutable_header();
+  ::mspb::RequestHeader* release_header();
+  void set_allocated_header(::mspb::RequestHeader* header);
+
+  // uint64 id = 2;
+  void clear_id();
+  static const int kIdFieldNumber = 2;
+  ::google::protobuf::uint64 id() const;
+  void set_id(::google::protobuf::uint64 value);
+
+  // .basepb.NodeState state = 3;
+  void clear_state();
+  static const int kStateFieldNumber = 3;
+  ::basepb::NodeState state() const;
+  void set_state(::basepb::NodeState value);
+
+  // @@protoc_insertion_point(class_scope:mspb.ChangeNodeStateRequest)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::mspb::RequestHeader* header_;
+  ::google::protobuf::uint64 id_;
+  int state_;
+  mutable int _cached_size_;
+  friend struct protobuf_mspb_2fmspb_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class ChangeNodeStateResponse : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:mspb.ChangeNodeStateResponse) */ {
+ public:
+  ChangeNodeStateResponse();
+  virtual ~ChangeNodeStateResponse();
+
+  ChangeNodeStateResponse(const ChangeNodeStateResponse& from);
+
+  inline ChangeNodeStateResponse& operator=(const ChangeNodeStateResponse& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  ChangeNodeStateResponse(ChangeNodeStateResponse&& from) noexcept
+    : ChangeNodeStateResponse() {
+    *this = ::std::move(from);
+  }
+
+  inline ChangeNodeStateResponse& operator=(ChangeNodeStateResponse&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const ChangeNodeStateResponse& default_instance();
+
+  static inline const ChangeNodeStateResponse* internal_default_instance() {
+    return reinterpret_cast<const ChangeNodeStateResponse*>(
+               &_ChangeNodeStateResponse_default_instance_);
+  }
+  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
+    24;
+
+  void Swap(ChangeNodeStateResponse* other);
+  friend void swap(ChangeNodeStateResponse& a, ChangeNodeStateResponse& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline ChangeNodeStateResponse* New() const PROTOBUF_FINAL { return New(NULL); }
+
+  ChangeNodeStateResponse* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void CopyFrom(const ChangeNodeStateResponse& from);
+  void MergeFrom(const ChangeNodeStateResponse& from);
+  void Clear() PROTOBUF_FINAL;
+  bool IsInitialized() const PROTOBUF_FINAL;
+
+  size_t ByteSizeLong() const PROTOBUF_FINAL;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
+  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const PROTOBUF_FINAL;
+  void InternalSwap(ChangeNodeStateResponse* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // .mspb.ResponseHeader header = 1;
+  bool has_header() const;
+  void clear_header();
+  static const int kHeaderFieldNumber = 1;
+  const ::mspb::ResponseHeader& header() const;
+  ::mspb::ResponseHeader* mutable_header();
+  ::mspb::ResponseHeader* release_header();
+  void set_allocated_header(::mspb::ResponseHeader* header);
+
+  // .basepb.Node node = 2;
+  bool has_node() const;
+  void clear_node();
+  static const int kNodeFieldNumber = 2;
+  const ::basepb::Node& node() const;
+  ::basepb::Node* mutable_node();
+  ::basepb::Node* release_node();
+  void set_allocated_node(::basepb::Node* node);
+
+  // @@protoc_insertion_point(class_scope:mspb.ChangeNodeStateResponse)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::mspb::ResponseHeader* header_;
+  ::basepb::Node* node_;
+  mutable int _cached_size_;
+  friend struct protobuf_mspb_2fmspb_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class CheckNodeStateRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:mspb.CheckNodeStateRequest) */ {
+ public:
+  CheckNodeStateRequest();
+  virtual ~CheckNodeStateRequest();
+
+  CheckNodeStateRequest(const CheckNodeStateRequest& from);
+
+  inline CheckNodeStateRequest& operator=(const CheckNodeStateRequest& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  CheckNodeStateRequest(CheckNodeStateRequest&& from) noexcept
+    : CheckNodeStateRequest() {
+    *this = ::std::move(from);
+  }
+
+  inline CheckNodeStateRequest& operator=(CheckNodeStateRequest&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const CheckNodeStateRequest& default_instance();
+
+  static inline const CheckNodeStateRequest* internal_default_instance() {
+    return reinterpret_cast<const CheckNodeStateRequest*>(
+               &_CheckNodeStateRequest_default_instance_);
+  }
+  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
+    25;
+
+  void Swap(CheckNodeStateRequest* other);
+  friend void swap(CheckNodeStateRequest& a, CheckNodeStateRequest& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline CheckNodeStateRequest* New() const PROTOBUF_FINAL { return New(NULL); }
+
+  CheckNodeStateRequest* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void CopyFrom(const CheckNodeStateRequest& from);
+  void MergeFrom(const CheckNodeStateRequest& from);
+  void Clear() PROTOBUF_FINAL;
+  bool IsInitialized() const PROTOBUF_FINAL;
+
+  size_t ByteSizeLong() const PROTOBUF_FINAL;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
+  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const PROTOBUF_FINAL;
+  void InternalSwap(CheckNodeStateRequest* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // .mspb.RequestHeader header = 1;
+  bool has_header() const;
+  void clear_header();
+  static const int kHeaderFieldNumber = 1;
+  const ::mspb::RequestHeader& header() const;
+  ::mspb::RequestHeader* mutable_header();
+  ::mspb::RequestHeader* release_header();
+  void set_allocated_header(::mspb::RequestHeader* header);
+
+  // uint64 id = 2;
+  void clear_id();
+  static const int kIdFieldNumber = 2;
+  ::google::protobuf::uint64 id() const;
+  void set_id(::google::protobuf::uint64 value);
+
+  // @@protoc_insertion_point(class_scope:mspb.CheckNodeStateRequest)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::mspb::RequestHeader* header_;
+  ::google::protobuf::uint64 id_;
+  mutable int _cached_size_;
+  friend struct protobuf_mspb_2fmspb_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class CheckNodeStateResponse : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:mspb.CheckNodeStateResponse) */ {
+ public:
+  CheckNodeStateResponse();
+  virtual ~CheckNodeStateResponse();
+
+  CheckNodeStateResponse(const CheckNodeStateResponse& from);
+
+  inline CheckNodeStateResponse& operator=(const CheckNodeStateResponse& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  CheckNodeStateResponse(CheckNodeStateResponse&& from) noexcept
+    : CheckNodeStateResponse() {
+    *this = ::std::move(from);
+  }
+
+  inline CheckNodeStateResponse& operator=(CheckNodeStateResponse&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const CheckNodeStateResponse& default_instance();
+
+  static inline const CheckNodeStateResponse* internal_default_instance() {
+    return reinterpret_cast<const CheckNodeStateResponse*>(
+               &_CheckNodeStateResponse_default_instance_);
+  }
+  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
+    26;
+
+  void Swap(CheckNodeStateResponse* other);
+  friend void swap(CheckNodeStateResponse& a, CheckNodeStateResponse& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline CheckNodeStateResponse* New() const PROTOBUF_FINAL { return New(NULL); }
+
+  CheckNodeStateResponse* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void CopyFrom(const CheckNodeStateResponse& from);
+  void MergeFrom(const CheckNodeStateResponse& from);
+  void Clear() PROTOBUF_FINAL;
+  bool IsInitialized() const PROTOBUF_FINAL;
+
+  size_t ByteSizeLong() const PROTOBUF_FINAL;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
+  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const PROTOBUF_FINAL;
+  void InternalSwap(CheckNodeStateResponse* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // .mspb.ResponseHeader header = 1;
+  bool has_header() const;
+  void clear_header();
+  static const int kHeaderFieldNumber = 1;
+  const ::mspb::ResponseHeader& header() const;
+  ::mspb::ResponseHeader* mutable_header();
+  ::mspb::ResponseHeader* release_header();
+  void set_allocated_header(::mspb::ResponseHeader* header);
+
+  // uint64 range_num = 2;
+  void clear_range_num();
+  static const int kRangeNumFieldNumber = 2;
+  ::google::protobuf::uint64 range_num() const;
+  void set_range_num(::google::protobuf::uint64 value);
+
+  // uint64 leader_num = 3;
+  void clear_leader_num();
+  static const int kLeaderNumFieldNumber = 3;
+  ::google::protobuf::uint64 leader_num() const;
+  void set_leader_num(::google::protobuf::uint64 value);
+
+  // .basepb.NodeState state = 4;
+  void clear_state();
+  static const int kStateFieldNumber = 4;
+  ::basepb::NodeState state() const;
+  void set_state(::basepb::NodeState value);
+
+  // @@protoc_insertion_point(class_scope:mspb.CheckNodeStateResponse)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::mspb::ResponseHeader* header_;
+  ::google::protobuf::uint64 range_num_;
+  ::google::protobuf::uint64 leader_num_;
+  int state_;
+  mutable int _cached_size_;
+  friend struct protobuf_mspb_2fmspb_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
 class DelDatabaseRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:mspb.DelDatabaseRequest) */ {
  public:
   DelDatabaseRequest();
@@ -1935,7 +3582,7 @@ class DelDatabaseRequest : public ::google::protobuf::Message /* @@protoc_insert
                &_DelDatabaseRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    14;
+    27;
 
   void Swap(DelDatabaseRequest* other);
   friend void swap(DelDatabaseRequest& a, DelDatabaseRequest& b) {
@@ -2057,7 +3704,7 @@ class DelDatabaseResponse : public ::google::protobuf::Message /* @@protoc_inser
                &_DelDatabaseResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    15;
+    28;
 
   void Swap(DelDatabaseResponse* other);
   friend void swap(DelDatabaseResponse& a, DelDatabaseResponse& b) {
@@ -2157,7 +3804,7 @@ class GetDBRequest : public ::google::protobuf::Message /* @@protoc_insertion_po
                &_GetDBRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    16;
+    29;
 
   void Swap(GetDBRequest* other);
   friend void swap(GetDBRequest& a, GetDBRequest& b) {
@@ -2272,7 +3919,7 @@ class GetDBResponse : public ::google::protobuf::Message /* @@protoc_insertion_p
                &_GetDBResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    17;
+    30;
 
   void Swap(GetDBResponse* other);
   friend void swap(GetDBResponse& a, GetDBResponse& b) {
@@ -2382,7 +4029,7 @@ class GetDBsResponse : public ::google::protobuf::Message /* @@protoc_insertion_
                &_GetDBsResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    18;
+    31;
 
   void Swap(GetDBsResponse* other);
   friend void swap(GetDBsResponse& a, GetDBsResponse& b) {
@@ -2495,7 +4142,7 @@ class DelTableRequest : public ::google::protobuf::Message /* @@protoc_insertion
                &_DelTableRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    19;
+    32;
 
   void Swap(DelTableRequest* other);
   friend void swap(DelTableRequest& a, DelTableRequest& b) {
@@ -2639,7 +4286,7 @@ class DelTableResponse : public ::google::protobuf::Message /* @@protoc_insertio
                &_DelTableResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    20;
+    33;
 
   void Swap(DelTableResponse* other);
   friend void swap(DelTableResponse& a, DelTableResponse& b) {
@@ -2715,6 +4362,330 @@ class DelTableResponse : public ::google::protobuf::Message /* @@protoc_insertio
 };
 // -------------------------------------------------------------------
 
+class CountTableRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:mspb.CountTableRequest) */ {
+ public:
+  CountTableRequest();
+  virtual ~CountTableRequest();
+
+  CountTableRequest(const CountTableRequest& from);
+
+  inline CountTableRequest& operator=(const CountTableRequest& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  CountTableRequest(CountTableRequest&& from) noexcept
+    : CountTableRequest() {
+    *this = ::std::move(from);
+  }
+
+  inline CountTableRequest& operator=(CountTableRequest&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const CountTableRequest& default_instance();
+
+  static inline const CountTableRequest* internal_default_instance() {
+    return reinterpret_cast<const CountTableRequest*>(
+               &_CountTableRequest_default_instance_);
+  }
+  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
+    34;
+
+  void Swap(CountTableRequest* other);
+  friend void swap(CountTableRequest& a, CountTableRequest& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline CountTableRequest* New() const PROTOBUF_FINAL { return New(NULL); }
+
+  CountTableRequest* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void CopyFrom(const CountTableRequest& from);
+  void MergeFrom(const CountTableRequest& from);
+  void Clear() PROTOBUF_FINAL;
+  bool IsInitialized() const PROTOBUF_FINAL;
+
+  size_t ByteSizeLong() const PROTOBUF_FINAL;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
+  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const PROTOBUF_FINAL;
+  void InternalSwap(CountTableRequest* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // .mspb.RequestHeader header = 1;
+  bool has_header() const;
+  void clear_header();
+  static const int kHeaderFieldNumber = 1;
+  const ::mspb::RequestHeader& header() const;
+  ::mspb::RequestHeader* mutable_header();
+  ::mspb::RequestHeader* release_header();
+  void set_allocated_header(::mspb::RequestHeader* header);
+
+  // @@protoc_insertion_point(class_scope:mspb.CountTableRequest)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::mspb::RequestHeader* header_;
+  mutable int _cached_size_;
+  friend struct protobuf_mspb_2fmspb_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class Counter : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:mspb.Counter) */ {
+ public:
+  Counter();
+  virtual ~Counter();
+
+  Counter(const Counter& from);
+
+  inline Counter& operator=(const Counter& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  Counter(Counter&& from) noexcept
+    : Counter() {
+    *this = ::std::move(from);
+  }
+
+  inline Counter& operator=(Counter&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const Counter& default_instance();
+
+  static inline const Counter* internal_default_instance() {
+    return reinterpret_cast<const Counter*>(
+               &_Counter_default_instance_);
+  }
+  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
+    35;
+
+  void Swap(Counter* other);
+  friend void swap(Counter& a, Counter& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline Counter* New() const PROTOBUF_FINAL { return New(NULL); }
+
+  Counter* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void CopyFrom(const Counter& from);
+  void MergeFrom(const Counter& from);
+  void Clear() PROTOBUF_FINAL;
+  bool IsInitialized() const PROTOBUF_FINAL;
+
+  size_t ByteSizeLong() const PROTOBUF_FINAL;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
+  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const PROTOBUF_FINAL;
+  void InternalSwap(Counter* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // uint64 db_id = 1;
+  void clear_db_id();
+  static const int kDbIdFieldNumber = 1;
+  ::google::protobuf::uint64 db_id() const;
+  void set_db_id(::google::protobuf::uint64 value);
+
+  // uint64 table_id = 2;
+  void clear_table_id();
+  static const int kTableIdFieldNumber = 2;
+  ::google::protobuf::uint64 table_id() const;
+  void set_table_id(::google::protobuf::uint64 value);
+
+  // uint64 count = 3;
+  void clear_count();
+  static const int kCountFieldNumber = 3;
+  ::google::protobuf::uint64 count() const;
+  void set_count(::google::protobuf::uint64 value);
+
+  // @@protoc_insertion_point(class_scope:mspb.Counter)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::uint64 db_id_;
+  ::google::protobuf::uint64 table_id_;
+  ::google::protobuf::uint64 count_;
+  mutable int _cached_size_;
+  friend struct protobuf_mspb_2fmspb_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class CountTableResponse : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:mspb.CountTableResponse) */ {
+ public:
+  CountTableResponse();
+  virtual ~CountTableResponse();
+
+  CountTableResponse(const CountTableResponse& from);
+
+  inline CountTableResponse& operator=(const CountTableResponse& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  CountTableResponse(CountTableResponse&& from) noexcept
+    : CountTableResponse() {
+    *this = ::std::move(from);
+  }
+
+  inline CountTableResponse& operator=(CountTableResponse&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const CountTableResponse& default_instance();
+
+  static inline const CountTableResponse* internal_default_instance() {
+    return reinterpret_cast<const CountTableResponse*>(
+               &_CountTableResponse_default_instance_);
+  }
+  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
+    36;
+
+  void Swap(CountTableResponse* other);
+  friend void swap(CountTableResponse& a, CountTableResponse& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline CountTableResponse* New() const PROTOBUF_FINAL { return New(NULL); }
+
+  CountTableResponse* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void CopyFrom(const CountTableResponse& from);
+  void MergeFrom(const CountTableResponse& from);
+  void Clear() PROTOBUF_FINAL;
+  bool IsInitialized() const PROTOBUF_FINAL;
+
+  size_t ByteSizeLong() const PROTOBUF_FINAL;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
+  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const PROTOBUF_FINAL;
+  void InternalSwap(CountTableResponse* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // repeated .mspb.Counter list = 2;
+  int list_size() const;
+  void clear_list();
+  static const int kListFieldNumber = 2;
+  const ::mspb::Counter& list(int index) const;
+  ::mspb::Counter* mutable_list(int index);
+  ::mspb::Counter* add_list();
+  ::google::protobuf::RepeatedPtrField< ::mspb::Counter >*
+      mutable_list();
+  const ::google::protobuf::RepeatedPtrField< ::mspb::Counter >&
+      list() const;
+
+  // .mspb.ResponseHeader header = 1;
+  bool has_header() const;
+  void clear_header();
+  static const int kHeaderFieldNumber = 1;
+  const ::mspb::ResponseHeader& header() const;
+  ::mspb::ResponseHeader* mutable_header();
+  ::mspb::ResponseHeader* release_header();
+  void set_allocated_header(::mspb::ResponseHeader* header);
+
+  // @@protoc_insertion_point(class_scope:mspb.CountTableResponse)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::RepeatedPtrField< ::mspb::Counter > list_;
+  ::mspb::ResponseHeader* header_;
+  mutable int _cached_size_;
+  friend struct protobuf_mspb_2fmspb_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
 class GetTableRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:mspb.GetTableRequest) */ {
  public:
   GetTableRequest();
@@ -2749,7 +4720,7 @@ class GetTableRequest : public ::google::protobuf::Message /* @@protoc_insertion
                &_GetTableRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    21;
+    37;
 
   void Swap(GetTableRequest* other);
   friend void swap(GetTableRequest& a, GetTableRequest& b) {
@@ -2893,7 +4864,7 @@ class GetTableResponse : public ::google::protobuf::Message /* @@protoc_insertio
                &_GetTableResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    22;
+    38;
 
   void Swap(GetTableResponse* other);
   friend void swap(GetTableResponse& a, GetTableResponse& b) {
@@ -3003,7 +4974,7 @@ class GetTablesRequest : public ::google::protobuf::Message /* @@protoc_insertio
                &_GetTablesRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    23;
+    39;
 
   void Swap(GetTablesRequest* other);
   friend void swap(GetTablesRequest& a, GetTablesRequest& b) {
@@ -3125,7 +5096,7 @@ class GetTablesResponse : public ::google::protobuf::Message /* @@protoc_inserti
                &_GetTablesResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    24;
+    40;
 
   void Swap(GetTablesResponse* other);
   friend void swap(GetTablesResponse& a, GetTablesResponse& b) {
@@ -3238,7 +5209,7 @@ class GetColumnsRequest : public ::google::protobuf::Message /* @@protoc_inserti
                &_GetColumnsRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    25;
+    41;
 
   void Swap(GetColumnsRequest* other);
   friend void swap(GetColumnsRequest& a, GetColumnsRequest& b) {
@@ -3352,7 +5323,7 @@ class GetColumnsResponse : public ::google::protobuf::Message /* @@protoc_insert
                &_GetColumnsResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    26;
+    42;
 
   void Swap(GetColumnsResponse* other);
   friend void swap(GetColumnsResponse& a, GetColumnsResponse& b) {
@@ -3465,7 +5436,7 @@ class GetNodeInfoRequest : public ::google::protobuf::Message /* @@protoc_insert
                &_GetNodeInfoRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    27;
+    43;
 
   void Swap(GetNodeInfoRequest* other);
   friend void swap(GetNodeInfoRequest& a, GetNodeInfoRequest& b) {
@@ -3565,7 +5536,7 @@ class GetNodeInfoResponse : public ::google::protobuf::Message /* @@protoc_inser
                &_GetNodeInfoResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    28;
+    44;
 
   void Swap(GetNodeInfoResponse* other);
   friend void swap(GetNodeInfoResponse& a, GetNodeInfoResponse& b) {
@@ -3678,7 +5649,7 @@ class GetNodeInfo : public ::google::protobuf::Message /* @@protoc_insertion_poi
                &_GetNodeInfo_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    29;
+    45;
 
   void Swap(GetNodeInfo* other);
   friend void swap(GetNodeInfo& a, GetNodeInfo& b) {
@@ -3803,7 +5774,7 @@ class GetColumnRequest : public ::google::protobuf::Message /* @@protoc_insertio
                &_GetColumnRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    30;
+    46;
 
   void Swap(GetColumnRequest* other);
   friend void swap(GetColumnRequest& a, GetColumnRequest& b) {
@@ -3939,7 +5910,7 @@ class GetColumnResponse : public ::google::protobuf::Message /* @@protoc_inserti
                &_GetColumnResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    31;
+    47;
 
   void Swap(GetColumnResponse* other);
   friend void swap(GetColumnResponse& a, GetColumnResponse& b) {
@@ -4049,7 +6020,7 @@ class CreateDatabaseRequest : public ::google::protobuf::Message /* @@protoc_ins
                &_CreateDatabaseRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    32;
+    48;
 
   void Swap(CreateDatabaseRequest* other);
   friend void swap(CreateDatabaseRequest& a, CreateDatabaseRequest& b) {
@@ -4164,7 +6135,7 @@ class CreateDatabaseResponse : public ::google::protobuf::Message /* @@protoc_in
                &_CreateDatabaseResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    33;
+    49;
 
   void Swap(CreateDatabaseResponse* other);
   friend void swap(CreateDatabaseResponse& a, CreateDatabaseResponse& b) {
@@ -4274,7 +6245,7 @@ class CreateTableRequest : public ::google::protobuf::Message /* @@protoc_insert
                &_CreateTableRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    34;
+    50;
 
   void Swap(CreateTableRequest* other);
   friend void swap(CreateTableRequest& a, CreateTableRequest& b) {
@@ -4385,6 +6356,20 @@ class CreateTableRequest : public ::google::protobuf::Message /* @@protoc_insert
   ::std::string* release_properties();
   void set_allocated_properties(::std::string* properties);
 
+  // string store_type = 6;
+  void clear_store_type();
+  static const int kStoreTypeFieldNumber = 6;
+  const ::std::string& store_type() const;
+  void set_store_type(const ::std::string& value);
+  #if LANG_CXX11
+  void set_store_type(::std::string&& value);
+  #endif
+  void set_store_type(const char* value);
+  void set_store_type(const char* value, size_t size);
+  ::std::string* mutable_store_type();
+  ::std::string* release_store_type();
+  void set_allocated_store_type(::std::string* store_type);
+
   // .mspb.RequestHeader header = 1;
   bool has_header() const;
   void clear_header();
@@ -4394,6 +6379,18 @@ class CreateTableRequest : public ::google::protobuf::Message /* @@protoc_insert
   ::mspb::RequestHeader* release_header();
   void set_allocated_header(::mspb::RequestHeader* header);
 
+  // uint64 replica_num = 7;
+  void clear_replica_num();
+  static const int kReplicaNumFieldNumber = 7;
+  ::google::protobuf::uint64 replica_num() const;
+  void set_replica_num(::google::protobuf::uint64 value);
+
+  // uint64 data_range_num = 8;
+  void clear_data_range_num();
+  static const int kDataRangeNumFieldNumber = 8;
+  ::google::protobuf::uint64 data_range_num() const;
+  void set_data_range_num(::google::protobuf::uint64 value);
+
   // @@protoc_insertion_point(class_scope:mspb.CreateTableRequest)
  private:
 
@@ -4402,7 +6399,10 @@ class CreateTableRequest : public ::google::protobuf::Message /* @@protoc_insert
   ::google::protobuf::internal::ArenaStringPtr db_name_;
   ::google::protobuf::internal::ArenaStringPtr table_name_;
   ::google::protobuf::internal::ArenaStringPtr properties_;
+  ::google::protobuf::internal::ArenaStringPtr store_type_;
   ::mspb::RequestHeader* header_;
+  ::google::protobuf::uint64 replica_num_;
+  ::google::protobuf::uint64 data_range_num_;
   mutable int _cached_size_;
   friend struct protobuf_mspb_2fmspb_2eproto::TableStruct;
 };
@@ -4442,7 +6442,7 @@ class CreateTableResponse : public ::google::protobuf::Message /* @@protoc_inser
                &_CreateTableResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    35;
+    51;
 
   void Swap(CreateTableResponse* other);
   friend void swap(CreateTableResponse& a, CreateTableResponse& b) {
@@ -4552,7 +6552,7 @@ class GetAutoIncIdRequest : public ::google::protobuf::Message /* @@protoc_inser
                &_GetAutoIncIdRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    36;
+    52;
 
   void Swap(GetAutoIncIdRequest* other);
   friend void swap(GetAutoIncIdRequest& a, GetAutoIncIdRequest& b) {
@@ -4639,6 +6639,126 @@ class GetAutoIncIdRequest : public ::google::protobuf::Message /* @@protoc_inser
 };
 // -------------------------------------------------------------------
 
+class IdPair : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:mspb.IdPair) */ {
+ public:
+  IdPair();
+  virtual ~IdPair();
+
+  IdPair(const IdPair& from);
+
+  inline IdPair& operator=(const IdPair& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  IdPair(IdPair&& from) noexcept
+    : IdPair() {
+    *this = ::std::move(from);
+  }
+
+  inline IdPair& operator=(IdPair&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const IdPair& default_instance();
+
+  static inline const IdPair* internal_default_instance() {
+    return reinterpret_cast<const IdPair*>(
+               &_IdPair_default_instance_);
+  }
+  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
+    53;
+
+  void Swap(IdPair* other);
+  friend void swap(IdPair& a, IdPair& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline IdPair* New() const PROTOBUF_FINAL { return New(NULL); }
+
+  IdPair* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void CopyFrom(const IdPair& from);
+  void MergeFrom(const IdPair& from);
+  void Clear() PROTOBUF_FINAL;
+  bool IsInitialized() const PROTOBUF_FINAL;
+
+  size_t ByteSizeLong() const PROTOBUF_FINAL;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
+  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const PROTOBUF_FINAL;
+  void InternalSwap(IdPair* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // bytes id_start = 1;
+  void clear_id_start();
+  static const int kIdStartFieldNumber = 1;
+  const ::std::string& id_start() const;
+  void set_id_start(const ::std::string& value);
+  #if LANG_CXX11
+  void set_id_start(::std::string&& value);
+  #endif
+  void set_id_start(const char* value);
+  void set_id_start(const void* value, size_t size);
+  ::std::string* mutable_id_start();
+  ::std::string* release_id_start();
+  void set_allocated_id_start(::std::string* id_start);
+
+  // bytes id_end = 2;
+  void clear_id_end();
+  static const int kIdEndFieldNumber = 2;
+  const ::std::string& id_end() const;
+  void set_id_end(const ::std::string& value);
+  #if LANG_CXX11
+  void set_id_end(::std::string&& value);
+  #endif
+  void set_id_end(const char* value);
+  void set_id_end(const void* value, size_t size);
+  ::std::string* mutable_id_end();
+  ::std::string* release_id_end();
+  void set_allocated_id_end(::std::string* id_end);
+
+  // @@protoc_insertion_point(class_scope:mspb.IdPair)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::internal::ArenaStringPtr id_start_;
+  ::google::protobuf::internal::ArenaStringPtr id_end_;
+  mutable int _cached_size_;
+  friend struct protobuf_mspb_2fmspb_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
 class GetAutoIncIdResponse : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:mspb.GetAutoIncIdResponse) */ {
  public:
   GetAutoIncIdResponse();
@@ -4673,7 +6793,7 @@ class GetAutoIncIdResponse : public ::google::protobuf::Message /* @@protoc_inse
                &_GetAutoIncIdResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    37;
+    54;
 
   void Swap(GetAutoIncIdResponse* other);
   friend void swap(GetAutoIncIdResponse& a, GetAutoIncIdResponse& b) {
@@ -4720,17 +6840,17 @@ class GetAutoIncIdResponse : public ::google::protobuf::Message /* @@protoc_inse
 
   // accessors -------------------------------------------------------
 
-  // repeated uint64 ids = 2;
-  int ids_size() const;
-  void clear_ids();
-  static const int kIdsFieldNumber = 2;
-  ::google::protobuf::uint64 ids(int index) const;
-  void set_ids(int index, ::google::protobuf::uint64 value);
-  void add_ids(::google::protobuf::uint64 value);
-  const ::google::protobuf::RepeatedField< ::google::protobuf::uint64 >&
-      ids() const;
-  ::google::protobuf::RepeatedField< ::google::protobuf::uint64 >*
-      mutable_ids();
+  // repeated .mspb.IdPair id_pairs = 2;
+  int id_pairs_size() const;
+  void clear_id_pairs();
+  static const int kIdPairsFieldNumber = 2;
+  const ::mspb::IdPair& id_pairs(int index) const;
+  ::mspb::IdPair* mutable_id_pairs(int index);
+  ::mspb::IdPair* add_id_pairs();
+  ::google::protobuf::RepeatedPtrField< ::mspb::IdPair >*
+      mutable_id_pairs();
+  const ::google::protobuf::RepeatedPtrField< ::mspb::IdPair >&
+      id_pairs() const;
 
   // .mspb.ResponseHeader header = 1;
   bool has_header() const;
@@ -4745,8 +6865,7 @@ class GetAutoIncIdResponse : public ::google::protobuf::Message /* @@protoc_inse
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  ::google::protobuf::RepeatedField< ::google::protobuf::uint64 > ids_;
-  mutable int _ids_cached_byte_size_;
+  ::google::protobuf::RepeatedPtrField< ::mspb::IdPair > id_pairs_;
   ::mspb::ResponseHeader* header_;
   mutable int _cached_size_;
   friend struct protobuf_mspb_2fmspb_2eproto::TableStruct;
@@ -4787,7 +6906,7 @@ class RequestHeader : public ::google::protobuf::Message /* @@protoc_insertion_p
                &_RequestHeader_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    38;
+    55;
 
   void Swap(RequestHeader* other);
   friend void swap(RequestHeader& a, RequestHeader& b) {
@@ -4884,7 +7003,7 @@ class ResponseHeader : public ::google::protobuf::Message /* @@protoc_insertion_
                &_ResponseHeader_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    39;
+    56;
 
   void Swap(ResponseHeader* other);
   friend void swap(ResponseHeader& a, ResponseHeader& b) {
@@ -4991,7 +7110,7 @@ class Error : public ::google::protobuf::Message /* @@protoc_insertion_point(cla
                &_Error_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    40;
+    57;
 
   void Swap(Error* other);
   friend void swap(Error& a, Error& b) {
@@ -5077,6 +7196,253 @@ class Error : public ::google::protobuf::Message /* @@protoc_insertion_point(cla
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wstrict-aliasing"
 #endif  // __GNUC__
+// ClusterInfoRequest
+
+// .mspb.RequestHeader header = 1;
+inline bool ClusterInfoRequest::has_header() const {
+  return this != internal_default_instance() && header_ != NULL;
+}
+inline void ClusterInfoRequest::clear_header() {
+  if (GetArenaNoVirtual() == NULL && header_ != NULL) delete header_;
+  header_ = NULL;
+}
+inline const ::mspb::RequestHeader& ClusterInfoRequest::header() const {
+  const ::mspb::RequestHeader* p = header_;
+  // @@protoc_insertion_point(field_get:mspb.ClusterInfoRequest.header)
+  return p != NULL ? *p : *reinterpret_cast<const ::mspb::RequestHeader*>(
+      &::mspb::_RequestHeader_default_instance_);
+}
+inline ::mspb::RequestHeader* ClusterInfoRequest::mutable_header() {
+  
+  if (header_ == NULL) {
+    header_ = new ::mspb::RequestHeader;
+  }
+  // @@protoc_insertion_point(field_mutable:mspb.ClusterInfoRequest.header)
+  return header_;
+}
+inline ::mspb::RequestHeader* ClusterInfoRequest::release_header() {
+  // @@protoc_insertion_point(field_release:mspb.ClusterInfoRequest.header)
+  
+  ::mspb::RequestHeader* temp = header_;
+  header_ = NULL;
+  return temp;
+}
+inline void ClusterInfoRequest::set_allocated_header(::mspb::RequestHeader* header) {
+  delete header_;
+  header_ = header;
+  if (header) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:mspb.ClusterInfoRequest.header)
+}
+
+// -------------------------------------------------------------------
+
+// ClusterInfoResponse
+
+// .mspb.ResponseHeader header = 1;
+inline bool ClusterInfoResponse::has_header() const {
+  return this != internal_default_instance() && header_ != NULL;
+}
+inline void ClusterInfoResponse::clear_header() {
+  if (GetArenaNoVirtual() == NULL && header_ != NULL) delete header_;
+  header_ = NULL;
+}
+inline const ::mspb::ResponseHeader& ClusterInfoResponse::header() const {
+  const ::mspb::ResponseHeader* p = header_;
+  // @@protoc_insertion_point(field_get:mspb.ClusterInfoResponse.header)
+  return p != NULL ? *p : *reinterpret_cast<const ::mspb::ResponseHeader*>(
+      &::mspb::_ResponseHeader_default_instance_);
+}
+inline ::mspb::ResponseHeader* ClusterInfoResponse::mutable_header() {
+  
+  if (header_ == NULL) {
+    header_ = new ::mspb::ResponseHeader;
+  }
+  // @@protoc_insertion_point(field_mutable:mspb.ClusterInfoResponse.header)
+  return header_;
+}
+inline ::mspb::ResponseHeader* ClusterInfoResponse::release_header() {
+  // @@protoc_insertion_point(field_release:mspb.ClusterInfoResponse.header)
+  
+  ::mspb::ResponseHeader* temp = header_;
+  header_ = NULL;
+  return temp;
+}
+inline void ClusterInfoResponse::set_allocated_header(::mspb::ResponseHeader* header) {
+  delete header_;
+  header_ = header;
+  if (header) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:mspb.ClusterInfoResponse.header)
+}
+
+// string build_version = 2;
+inline void ClusterInfoResponse::clear_build_version() {
+  build_version_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& ClusterInfoResponse::build_version() const {
+  // @@protoc_insertion_point(field_get:mspb.ClusterInfoResponse.build_version)
+  return build_version_.GetNoArena();
+}
+inline void ClusterInfoResponse::set_build_version(const ::std::string& value) {
+  
+  build_version_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:mspb.ClusterInfoResponse.build_version)
+}
+#if LANG_CXX11
+inline void ClusterInfoResponse::set_build_version(::std::string&& value) {
+  
+  build_version_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:mspb.ClusterInfoResponse.build_version)
+}
+#endif
+inline void ClusterInfoResponse::set_build_version(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  build_version_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:mspb.ClusterInfoResponse.build_version)
+}
+inline void ClusterInfoResponse::set_build_version(const char* value, size_t size) {
+  
+  build_version_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:mspb.ClusterInfoResponse.build_version)
+}
+inline ::std::string* ClusterInfoResponse::mutable_build_version() {
+  
+  // @@protoc_insertion_point(field_mutable:mspb.ClusterInfoResponse.build_version)
+  return build_version_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* ClusterInfoResponse::release_build_version() {
+  // @@protoc_insertion_point(field_release:mspb.ClusterInfoResponse.build_version)
+  
+  return build_version_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void ClusterInfoResponse::set_allocated_build_version(::std::string* build_version) {
+  if (build_version != NULL) {
+    
+  } else {
+    
+  }
+  build_version_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), build_version);
+  // @@protoc_insertion_point(field_set_allocated:mspb.ClusterInfoResponse.build_version)
+}
+
+// string build_time = 3;
+inline void ClusterInfoResponse::clear_build_time() {
+  build_time_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& ClusterInfoResponse::build_time() const {
+  // @@protoc_insertion_point(field_get:mspb.ClusterInfoResponse.build_time)
+  return build_time_.GetNoArena();
+}
+inline void ClusterInfoResponse::set_build_time(const ::std::string& value) {
+  
+  build_time_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:mspb.ClusterInfoResponse.build_time)
+}
+#if LANG_CXX11
+inline void ClusterInfoResponse::set_build_time(::std::string&& value) {
+  
+  build_time_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:mspb.ClusterInfoResponse.build_time)
+}
+#endif
+inline void ClusterInfoResponse::set_build_time(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  build_time_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:mspb.ClusterInfoResponse.build_time)
+}
+inline void ClusterInfoResponse::set_build_time(const char* value, size_t size) {
+  
+  build_time_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:mspb.ClusterInfoResponse.build_time)
+}
+inline ::std::string* ClusterInfoResponse::mutable_build_time() {
+  
+  // @@protoc_insertion_point(field_mutable:mspb.ClusterInfoResponse.build_time)
+  return build_time_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* ClusterInfoResponse::release_build_time() {
+  // @@protoc_insertion_point(field_release:mspb.ClusterInfoResponse.build_time)
+  
+  return build_time_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void ClusterInfoResponse::set_allocated_build_time(::std::string* build_time) {
+  if (build_time != NULL) {
+    
+  } else {
+    
+  }
+  build_time_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), build_time);
+  // @@protoc_insertion_point(field_set_allocated:mspb.ClusterInfoResponse.build_time)
+}
+
+// string commit_id = 4;
+inline void ClusterInfoResponse::clear_commit_id() {
+  commit_id_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& ClusterInfoResponse::commit_id() const {
+  // @@protoc_insertion_point(field_get:mspb.ClusterInfoResponse.commit_id)
+  return commit_id_.GetNoArena();
+}
+inline void ClusterInfoResponse::set_commit_id(const ::std::string& value) {
+  
+  commit_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:mspb.ClusterInfoResponse.commit_id)
+}
+#if LANG_CXX11
+inline void ClusterInfoResponse::set_commit_id(::std::string&& value) {
+  
+  commit_id_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:mspb.ClusterInfoResponse.commit_id)
+}
+#endif
+inline void ClusterInfoResponse::set_commit_id(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  commit_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:mspb.ClusterInfoResponse.commit_id)
+}
+inline void ClusterInfoResponse::set_commit_id(const char* value, size_t size) {
+  
+  commit_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:mspb.ClusterInfoResponse.commit_id)
+}
+inline ::std::string* ClusterInfoResponse::mutable_commit_id() {
+  
+  // @@protoc_insertion_point(field_mutable:mspb.ClusterInfoResponse.commit_id)
+  return commit_id_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* ClusterInfoResponse::release_commit_id() {
+  // @@protoc_insertion_point(field_release:mspb.ClusterInfoResponse.commit_id)
+  
+  return commit_id_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void ClusterInfoResponse::set_allocated_commit_id(::std::string* commit_id) {
+  if (commit_id != NULL) {
+    
+  } else {
+    
+  }
+  commit_id_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), commit_id);
+  // @@protoc_insertion_point(field_set_allocated:mspb.ClusterInfoResponse.commit_id)
+}
+
+// -------------------------------------------------------------------
+
 // RangeHeartbeatRequest
 
 // .mspb.RequestHeader header = 1;
@@ -5303,6 +7669,266 @@ inline void RangeHeartbeatResponse::set_allocated_epoch(::basepb::RangeEpoch* ep
 
 // -------------------------------------------------------------------
 
+// ChangeRangeStoreTypeRequest
+
+// .mspb.RequestHeader header = 1;
+inline bool ChangeRangeStoreTypeRequest::has_header() const {
+  return this != internal_default_instance() && header_ != NULL;
+}
+inline void ChangeRangeStoreTypeRequest::clear_header() {
+  if (GetArenaNoVirtual() == NULL && header_ != NULL) delete header_;
+  header_ = NULL;
+}
+inline const ::mspb::RequestHeader& ChangeRangeStoreTypeRequest::header() const {
+  const ::mspb::RequestHeader* p = header_;
+  // @@protoc_insertion_point(field_get:mspb.ChangeRangeStoreTypeRequest.header)
+  return p != NULL ? *p : *reinterpret_cast<const ::mspb::RequestHeader*>(
+      &::mspb::_RequestHeader_default_instance_);
+}
+inline ::mspb::RequestHeader* ChangeRangeStoreTypeRequest::mutable_header() {
+  
+  if (header_ == NULL) {
+    header_ = new ::mspb::RequestHeader;
+  }
+  // @@protoc_insertion_point(field_mutable:mspb.ChangeRangeStoreTypeRequest.header)
+  return header_;
+}
+inline ::mspb::RequestHeader* ChangeRangeStoreTypeRequest::release_header() {
+  // @@protoc_insertion_point(field_release:mspb.ChangeRangeStoreTypeRequest.header)
+  
+  ::mspb::RequestHeader* temp = header_;
+  header_ = NULL;
+  return temp;
+}
+inline void ChangeRangeStoreTypeRequest::set_allocated_header(::mspb::RequestHeader* header) {
+  delete header_;
+  header_ = header;
+  if (header) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:mspb.ChangeRangeStoreTypeRequest.header)
+}
+
+// uint64 table_id = 2;
+inline void ChangeRangeStoreTypeRequest::clear_table_id() {
+  table_id_ = GOOGLE_ULONGLONG(0);
+}
+inline ::google::protobuf::uint64 ChangeRangeStoreTypeRequest::table_id() const {
+  // @@protoc_insertion_point(field_get:mspb.ChangeRangeStoreTypeRequest.table_id)
+  return table_id_;
+}
+inline void ChangeRangeStoreTypeRequest::set_table_id(::google::protobuf::uint64 value) {
+  
+  table_id_ = value;
+  // @@protoc_insertion_point(field_set:mspb.ChangeRangeStoreTypeRequest.table_id)
+}
+
+// uint64 range_id = 3;
+inline void ChangeRangeStoreTypeRequest::clear_range_id() {
+  range_id_ = GOOGLE_ULONGLONG(0);
+}
+inline ::google::protobuf::uint64 ChangeRangeStoreTypeRequest::range_id() const {
+  // @@protoc_insertion_point(field_get:mspb.ChangeRangeStoreTypeRequest.range_id)
+  return range_id_;
+}
+inline void ChangeRangeStoreTypeRequest::set_range_id(::google::protobuf::uint64 value) {
+  
+  range_id_ = value;
+  // @@protoc_insertion_point(field_set:mspb.ChangeRangeStoreTypeRequest.range_id)
+}
+
+// .basepb.StoreType store_type = 4;
+inline void ChangeRangeStoreTypeRequest::clear_store_type() {
+  store_type_ = 0;
+}
+inline ::basepb::StoreType ChangeRangeStoreTypeRequest::store_type() const {
+  // @@protoc_insertion_point(field_get:mspb.ChangeRangeStoreTypeRequest.store_type)
+  return static_cast< ::basepb::StoreType >(store_type_);
+}
+inline void ChangeRangeStoreTypeRequest::set_store_type(::basepb::StoreType value) {
+  
+  store_type_ = value;
+  // @@protoc_insertion_point(field_set:mspb.ChangeRangeStoreTypeRequest.store_type)
+}
+
+// -------------------------------------------------------------------
+
+// ChangeRangeStoreTypeResponse
+
+// .mspb.ResponseHeader header = 1;
+inline bool ChangeRangeStoreTypeResponse::has_header() const {
+  return this != internal_default_instance() && header_ != NULL;
+}
+inline void ChangeRangeStoreTypeResponse::clear_header() {
+  if (GetArenaNoVirtual() == NULL && header_ != NULL) delete header_;
+  header_ = NULL;
+}
+inline const ::mspb::ResponseHeader& ChangeRangeStoreTypeResponse::header() const {
+  const ::mspb::ResponseHeader* p = header_;
+  // @@protoc_insertion_point(field_get:mspb.ChangeRangeStoreTypeResponse.header)
+  return p != NULL ? *p : *reinterpret_cast<const ::mspb::ResponseHeader*>(
+      &::mspb::_ResponseHeader_default_instance_);
+}
+inline ::mspb::ResponseHeader* ChangeRangeStoreTypeResponse::mutable_header() {
+  
+  if (header_ == NULL) {
+    header_ = new ::mspb::ResponseHeader;
+  }
+  // @@protoc_insertion_point(field_mutable:mspb.ChangeRangeStoreTypeResponse.header)
+  return header_;
+}
+inline ::mspb::ResponseHeader* ChangeRangeStoreTypeResponse::release_header() {
+  // @@protoc_insertion_point(field_release:mspb.ChangeRangeStoreTypeResponse.header)
+  
+  ::mspb::ResponseHeader* temp = header_;
+  header_ = NULL;
+  return temp;
+}
+inline void ChangeRangeStoreTypeResponse::set_allocated_header(::mspb::ResponseHeader* header) {
+  delete header_;
+  header_ = header;
+  if (header) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:mspb.ChangeRangeStoreTypeResponse.header)
+}
+
+// -------------------------------------------------------------------
+
+// PeerMoveRequest
+
+// .mspb.RequestHeader header = 1;
+inline bool PeerMoveRequest::has_header() const {
+  return this != internal_default_instance() && header_ != NULL;
+}
+inline void PeerMoveRequest::clear_header() {
+  if (GetArenaNoVirtual() == NULL && header_ != NULL) delete header_;
+  header_ = NULL;
+}
+inline const ::mspb::RequestHeader& PeerMoveRequest::header() const {
+  const ::mspb::RequestHeader* p = header_;
+  // @@protoc_insertion_point(field_get:mspb.PeerMoveRequest.header)
+  return p != NULL ? *p : *reinterpret_cast<const ::mspb::RequestHeader*>(
+      &::mspb::_RequestHeader_default_instance_);
+}
+inline ::mspb::RequestHeader* PeerMoveRequest::mutable_header() {
+  
+  if (header_ == NULL) {
+    header_ = new ::mspb::RequestHeader;
+  }
+  // @@protoc_insertion_point(field_mutable:mspb.PeerMoveRequest.header)
+  return header_;
+}
+inline ::mspb::RequestHeader* PeerMoveRequest::release_header() {
+  // @@protoc_insertion_point(field_release:mspb.PeerMoveRequest.header)
+  
+  ::mspb::RequestHeader* temp = header_;
+  header_ = NULL;
+  return temp;
+}
+inline void PeerMoveRequest::set_allocated_header(::mspb::RequestHeader* header) {
+  delete header_;
+  header_ = header;
+  if (header) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:mspb.PeerMoveRequest.header)
+}
+
+// uint64 table_id = 2;
+inline void PeerMoveRequest::clear_table_id() {
+  table_id_ = GOOGLE_ULONGLONG(0);
+}
+inline ::google::protobuf::uint64 PeerMoveRequest::table_id() const {
+  // @@protoc_insertion_point(field_get:mspb.PeerMoveRequest.table_id)
+  return table_id_;
+}
+inline void PeerMoveRequest::set_table_id(::google::protobuf::uint64 value) {
+  
+  table_id_ = value;
+  // @@protoc_insertion_point(field_set:mspb.PeerMoveRequest.table_id)
+}
+
+// uint64 range_id = 3;
+inline void PeerMoveRequest::clear_range_id() {
+  range_id_ = GOOGLE_ULONGLONG(0);
+}
+inline ::google::protobuf::uint64 PeerMoveRequest::range_id() const {
+  // @@protoc_insertion_point(field_get:mspb.PeerMoveRequest.range_id)
+  return range_id_;
+}
+inline void PeerMoveRequest::set_range_id(::google::protobuf::uint64 value) {
+  
+  range_id_ = value;
+  // @@protoc_insertion_point(field_set:mspb.PeerMoveRequest.range_id)
+}
+
+// .basepb.StoreType store_type = 4;
+inline void PeerMoveRequest::clear_store_type() {
+  store_type_ = 0;
+}
+inline ::basepb::StoreType PeerMoveRequest::store_type() const {
+  // @@protoc_insertion_point(field_get:mspb.PeerMoveRequest.store_type)
+  return static_cast< ::basepb::StoreType >(store_type_);
+}
+inline void PeerMoveRequest::set_store_type(::basepb::StoreType value) {
+  
+  store_type_ = value;
+  // @@protoc_insertion_point(field_set:mspb.PeerMoveRequest.store_type)
+}
+
+// -------------------------------------------------------------------
+
+// PeerMoveResponse
+
+// .mspb.ResponseHeader header = 1;
+inline bool PeerMoveResponse::has_header() const {
+  return this != internal_default_instance() && header_ != NULL;
+}
+inline void PeerMoveResponse::clear_header() {
+  if (GetArenaNoVirtual() == NULL && header_ != NULL) delete header_;
+  header_ = NULL;
+}
+inline const ::mspb::ResponseHeader& PeerMoveResponse::header() const {
+  const ::mspb::ResponseHeader* p = header_;
+  // @@protoc_insertion_point(field_get:mspb.PeerMoveResponse.header)
+  return p != NULL ? *p : *reinterpret_cast<const ::mspb::ResponseHeader*>(
+      &::mspb::_ResponseHeader_default_instance_);
+}
+inline ::mspb::ResponseHeader* PeerMoveResponse::mutable_header() {
+  
+  if (header_ == NULL) {
+    header_ = new ::mspb::ResponseHeader;
+  }
+  // @@protoc_insertion_point(field_mutable:mspb.PeerMoveResponse.header)
+  return header_;
+}
+inline ::mspb::ResponseHeader* PeerMoveResponse::release_header() {
+  // @@protoc_insertion_point(field_release:mspb.PeerMoveResponse.header)
+  
+  ::mspb::ResponseHeader* temp = header_;
+  header_ = NULL;
+  return temp;
+}
+inline void PeerMoveResponse::set_allocated_header(::mspb::ResponseHeader* header) {
+  delete header_;
+  header_ = header;
+  if (header) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:mspb.PeerMoveResponse.header)
+}
+
+// -------------------------------------------------------------------
+
 // NodeHeartbeatRequest
 
 // .mspb.RequestHeader header = 1;
@@ -5415,6 +8041,191 @@ inline void NodeHeartbeatResponse::set_node_id(::google::protobuf::uint64 value)
   
   node_id_ = value;
   // @@protoc_insertion_point(field_set:mspb.NodeHeartbeatResponse.node_id)
+}
+
+// -------------------------------------------------------------------
+
+// WatcherEventRequest
+
+// .mspb.RequestHeader header = 1;
+inline bool WatcherEventRequest::has_header() const {
+  return this != internal_default_instance() && header_ != NULL;
+}
+inline void WatcherEventRequest::clear_header() {
+  if (GetArenaNoVirtual() == NULL && header_ != NULL) delete header_;
+  header_ = NULL;
+}
+inline const ::mspb::RequestHeader& WatcherEventRequest::header() const {
+  const ::mspb::RequestHeader* p = header_;
+  // @@protoc_insertion_point(field_get:mspb.WatcherEventRequest.header)
+  return p != NULL ? *p : *reinterpret_cast<const ::mspb::RequestHeader*>(
+      &::mspb::_RequestHeader_default_instance_);
+}
+inline ::mspb::RequestHeader* WatcherEventRequest::mutable_header() {
+  
+  if (header_ == NULL) {
+    header_ = new ::mspb::RequestHeader;
+  }
+  // @@protoc_insertion_point(field_mutable:mspb.WatcherEventRequest.header)
+  return header_;
+}
+inline ::mspb::RequestHeader* WatcherEventRequest::release_header() {
+  // @@protoc_insertion_point(field_release:mspb.WatcherEventRequest.header)
+  
+  ::mspb::RequestHeader* temp = header_;
+  header_ = NULL;
+  return temp;
+}
+inline void WatcherEventRequest::set_allocated_header(::mspb::RequestHeader* header) {
+  delete header_;
+  header_ = header;
+  if (header) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:mspb.WatcherEventRequest.header)
+}
+
+// uint64 version = 2;
+inline void WatcherEventRequest::clear_version() {
+  version_ = GOOGLE_ULONGLONG(0);
+}
+inline ::google::protobuf::uint64 WatcherEventRequest::version() const {
+  // @@protoc_insertion_point(field_get:mspb.WatcherEventRequest.version)
+  return version_;
+}
+inline void WatcherEventRequest::set_version(::google::protobuf::uint64 value) {
+  
+  version_ = value;
+  // @@protoc_insertion_point(field_set:mspb.WatcherEventRequest.version)
+}
+
+// string master = 3;
+inline void WatcherEventRequest::clear_master() {
+  master_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& WatcherEventRequest::master() const {
+  // @@protoc_insertion_point(field_get:mspb.WatcherEventRequest.master)
+  return master_.GetNoArena();
+}
+inline void WatcherEventRequest::set_master(const ::std::string& value) {
+  
+  master_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:mspb.WatcherEventRequest.master)
+}
+#if LANG_CXX11
+inline void WatcherEventRequest::set_master(::std::string&& value) {
+  
+  master_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:mspb.WatcherEventRequest.master)
+}
+#endif
+inline void WatcherEventRequest::set_master(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  master_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:mspb.WatcherEventRequest.master)
+}
+inline void WatcherEventRequest::set_master(const char* value, size_t size) {
+  
+  master_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:mspb.WatcherEventRequest.master)
+}
+inline ::std::string* WatcherEventRequest::mutable_master() {
+  
+  // @@protoc_insertion_point(field_mutable:mspb.WatcherEventRequest.master)
+  return master_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* WatcherEventRequest::release_master() {
+  // @@protoc_insertion_point(field_release:mspb.WatcherEventRequest.master)
+  
+  return master_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void WatcherEventRequest::set_allocated_master(::std::string* master) {
+  if (master != NULL) {
+    
+  } else {
+    
+  }
+  master_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), master);
+  // @@protoc_insertion_point(field_set_allocated:mspb.WatcherEventRequest.master)
+}
+
+// -------------------------------------------------------------------
+
+// WatcherEventResponse
+
+// .mspb.ResponseHeader header = 1;
+inline bool WatcherEventResponse::has_header() const {
+  return this != internal_default_instance() && header_ != NULL;
+}
+inline void WatcherEventResponse::clear_header() {
+  if (GetArenaNoVirtual() == NULL && header_ != NULL) delete header_;
+  header_ = NULL;
+}
+inline const ::mspb::ResponseHeader& WatcherEventResponse::header() const {
+  const ::mspb::ResponseHeader* p = header_;
+  // @@protoc_insertion_point(field_get:mspb.WatcherEventResponse.header)
+  return p != NULL ? *p : *reinterpret_cast<const ::mspb::ResponseHeader*>(
+      &::mspb::_ResponseHeader_default_instance_);
+}
+inline ::mspb::ResponseHeader* WatcherEventResponse::mutable_header() {
+  
+  if (header_ == NULL) {
+    header_ = new ::mspb::ResponseHeader;
+  }
+  // @@protoc_insertion_point(field_mutable:mspb.WatcherEventResponse.header)
+  return header_;
+}
+inline ::mspb::ResponseHeader* WatcherEventResponse::release_header() {
+  // @@protoc_insertion_point(field_release:mspb.WatcherEventResponse.header)
+  
+  ::mspb::ResponseHeader* temp = header_;
+  header_ = NULL;
+  return temp;
+}
+inline void WatcherEventResponse::set_allocated_header(::mspb::ResponseHeader* header) {
+  delete header_;
+  header_ = header;
+  if (header) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:mspb.WatcherEventResponse.header)
+}
+
+// repeated .basepb.WatcherEvent events = 2;
+inline int WatcherEventResponse::events_size() const {
+  return events_.size();
+}
+inline void WatcherEventResponse::clear_events() {
+  events_.Clear();
+}
+inline const ::basepb::WatcherEvent& WatcherEventResponse::events(int index) const {
+  // @@protoc_insertion_point(field_get:mspb.WatcherEventResponse.events)
+  return events_.Get(index);
+}
+inline ::basepb::WatcherEvent* WatcherEventResponse::mutable_events(int index) {
+  // @@protoc_insertion_point(field_mutable:mspb.WatcherEventResponse.events)
+  return events_.Mutable(index);
+}
+inline ::basepb::WatcherEvent* WatcherEventResponse::add_events() {
+  // @@protoc_insertion_point(field_add:mspb.WatcherEventResponse.events)
+  return events_.Add();
+}
+inline ::google::protobuf::RepeatedPtrField< ::basepb::WatcherEvent >*
+WatcherEventResponse::mutable_events() {
+  // @@protoc_insertion_point(field_mutable_list:mspb.WatcherEventResponse.events)
+  return &events_;
+}
+inline const ::google::protobuf::RepeatedPtrField< ::basepb::WatcherEvent >&
+WatcherEventResponse::events() const {
+  // @@protoc_insertion_point(field_list:mspb.WatcherEventResponse.events)
+  return events_;
 }
 
 // -------------------------------------------------------------------
@@ -5751,6 +8562,106 @@ inline void AskSplitResponse::set_allocated_split_key(::std::string* split_key) 
 
 // -------------------------------------------------------------------
 
+// RangeFingerprint
+
+// uint64 range_id = 1;
+inline void RangeFingerprint::clear_range_id() {
+  range_id_ = GOOGLE_ULONGLONG(0);
+}
+inline ::google::protobuf::uint64 RangeFingerprint::range_id() const {
+  // @@protoc_insertion_point(field_get:mspb.RangeFingerprint.range_id)
+  return range_id_;
+}
+inline void RangeFingerprint::set_range_id(::google::protobuf::uint64 value) {
+  
+  range_id_ = value;
+  // @@protoc_insertion_point(field_set:mspb.RangeFingerprint.range_id)
+}
+
+// .basepb.RangeEpoch range_epoch = 2;
+inline bool RangeFingerprint::has_range_epoch() const {
+  return this != internal_default_instance() && range_epoch_ != NULL;
+}
+inline void RangeFingerprint::clear_range_epoch() {
+  if (GetArenaNoVirtual() == NULL && range_epoch_ != NULL) delete range_epoch_;
+  range_epoch_ = NULL;
+}
+inline const ::basepb::RangeEpoch& RangeFingerprint::range_epoch() const {
+  const ::basepb::RangeEpoch* p = range_epoch_;
+  // @@protoc_insertion_point(field_get:mspb.RangeFingerprint.range_epoch)
+  return p != NULL ? *p : *reinterpret_cast<const ::basepb::RangeEpoch*>(
+      &::basepb::_RangeEpoch_default_instance_);
+}
+inline ::basepb::RangeEpoch* RangeFingerprint::mutable_range_epoch() {
+  
+  if (range_epoch_ == NULL) {
+    range_epoch_ = new ::basepb::RangeEpoch;
+  }
+  // @@protoc_insertion_point(field_mutable:mspb.RangeFingerprint.range_epoch)
+  return range_epoch_;
+}
+inline ::basepb::RangeEpoch* RangeFingerprint::release_range_epoch() {
+  // @@protoc_insertion_point(field_release:mspb.RangeFingerprint.range_epoch)
+  
+  ::basepb::RangeEpoch* temp = range_epoch_;
+  range_epoch_ = NULL;
+  return temp;
+}
+inline void RangeFingerprint::set_allocated_range_epoch(::basepb::RangeEpoch* range_epoch) {
+  delete range_epoch_;
+  range_epoch_ = range_epoch;
+  if (range_epoch) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:mspb.RangeFingerprint.range_epoch)
+}
+
+// uint64 db_id = 3;
+inline void RangeFingerprint::clear_db_id() {
+  db_id_ = GOOGLE_ULONGLONG(0);
+}
+inline ::google::protobuf::uint64 RangeFingerprint::db_id() const {
+  // @@protoc_insertion_point(field_get:mspb.RangeFingerprint.db_id)
+  return db_id_;
+}
+inline void RangeFingerprint::set_db_id(::google::protobuf::uint64 value) {
+  
+  db_id_ = value;
+  // @@protoc_insertion_point(field_set:mspb.RangeFingerprint.db_id)
+}
+
+// uint64 table_id = 4;
+inline void RangeFingerprint::clear_table_id() {
+  table_id_ = GOOGLE_ULONGLONG(0);
+}
+inline ::google::protobuf::uint64 RangeFingerprint::table_id() const {
+  // @@protoc_insertion_point(field_get:mspb.RangeFingerprint.table_id)
+  return table_id_;
+}
+inline void RangeFingerprint::set_table_id(::google::protobuf::uint64 value) {
+  
+  table_id_ = value;
+  // @@protoc_insertion_point(field_set:mspb.RangeFingerprint.table_id)
+}
+
+// uint64 peer_id = 5;
+inline void RangeFingerprint::clear_peer_id() {
+  peer_id_ = GOOGLE_ULONGLONG(0);
+}
+inline ::google::protobuf::uint64 RangeFingerprint::peer_id() const {
+  // @@protoc_insertion_point(field_get:mspb.RangeFingerprint.peer_id)
+  return peer_id_;
+}
+inline void RangeFingerprint::set_peer_id(::google::protobuf::uint64 value) {
+  
+  peer_id_ = value;
+  // @@protoc_insertion_point(field_set:mspb.RangeFingerprint.peer_id)
+}
+
+// -------------------------------------------------------------------
+
 // RegisterNodeRequest
 
 // .mspb.RequestHeader header = 1;
@@ -5888,6 +8799,50 @@ inline void RegisterNodeRequest::set_allocated_version(::std::string* version) {
   // @@protoc_insertion_point(field_set_allocated:mspb.RegisterNodeRequest.version)
 }
 
+// .mspb.StorageEngine st_engine = 6;
+inline void RegisterNodeRequest::clear_st_engine() {
+  st_engine_ = 0;
+}
+inline ::mspb::StorageEngine RegisterNodeRequest::st_engine() const {
+  // @@protoc_insertion_point(field_get:mspb.RegisterNodeRequest.st_engine)
+  return static_cast< ::mspb::StorageEngine >(st_engine_);
+}
+inline void RegisterNodeRequest::set_st_engine(::mspb::StorageEngine value) {
+  
+  st_engine_ = value;
+  // @@protoc_insertion_point(field_set:mspb.RegisterNodeRequest.st_engine)
+}
+
+// repeated .mspb.RangeFingerprint ranges = 7;
+inline int RegisterNodeRequest::ranges_size() const {
+  return ranges_.size();
+}
+inline void RegisterNodeRequest::clear_ranges() {
+  ranges_.Clear();
+}
+inline const ::mspb::RangeFingerprint& RegisterNodeRequest::ranges(int index) const {
+  // @@protoc_insertion_point(field_get:mspb.RegisterNodeRequest.ranges)
+  return ranges_.Get(index);
+}
+inline ::mspb::RangeFingerprint* RegisterNodeRequest::mutable_ranges(int index) {
+  // @@protoc_insertion_point(field_mutable:mspb.RegisterNodeRequest.ranges)
+  return ranges_.Mutable(index);
+}
+inline ::mspb::RangeFingerprint* RegisterNodeRequest::add_ranges() {
+  // @@protoc_insertion_point(field_add:mspb.RegisterNodeRequest.ranges)
+  return ranges_.Add();
+}
+inline ::google::protobuf::RepeatedPtrField< ::mspb::RangeFingerprint >*
+RegisterNodeRequest::mutable_ranges() {
+  // @@protoc_insertion_point(field_mutable_list:mspb.RegisterNodeRequest.ranges)
+  return &ranges_;
+}
+inline const ::google::protobuf::RepeatedPtrField< ::mspb::RangeFingerprint >&
+RegisterNodeRequest::ranges() const {
+  // @@protoc_insertion_point(field_list:mspb.RegisterNodeRequest.ranges)
+  return ranges_;
+}
+
 // -------------------------------------------------------------------
 
 // RegisterNodeResponse
@@ -5944,6 +8899,36 @@ inline void RegisterNodeResponse::set_node_id(::google::protobuf::uint64 value) 
   
   node_id_ = value;
   // @@protoc_insertion_point(field_set:mspb.RegisterNodeResponse.node_id)
+}
+
+// repeated uint64 invalid_ranges = 3;
+inline int RegisterNodeResponse::invalid_ranges_size() const {
+  return invalid_ranges_.size();
+}
+inline void RegisterNodeResponse::clear_invalid_ranges() {
+  invalid_ranges_.Clear();
+}
+inline ::google::protobuf::uint64 RegisterNodeResponse::invalid_ranges(int index) const {
+  // @@protoc_insertion_point(field_get:mspb.RegisterNodeResponse.invalid_ranges)
+  return invalid_ranges_.Get(index);
+}
+inline void RegisterNodeResponse::set_invalid_ranges(int index, ::google::protobuf::uint64 value) {
+  invalid_ranges_.Set(index, value);
+  // @@protoc_insertion_point(field_set:mspb.RegisterNodeResponse.invalid_ranges)
+}
+inline void RegisterNodeResponse::add_invalid_ranges(::google::protobuf::uint64 value) {
+  invalid_ranges_.Add(value);
+  // @@protoc_insertion_point(field_add:mspb.RegisterNodeResponse.invalid_ranges)
+}
+inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint64 >&
+RegisterNodeResponse::invalid_ranges() const {
+  // @@protoc_insertion_point(field_list:mspb.RegisterNodeResponse.invalid_ranges)
+  return invalid_ranges_;
+}
+inline ::google::protobuf::RepeatedField< ::google::protobuf::uint64 >*
+RegisterNodeResponse::mutable_invalid_ranges() {
+  // @@protoc_insertion_point(field_mutable_list:mspb.RegisterNodeResponse.invalid_ranges)
+  return &invalid_ranges_;
 }
 
 // -------------------------------------------------------------------
@@ -6085,6 +9070,34 @@ inline void GetRouteRequest::set_max(::google::protobuf::uint32 value) {
   // @@protoc_insertion_point(field_set:mspb.GetRouteRequest.max)
 }
 
+// .basepb.RangeType rangeType = 6;
+inline void GetRouteRequest::clear_rangetype() {
+  rangetype_ = 0;
+}
+inline ::basepb::RangeType GetRouteRequest::rangetype() const {
+  // @@protoc_insertion_point(field_get:mspb.GetRouteRequest.rangeType)
+  return static_cast< ::basepb::RangeType >(rangetype_);
+}
+inline void GetRouteRequest::set_rangetype(::basepb::RangeType value) {
+  
+  rangetype_ = value;
+  // @@protoc_insertion_point(field_set:mspb.GetRouteRequest.rangeType)
+}
+
+// bool has_all = 7;
+inline void GetRouteRequest::clear_has_all() {
+  has_all_ = false;
+}
+inline bool GetRouteRequest::has_all() const {
+  // @@protoc_insertion_point(field_get:mspb.GetRouteRequest.has_all)
+  return has_all_;
+}
+inline void GetRouteRequest::set_has_all(bool value) {
+  
+  has_all_ = value;
+  // @@protoc_insertion_point(field_set:mspb.GetRouteRequest.has_all)
+}
+
 // -------------------------------------------------------------------
 
 // GetRouteResponse
@@ -6157,6 +9170,73 @@ inline const ::google::protobuf::RepeatedPtrField< ::basepb::Range >&
 GetRouteResponse::routes() const {
   // @@protoc_insertion_point(field_list:mspb.GetRouteResponse.routes)
   return routes_;
+}
+
+// string master = 3;
+inline void GetRouteResponse::clear_master() {
+  master_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& GetRouteResponse::master() const {
+  // @@protoc_insertion_point(field_get:mspb.GetRouteResponse.master)
+  return master_.GetNoArena();
+}
+inline void GetRouteResponse::set_master(const ::std::string& value) {
+  
+  master_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:mspb.GetRouteResponse.master)
+}
+#if LANG_CXX11
+inline void GetRouteResponse::set_master(::std::string&& value) {
+  
+  master_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:mspb.GetRouteResponse.master)
+}
+#endif
+inline void GetRouteResponse::set_master(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  master_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:mspb.GetRouteResponse.master)
+}
+inline void GetRouteResponse::set_master(const char* value, size_t size) {
+  
+  master_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:mspb.GetRouteResponse.master)
+}
+inline ::std::string* GetRouteResponse::mutable_master() {
+  
+  // @@protoc_insertion_point(field_mutable:mspb.GetRouteResponse.master)
+  return master_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* GetRouteResponse::release_master() {
+  // @@protoc_insertion_point(field_release:mspb.GetRouteResponse.master)
+  
+  return master_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void GetRouteResponse::set_allocated_master(::std::string* master) {
+  if (master != NULL) {
+    
+  } else {
+    
+  }
+  master_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), master);
+  // @@protoc_insertion_point(field_set_allocated:mspb.GetRouteResponse.master)
+}
+
+// uint64 version = 4;
+inline void GetRouteResponse::clear_version() {
+  version_ = GOOGLE_ULONGLONG(0);
+}
+inline ::google::protobuf::uint64 GetRouteResponse::version() const {
+  // @@protoc_insertion_point(field_get:mspb.GetRouteResponse.version)
+  return version_;
+}
+inline void GetRouteResponse::set_version(::google::protobuf::uint64 value) {
+  
+  version_ = value;
+  // @@protoc_insertion_point(field_set:mspb.GetRouteResponse.version)
 }
 
 // -------------------------------------------------------------------
@@ -6417,6 +9497,306 @@ inline void GetNodeResponse::set_allocated_node(::basepb::Node* node) {
     
   }
   // @@protoc_insertion_point(field_set_allocated:mspb.GetNodeResponse.node)
+}
+
+// -------------------------------------------------------------------
+
+// ChangeNodeStateRequest
+
+// .mspb.RequestHeader header = 1;
+inline bool ChangeNodeStateRequest::has_header() const {
+  return this != internal_default_instance() && header_ != NULL;
+}
+inline void ChangeNodeStateRequest::clear_header() {
+  if (GetArenaNoVirtual() == NULL && header_ != NULL) delete header_;
+  header_ = NULL;
+}
+inline const ::mspb::RequestHeader& ChangeNodeStateRequest::header() const {
+  const ::mspb::RequestHeader* p = header_;
+  // @@protoc_insertion_point(field_get:mspb.ChangeNodeStateRequest.header)
+  return p != NULL ? *p : *reinterpret_cast<const ::mspb::RequestHeader*>(
+      &::mspb::_RequestHeader_default_instance_);
+}
+inline ::mspb::RequestHeader* ChangeNodeStateRequest::mutable_header() {
+  
+  if (header_ == NULL) {
+    header_ = new ::mspb::RequestHeader;
+  }
+  // @@protoc_insertion_point(field_mutable:mspb.ChangeNodeStateRequest.header)
+  return header_;
+}
+inline ::mspb::RequestHeader* ChangeNodeStateRequest::release_header() {
+  // @@protoc_insertion_point(field_release:mspb.ChangeNodeStateRequest.header)
+  
+  ::mspb::RequestHeader* temp = header_;
+  header_ = NULL;
+  return temp;
+}
+inline void ChangeNodeStateRequest::set_allocated_header(::mspb::RequestHeader* header) {
+  delete header_;
+  header_ = header;
+  if (header) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:mspb.ChangeNodeStateRequest.header)
+}
+
+// uint64 id = 2;
+inline void ChangeNodeStateRequest::clear_id() {
+  id_ = GOOGLE_ULONGLONG(0);
+}
+inline ::google::protobuf::uint64 ChangeNodeStateRequest::id() const {
+  // @@protoc_insertion_point(field_get:mspb.ChangeNodeStateRequest.id)
+  return id_;
+}
+inline void ChangeNodeStateRequest::set_id(::google::protobuf::uint64 value) {
+  
+  id_ = value;
+  // @@protoc_insertion_point(field_set:mspb.ChangeNodeStateRequest.id)
+}
+
+// .basepb.NodeState state = 3;
+inline void ChangeNodeStateRequest::clear_state() {
+  state_ = 0;
+}
+inline ::basepb::NodeState ChangeNodeStateRequest::state() const {
+  // @@protoc_insertion_point(field_get:mspb.ChangeNodeStateRequest.state)
+  return static_cast< ::basepb::NodeState >(state_);
+}
+inline void ChangeNodeStateRequest::set_state(::basepb::NodeState value) {
+  
+  state_ = value;
+  // @@protoc_insertion_point(field_set:mspb.ChangeNodeStateRequest.state)
+}
+
+// -------------------------------------------------------------------
+
+// ChangeNodeStateResponse
+
+// .mspb.ResponseHeader header = 1;
+inline bool ChangeNodeStateResponse::has_header() const {
+  return this != internal_default_instance() && header_ != NULL;
+}
+inline void ChangeNodeStateResponse::clear_header() {
+  if (GetArenaNoVirtual() == NULL && header_ != NULL) delete header_;
+  header_ = NULL;
+}
+inline const ::mspb::ResponseHeader& ChangeNodeStateResponse::header() const {
+  const ::mspb::ResponseHeader* p = header_;
+  // @@protoc_insertion_point(field_get:mspb.ChangeNodeStateResponse.header)
+  return p != NULL ? *p : *reinterpret_cast<const ::mspb::ResponseHeader*>(
+      &::mspb::_ResponseHeader_default_instance_);
+}
+inline ::mspb::ResponseHeader* ChangeNodeStateResponse::mutable_header() {
+  
+  if (header_ == NULL) {
+    header_ = new ::mspb::ResponseHeader;
+  }
+  // @@protoc_insertion_point(field_mutable:mspb.ChangeNodeStateResponse.header)
+  return header_;
+}
+inline ::mspb::ResponseHeader* ChangeNodeStateResponse::release_header() {
+  // @@protoc_insertion_point(field_release:mspb.ChangeNodeStateResponse.header)
+  
+  ::mspb::ResponseHeader* temp = header_;
+  header_ = NULL;
+  return temp;
+}
+inline void ChangeNodeStateResponse::set_allocated_header(::mspb::ResponseHeader* header) {
+  delete header_;
+  header_ = header;
+  if (header) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:mspb.ChangeNodeStateResponse.header)
+}
+
+// .basepb.Node node = 2;
+inline bool ChangeNodeStateResponse::has_node() const {
+  return this != internal_default_instance() && node_ != NULL;
+}
+inline void ChangeNodeStateResponse::clear_node() {
+  if (GetArenaNoVirtual() == NULL && node_ != NULL) delete node_;
+  node_ = NULL;
+}
+inline const ::basepb::Node& ChangeNodeStateResponse::node() const {
+  const ::basepb::Node* p = node_;
+  // @@protoc_insertion_point(field_get:mspb.ChangeNodeStateResponse.node)
+  return p != NULL ? *p : *reinterpret_cast<const ::basepb::Node*>(
+      &::basepb::_Node_default_instance_);
+}
+inline ::basepb::Node* ChangeNodeStateResponse::mutable_node() {
+  
+  if (node_ == NULL) {
+    node_ = new ::basepb::Node;
+  }
+  // @@protoc_insertion_point(field_mutable:mspb.ChangeNodeStateResponse.node)
+  return node_;
+}
+inline ::basepb::Node* ChangeNodeStateResponse::release_node() {
+  // @@protoc_insertion_point(field_release:mspb.ChangeNodeStateResponse.node)
+  
+  ::basepb::Node* temp = node_;
+  node_ = NULL;
+  return temp;
+}
+inline void ChangeNodeStateResponse::set_allocated_node(::basepb::Node* node) {
+  delete node_;
+  node_ = node;
+  if (node) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:mspb.ChangeNodeStateResponse.node)
+}
+
+// -------------------------------------------------------------------
+
+// CheckNodeStateRequest
+
+// .mspb.RequestHeader header = 1;
+inline bool CheckNodeStateRequest::has_header() const {
+  return this != internal_default_instance() && header_ != NULL;
+}
+inline void CheckNodeStateRequest::clear_header() {
+  if (GetArenaNoVirtual() == NULL && header_ != NULL) delete header_;
+  header_ = NULL;
+}
+inline const ::mspb::RequestHeader& CheckNodeStateRequest::header() const {
+  const ::mspb::RequestHeader* p = header_;
+  // @@protoc_insertion_point(field_get:mspb.CheckNodeStateRequest.header)
+  return p != NULL ? *p : *reinterpret_cast<const ::mspb::RequestHeader*>(
+      &::mspb::_RequestHeader_default_instance_);
+}
+inline ::mspb::RequestHeader* CheckNodeStateRequest::mutable_header() {
+  
+  if (header_ == NULL) {
+    header_ = new ::mspb::RequestHeader;
+  }
+  // @@protoc_insertion_point(field_mutable:mspb.CheckNodeStateRequest.header)
+  return header_;
+}
+inline ::mspb::RequestHeader* CheckNodeStateRequest::release_header() {
+  // @@protoc_insertion_point(field_release:mspb.CheckNodeStateRequest.header)
+  
+  ::mspb::RequestHeader* temp = header_;
+  header_ = NULL;
+  return temp;
+}
+inline void CheckNodeStateRequest::set_allocated_header(::mspb::RequestHeader* header) {
+  delete header_;
+  header_ = header;
+  if (header) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:mspb.CheckNodeStateRequest.header)
+}
+
+// uint64 id = 2;
+inline void CheckNodeStateRequest::clear_id() {
+  id_ = GOOGLE_ULONGLONG(0);
+}
+inline ::google::protobuf::uint64 CheckNodeStateRequest::id() const {
+  // @@protoc_insertion_point(field_get:mspb.CheckNodeStateRequest.id)
+  return id_;
+}
+inline void CheckNodeStateRequest::set_id(::google::protobuf::uint64 value) {
+  
+  id_ = value;
+  // @@protoc_insertion_point(field_set:mspb.CheckNodeStateRequest.id)
+}
+
+// -------------------------------------------------------------------
+
+// CheckNodeStateResponse
+
+// .mspb.ResponseHeader header = 1;
+inline bool CheckNodeStateResponse::has_header() const {
+  return this != internal_default_instance() && header_ != NULL;
+}
+inline void CheckNodeStateResponse::clear_header() {
+  if (GetArenaNoVirtual() == NULL && header_ != NULL) delete header_;
+  header_ = NULL;
+}
+inline const ::mspb::ResponseHeader& CheckNodeStateResponse::header() const {
+  const ::mspb::ResponseHeader* p = header_;
+  // @@protoc_insertion_point(field_get:mspb.CheckNodeStateResponse.header)
+  return p != NULL ? *p : *reinterpret_cast<const ::mspb::ResponseHeader*>(
+      &::mspb::_ResponseHeader_default_instance_);
+}
+inline ::mspb::ResponseHeader* CheckNodeStateResponse::mutable_header() {
+  
+  if (header_ == NULL) {
+    header_ = new ::mspb::ResponseHeader;
+  }
+  // @@protoc_insertion_point(field_mutable:mspb.CheckNodeStateResponse.header)
+  return header_;
+}
+inline ::mspb::ResponseHeader* CheckNodeStateResponse::release_header() {
+  // @@protoc_insertion_point(field_release:mspb.CheckNodeStateResponse.header)
+  
+  ::mspb::ResponseHeader* temp = header_;
+  header_ = NULL;
+  return temp;
+}
+inline void CheckNodeStateResponse::set_allocated_header(::mspb::ResponseHeader* header) {
+  delete header_;
+  header_ = header;
+  if (header) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:mspb.CheckNodeStateResponse.header)
+}
+
+// uint64 range_num = 2;
+inline void CheckNodeStateResponse::clear_range_num() {
+  range_num_ = GOOGLE_ULONGLONG(0);
+}
+inline ::google::protobuf::uint64 CheckNodeStateResponse::range_num() const {
+  // @@protoc_insertion_point(field_get:mspb.CheckNodeStateResponse.range_num)
+  return range_num_;
+}
+inline void CheckNodeStateResponse::set_range_num(::google::protobuf::uint64 value) {
+  
+  range_num_ = value;
+  // @@protoc_insertion_point(field_set:mspb.CheckNodeStateResponse.range_num)
+}
+
+// uint64 leader_num = 3;
+inline void CheckNodeStateResponse::clear_leader_num() {
+  leader_num_ = GOOGLE_ULONGLONG(0);
+}
+inline ::google::protobuf::uint64 CheckNodeStateResponse::leader_num() const {
+  // @@protoc_insertion_point(field_get:mspb.CheckNodeStateResponse.leader_num)
+  return leader_num_;
+}
+inline void CheckNodeStateResponse::set_leader_num(::google::protobuf::uint64 value) {
+  
+  leader_num_ = value;
+  // @@protoc_insertion_point(field_set:mspb.CheckNodeStateResponse.leader_num)
+}
+
+// .basepb.NodeState state = 4;
+inline void CheckNodeStateResponse::clear_state() {
+  state_ = 0;
+}
+inline ::basepb::NodeState CheckNodeStateResponse::state() const {
+  // @@protoc_insertion_point(field_get:mspb.CheckNodeStateResponse.state)
+  return static_cast< ::basepb::NodeState >(state_);
+}
+inline void CheckNodeStateResponse::set_state(::basepb::NodeState value) {
+  
+  state_ = value;
+  // @@protoc_insertion_point(field_set:mspb.CheckNodeStateResponse.state)
 }
 
 // -------------------------------------------------------------------
@@ -7089,6 +10469,170 @@ inline void DelTableResponse::set_allocated_table(::basepb::Table* table) {
     
   }
   // @@protoc_insertion_point(field_set_allocated:mspb.DelTableResponse.table)
+}
+
+// -------------------------------------------------------------------
+
+// CountTableRequest
+
+// .mspb.RequestHeader header = 1;
+inline bool CountTableRequest::has_header() const {
+  return this != internal_default_instance() && header_ != NULL;
+}
+inline void CountTableRequest::clear_header() {
+  if (GetArenaNoVirtual() == NULL && header_ != NULL) delete header_;
+  header_ = NULL;
+}
+inline const ::mspb::RequestHeader& CountTableRequest::header() const {
+  const ::mspb::RequestHeader* p = header_;
+  // @@protoc_insertion_point(field_get:mspb.CountTableRequest.header)
+  return p != NULL ? *p : *reinterpret_cast<const ::mspb::RequestHeader*>(
+      &::mspb::_RequestHeader_default_instance_);
+}
+inline ::mspb::RequestHeader* CountTableRequest::mutable_header() {
+  
+  if (header_ == NULL) {
+    header_ = new ::mspb::RequestHeader;
+  }
+  // @@protoc_insertion_point(field_mutable:mspb.CountTableRequest.header)
+  return header_;
+}
+inline ::mspb::RequestHeader* CountTableRequest::release_header() {
+  // @@protoc_insertion_point(field_release:mspb.CountTableRequest.header)
+  
+  ::mspb::RequestHeader* temp = header_;
+  header_ = NULL;
+  return temp;
+}
+inline void CountTableRequest::set_allocated_header(::mspb::RequestHeader* header) {
+  delete header_;
+  header_ = header;
+  if (header) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:mspb.CountTableRequest.header)
+}
+
+// -------------------------------------------------------------------
+
+// Counter
+
+// uint64 db_id = 1;
+inline void Counter::clear_db_id() {
+  db_id_ = GOOGLE_ULONGLONG(0);
+}
+inline ::google::protobuf::uint64 Counter::db_id() const {
+  // @@protoc_insertion_point(field_get:mspb.Counter.db_id)
+  return db_id_;
+}
+inline void Counter::set_db_id(::google::protobuf::uint64 value) {
+  
+  db_id_ = value;
+  // @@protoc_insertion_point(field_set:mspb.Counter.db_id)
+}
+
+// uint64 table_id = 2;
+inline void Counter::clear_table_id() {
+  table_id_ = GOOGLE_ULONGLONG(0);
+}
+inline ::google::protobuf::uint64 Counter::table_id() const {
+  // @@protoc_insertion_point(field_get:mspb.Counter.table_id)
+  return table_id_;
+}
+inline void Counter::set_table_id(::google::protobuf::uint64 value) {
+  
+  table_id_ = value;
+  // @@protoc_insertion_point(field_set:mspb.Counter.table_id)
+}
+
+// uint64 count = 3;
+inline void Counter::clear_count() {
+  count_ = GOOGLE_ULONGLONG(0);
+}
+inline ::google::protobuf::uint64 Counter::count() const {
+  // @@protoc_insertion_point(field_get:mspb.Counter.count)
+  return count_;
+}
+inline void Counter::set_count(::google::protobuf::uint64 value) {
+  
+  count_ = value;
+  // @@protoc_insertion_point(field_set:mspb.Counter.count)
+}
+
+// -------------------------------------------------------------------
+
+// CountTableResponse
+
+// .mspb.ResponseHeader header = 1;
+inline bool CountTableResponse::has_header() const {
+  return this != internal_default_instance() && header_ != NULL;
+}
+inline void CountTableResponse::clear_header() {
+  if (GetArenaNoVirtual() == NULL && header_ != NULL) delete header_;
+  header_ = NULL;
+}
+inline const ::mspb::ResponseHeader& CountTableResponse::header() const {
+  const ::mspb::ResponseHeader* p = header_;
+  // @@protoc_insertion_point(field_get:mspb.CountTableResponse.header)
+  return p != NULL ? *p : *reinterpret_cast<const ::mspb::ResponseHeader*>(
+      &::mspb::_ResponseHeader_default_instance_);
+}
+inline ::mspb::ResponseHeader* CountTableResponse::mutable_header() {
+  
+  if (header_ == NULL) {
+    header_ = new ::mspb::ResponseHeader;
+  }
+  // @@protoc_insertion_point(field_mutable:mspb.CountTableResponse.header)
+  return header_;
+}
+inline ::mspb::ResponseHeader* CountTableResponse::release_header() {
+  // @@protoc_insertion_point(field_release:mspb.CountTableResponse.header)
+  
+  ::mspb::ResponseHeader* temp = header_;
+  header_ = NULL;
+  return temp;
+}
+inline void CountTableResponse::set_allocated_header(::mspb::ResponseHeader* header) {
+  delete header_;
+  header_ = header;
+  if (header) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:mspb.CountTableResponse.header)
+}
+
+// repeated .mspb.Counter list = 2;
+inline int CountTableResponse::list_size() const {
+  return list_.size();
+}
+inline void CountTableResponse::clear_list() {
+  list_.Clear();
+}
+inline const ::mspb::Counter& CountTableResponse::list(int index) const {
+  // @@protoc_insertion_point(field_get:mspb.CountTableResponse.list)
+  return list_.Get(index);
+}
+inline ::mspb::Counter* CountTableResponse::mutable_list(int index) {
+  // @@protoc_insertion_point(field_mutable:mspb.CountTableResponse.list)
+  return list_.Mutable(index);
+}
+inline ::mspb::Counter* CountTableResponse::add_list() {
+  // @@protoc_insertion_point(field_add:mspb.CountTableResponse.list)
+  return list_.Add();
+}
+inline ::google::protobuf::RepeatedPtrField< ::mspb::Counter >*
+CountTableResponse::mutable_list() {
+  // @@protoc_insertion_point(field_mutable_list:mspb.CountTableResponse.list)
+  return &list_;
+}
+inline const ::google::protobuf::RepeatedPtrField< ::mspb::Counter >&
+CountTableResponse::list() const {
+  // @@protoc_insertion_point(field_list:mspb.CountTableResponse.list)
+  return list_;
 }
 
 // -------------------------------------------------------------------
@@ -8615,6 +12159,87 @@ CreateTableRequest::mutable_range_keys() {
   return &range_keys_;
 }
 
+// string store_type = 6;
+inline void CreateTableRequest::clear_store_type() {
+  store_type_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& CreateTableRequest::store_type() const {
+  // @@protoc_insertion_point(field_get:mspb.CreateTableRequest.store_type)
+  return store_type_.GetNoArena();
+}
+inline void CreateTableRequest::set_store_type(const ::std::string& value) {
+  
+  store_type_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:mspb.CreateTableRequest.store_type)
+}
+#if LANG_CXX11
+inline void CreateTableRequest::set_store_type(::std::string&& value) {
+  
+  store_type_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:mspb.CreateTableRequest.store_type)
+}
+#endif
+inline void CreateTableRequest::set_store_type(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  store_type_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:mspb.CreateTableRequest.store_type)
+}
+inline void CreateTableRequest::set_store_type(const char* value, size_t size) {
+  
+  store_type_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:mspb.CreateTableRequest.store_type)
+}
+inline ::std::string* CreateTableRequest::mutable_store_type() {
+  
+  // @@protoc_insertion_point(field_mutable:mspb.CreateTableRequest.store_type)
+  return store_type_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* CreateTableRequest::release_store_type() {
+  // @@protoc_insertion_point(field_release:mspb.CreateTableRequest.store_type)
+  
+  return store_type_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void CreateTableRequest::set_allocated_store_type(::std::string* store_type) {
+  if (store_type != NULL) {
+    
+  } else {
+    
+  }
+  store_type_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), store_type);
+  // @@protoc_insertion_point(field_set_allocated:mspb.CreateTableRequest.store_type)
+}
+
+// uint64 replica_num = 7;
+inline void CreateTableRequest::clear_replica_num() {
+  replica_num_ = GOOGLE_ULONGLONG(0);
+}
+inline ::google::protobuf::uint64 CreateTableRequest::replica_num() const {
+  // @@protoc_insertion_point(field_get:mspb.CreateTableRequest.replica_num)
+  return replica_num_;
+}
+inline void CreateTableRequest::set_replica_num(::google::protobuf::uint64 value) {
+  
+  replica_num_ = value;
+  // @@protoc_insertion_point(field_set:mspb.CreateTableRequest.replica_num)
+}
+
+// uint64 data_range_num = 8;
+inline void CreateTableRequest::clear_data_range_num() {
+  data_range_num_ = GOOGLE_ULONGLONG(0);
+}
+inline ::google::protobuf::uint64 CreateTableRequest::data_range_num() const {
+  // @@protoc_insertion_point(field_get:mspb.CreateTableRequest.data_range_num)
+  return data_range_num_;
+}
+inline void CreateTableRequest::set_data_range_num(::google::protobuf::uint64 value) {
+  
+  data_range_num_ = value;
+  // @@protoc_insertion_point(field_set:mspb.CreateTableRequest.data_range_num)
+}
+
 // -------------------------------------------------------------------
 
 // CreateTableResponse
@@ -8787,6 +12412,116 @@ inline void GetAutoIncIdRequest::set_size(::google::protobuf::uint32 value) {
 
 // -------------------------------------------------------------------
 
+// IdPair
+
+// bytes id_start = 1;
+inline void IdPair::clear_id_start() {
+  id_start_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& IdPair::id_start() const {
+  // @@protoc_insertion_point(field_get:mspb.IdPair.id_start)
+  return id_start_.GetNoArena();
+}
+inline void IdPair::set_id_start(const ::std::string& value) {
+  
+  id_start_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:mspb.IdPair.id_start)
+}
+#if LANG_CXX11
+inline void IdPair::set_id_start(::std::string&& value) {
+  
+  id_start_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:mspb.IdPair.id_start)
+}
+#endif
+inline void IdPair::set_id_start(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  id_start_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:mspb.IdPair.id_start)
+}
+inline void IdPair::set_id_start(const void* value, size_t size) {
+  
+  id_start_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:mspb.IdPair.id_start)
+}
+inline ::std::string* IdPair::mutable_id_start() {
+  
+  // @@protoc_insertion_point(field_mutable:mspb.IdPair.id_start)
+  return id_start_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* IdPair::release_id_start() {
+  // @@protoc_insertion_point(field_release:mspb.IdPair.id_start)
+  
+  return id_start_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void IdPair::set_allocated_id_start(::std::string* id_start) {
+  if (id_start != NULL) {
+    
+  } else {
+    
+  }
+  id_start_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), id_start);
+  // @@protoc_insertion_point(field_set_allocated:mspb.IdPair.id_start)
+}
+
+// bytes id_end = 2;
+inline void IdPair::clear_id_end() {
+  id_end_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& IdPair::id_end() const {
+  // @@protoc_insertion_point(field_get:mspb.IdPair.id_end)
+  return id_end_.GetNoArena();
+}
+inline void IdPair::set_id_end(const ::std::string& value) {
+  
+  id_end_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:mspb.IdPair.id_end)
+}
+#if LANG_CXX11
+inline void IdPair::set_id_end(::std::string&& value) {
+  
+  id_end_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:mspb.IdPair.id_end)
+}
+#endif
+inline void IdPair::set_id_end(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  id_end_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:mspb.IdPair.id_end)
+}
+inline void IdPair::set_id_end(const void* value, size_t size) {
+  
+  id_end_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:mspb.IdPair.id_end)
+}
+inline ::std::string* IdPair::mutable_id_end() {
+  
+  // @@protoc_insertion_point(field_mutable:mspb.IdPair.id_end)
+  return id_end_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* IdPair::release_id_end() {
+  // @@protoc_insertion_point(field_release:mspb.IdPair.id_end)
+  
+  return id_end_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void IdPair::set_allocated_id_end(::std::string* id_end) {
+  if (id_end != NULL) {
+    
+  } else {
+    
+  }
+  id_end_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), id_end);
+  // @@protoc_insertion_point(field_set_allocated:mspb.IdPair.id_end)
+}
+
+// -------------------------------------------------------------------
+
 // GetAutoIncIdResponse
 
 // .mspb.ResponseHeader header = 1;
@@ -8829,34 +12564,34 @@ inline void GetAutoIncIdResponse::set_allocated_header(::mspb::ResponseHeader* h
   // @@protoc_insertion_point(field_set_allocated:mspb.GetAutoIncIdResponse.header)
 }
 
-// repeated uint64 ids = 2;
-inline int GetAutoIncIdResponse::ids_size() const {
-  return ids_.size();
+// repeated .mspb.IdPair id_pairs = 2;
+inline int GetAutoIncIdResponse::id_pairs_size() const {
+  return id_pairs_.size();
 }
-inline void GetAutoIncIdResponse::clear_ids() {
-  ids_.Clear();
+inline void GetAutoIncIdResponse::clear_id_pairs() {
+  id_pairs_.Clear();
 }
-inline ::google::protobuf::uint64 GetAutoIncIdResponse::ids(int index) const {
-  // @@protoc_insertion_point(field_get:mspb.GetAutoIncIdResponse.ids)
-  return ids_.Get(index);
+inline const ::mspb::IdPair& GetAutoIncIdResponse::id_pairs(int index) const {
+  // @@protoc_insertion_point(field_get:mspb.GetAutoIncIdResponse.id_pairs)
+  return id_pairs_.Get(index);
 }
-inline void GetAutoIncIdResponse::set_ids(int index, ::google::protobuf::uint64 value) {
-  ids_.Set(index, value);
-  // @@protoc_insertion_point(field_set:mspb.GetAutoIncIdResponse.ids)
+inline ::mspb::IdPair* GetAutoIncIdResponse::mutable_id_pairs(int index) {
+  // @@protoc_insertion_point(field_mutable:mspb.GetAutoIncIdResponse.id_pairs)
+  return id_pairs_.Mutable(index);
 }
-inline void GetAutoIncIdResponse::add_ids(::google::protobuf::uint64 value) {
-  ids_.Add(value);
-  // @@protoc_insertion_point(field_add:mspb.GetAutoIncIdResponse.ids)
+inline ::mspb::IdPair* GetAutoIncIdResponse::add_id_pairs() {
+  // @@protoc_insertion_point(field_add:mspb.GetAutoIncIdResponse.id_pairs)
+  return id_pairs_.Add();
 }
-inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint64 >&
-GetAutoIncIdResponse::ids() const {
-  // @@protoc_insertion_point(field_list:mspb.GetAutoIncIdResponse.ids)
-  return ids_;
+inline ::google::protobuf::RepeatedPtrField< ::mspb::IdPair >*
+GetAutoIncIdResponse::mutable_id_pairs() {
+  // @@protoc_insertion_point(field_mutable_list:mspb.GetAutoIncIdResponse.id_pairs)
+  return &id_pairs_;
 }
-inline ::google::protobuf::RepeatedField< ::google::protobuf::uint64 >*
-GetAutoIncIdResponse::mutable_ids() {
-  // @@protoc_insertion_point(field_mutable_list:mspb.GetAutoIncIdResponse.ids)
-  return &ids_;
+inline const ::google::protobuf::RepeatedPtrField< ::mspb::IdPair >&
+GetAutoIncIdResponse::id_pairs() const {
+  // @@protoc_insertion_point(field_list:mspb.GetAutoIncIdResponse.id_pairs)
+  return id_pairs_;
 }
 
 // -------------------------------------------------------------------
@@ -9090,6 +12825,40 @@ inline void Error::set_allocated_message(::std::string* message) {
 
 // -------------------------------------------------------------------
 
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
 
 // @@protoc_insertion_point(namespace_scope)
 
@@ -9103,6 +12872,11 @@ template <> struct is_proto_enum< ::mspb::ErrorType> : ::google::protobuf::inter
 template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::mspb::ErrorType>() {
   return ::mspb::ErrorType_descriptor();
+}
+template <> struct is_proto_enum< ::mspb::StorageEngine> : ::google::protobuf::internal::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor< ::mspb::StorageEngine>() {
+  return ::mspb::StorageEngine_descriptor();
 }
 
 }  // namespace protobuf

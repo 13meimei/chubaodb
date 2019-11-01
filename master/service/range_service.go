@@ -17,6 +17,7 @@ package service
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	client "github.com/chubaodb/chubaodb/master/client/ds_client"
 	"github.com/chubaodb/chubaodb/master/entity"
@@ -24,7 +25,6 @@ import (
 	"github.com/chubaodb/chubaodb/master/entity/pkg/basepb"
 	"github.com/chubaodb/chubaodb/master/entity/pkg/dspb"
 	"github.com/chubaodb/chubaodb/master/entity/pkg/mspb"
-	"github.com/chubaodb/chubaodb/master/utils"
 	unsafeBytes "github.com/chubaodb/chubaodb/master/utils/bytes"
 	"github.com/chubaodb/chubaodb/master/utils/cblog"
 	"github.com/chubaodb/chubaodb/master/utils/log"
@@ -35,13 +35,44 @@ import (
 	"time"
 )
 
-// return true for update , false is not write
-func (rs *BaseService) Heartbeat(ctx context.Context, rg *basepb.Range) (bool, error) {
+func (rs *BaseService) ChangeRangeStoreType(ctx context.Context, tableID uint64, rangeID uint64, storeType basepb.StoreType) error {
+	return rs.STM(ctx, func(stm concurrency.STM) error {
 
-	var flag bool
+		dbRange := new(basepb.Range)
+
+		realBytes := stm.Get(entity.RangeKey(tableID, rangeID))
+
+		if len(realBytes) == 0 {
+			return cblog.LogErrAndReturn(errs.Error(mspb.ErrorType_NotExistRange))
+		}
+
+		if err := dbRange.Unmarshal([]byte(realBytes)); err != nil {
+			return cblog.LogErrAndReturn(err)
+		}
+
+		if dbRange.StoreType == storeType {
+			return nil
+		}
+
+		dbRange.StoreType = storeType
+
+		rgBytes, err := dbRange.Marshal()
+		if err != nil {
+			return cblog.LogErrAndReturn(err)
+		}
+
+		stm.Put(entity.RangeKey(tableID, rangeID), unsafeBytes.ByteToString(rgBytes))
+
+		return nil
+	})
+}
+
+// return true for update , false is not write
+func (rs *BaseService) Heartbeat(ctx context.Context, rg *basepb.Range) (*basepb.Range, error) {
+
+	var rng *basepb.Range
 
 	err := rs.STM(ctx, func(stm concurrency.STM) error {
-
 		dbRange := new(basepb.Range)
 
 		realBytes := stm.Get(entity.RangeKey(rg.TableId, rg.Id))
@@ -50,11 +81,51 @@ func (rs *BaseService) Heartbeat(ctx context.Context, rg *basepb.Range) (bool, e
 			if err := dbRange.Unmarshal([]byte(realBytes)); err != nil {
 				return cblog.LogErrAndReturn(err)
 			}
+			rg.StoreType = dbRange.StoreType //use dbRange replace store type
 
-			if dbRange.RangeEpoch != nil && (dbRange.RangeEpoch.ConfVer > rg.RangeEpoch.ConfVer || dbRange.RangeEpoch.Version > rg.RangeEpoch.Version) {
-				flag = false
+			if dbRange.RangeEpoch != nil && (dbRange.RangeEpoch.ConfVer > rg.RangeEpoch.ConfVer || dbRange.RangeEpoch.Version > rg.RangeEpoch.Version || dbRange.Term > rg.Term) {
+				rng = dbRange
 				return nil
 			}
+
+			if dbRange.RangeEpoch != nil && (dbRange.RangeEpoch.ConfVer == rg.RangeEpoch.ConfVer && dbRange.RangeEpoch.Version == rg.RangeEpoch.Version && dbRange.Term == rg.Term) {
+				if len(rg.Peers) == len(dbRange.Peers) {
+					sort.Slice(rg.Peers, func(i, j int) bool {
+						return rg.Peers[i].Id < rg.Peers[j].Id
+					})
+
+					sort.Slice(dbRange.Peers, func(i, j int) bool {
+						return dbRange.Peers[i].Id < dbRange.Peers[j].Id
+					})
+
+					var flag bool
+					for i, rP := range rg.Peers {
+						dP := dbRange.Peers[i]
+						if rP.Id != dP.Id || rP.Type != dP.Type {
+							flag = true
+							break
+						}
+					}
+					if !flag {
+						rng = dbRange
+						return nil
+					}
+				}
+			}
+
+		} else if rg.ParentRangeId > 0 {
+			parentRange := new(basepb.Range)
+			parentBytes := stm.Get(entity.RangeKey(rg.TableId, rg.ParentRangeId))
+			if len(parentBytes) > 0 {
+				if err := parentRange.Unmarshal([]byte(parentBytes)); err != nil {
+					_ = cblog.LogErrAndReturn(fmt.Errorf("parent range unmarshal has err:[%s]", err.Error()))
+				} else {
+					rg.StoreType = parentRange.StoreType //use parentRange replace store type
+				}
+			} else {
+				_ = cblog.LogErrAndReturn(fmt.Errorf("impossibility not found parent range:[%d]", rg.ParentRangeId))
+			}
+
 		}
 
 		rgBytes, err := rg.Marshal()
@@ -63,14 +134,20 @@ func (rs *BaseService) Heartbeat(ctx context.Context, rg *basepb.Range) (bool, e
 			return cblog.LogErrAndReturn(err)
 		}
 
+		if log.IsDebugEnabled() {
+			newrb, _ := json.Marshal(rg)
+			var oldrb = []byte{}
+			if dbRange != nil {
+				oldrb, _ = json.Marshal(dbRange)
+			}
+			log.Info("to update range to db, old:[%s] new:[%s]", string(oldrb), string(newrb))
+		}
+
+		rng = rg
 		stm.Put(entity.RangeKey(rg.TableId, rg.Id), unsafeBytes.ByteToString(rgBytes))
-
-		flag = true
-
 		return nil
 	})
-
-	return flag, cblog.LogErrAndReturn(err)
+	return rng, cblog.LogErrAndReturn(err)
 }
 
 func (rs *BaseService) AskSplit(ctx context.Context, rng *basepb.Range, force bool) (uint64, []uint64, error) {
@@ -106,14 +183,31 @@ func (rs *BaseService) AskSplit(ctx context.Context, rng *basepb.Range, force bo
 		}
 	}
 
-	property, err := utils.ParseTableProperties(table.Properties)
-	if err != nil {
-		return 0, nil, cblog.LogErrAndReturn(fmt.Errorf("parse table properties err:[%s] content:[%s]", err.Error(), table.Properties))
+	var snapPeers []*basepb.Peer
 
+	for _, p := range rng.Peers {
+		if p.Type == basepb.PeerType_PeerType_Learner {
+			snapPeers = append(snapPeers, p)
+		}
 	}
 
-	if len(rng.Peers) > property.ReplicaNum {
-		return 0, nil, cblog.LogErrAndReturn(fmt.Errorf("peer:[%d] gather than replica:[%d]", len(rng.Peers), property.ReplicaNum))
+	if len(rng.Peers)-len(snapPeers) < int(table.ReplicaNum) {
+		return 0, nil, cblog.LogErrAndReturn(fmt.Errorf("range:[%d] has not health peer:[%d] snapshot:[%d] but need:[%d]", rng.Id, len(rng.Peers), len(snapPeers), table.ReplicaNum))
+	}
+
+	for _, sp := range snapPeers {
+		if err := rs.SyncDelMemeber(ctx, rng, sp.Id); err != nil {
+			return 0, nil, cblog.LogErrAndReturn(err)
+		}
+
+		newPeers := make([]*basepb.Peer, 0, len(rng.Peers)-1)
+
+		for _, p := range rng.Peers {
+			if p.Id != sp.Id {
+				newPeers = append(newPeers, p)
+			}
+		}
+		rng.Peers = newPeers
 	}
 
 	newRangeID, err := rs.NewIDGenerate(ctx, entity.SequenceRangeID, 1, 5*time.Second)
@@ -136,7 +230,7 @@ func (rs *BaseService) AskSplit(ctx context.Context, rng *basepb.Range, force bo
 }
 
 // if tableID ==0 it will return all ranges
-func (rs *BaseService) GetRoute(ctx context.Context, max int, dbID, tableID uint64, key []byte) ([]*basepb.Range, error) {
+func (rs *BaseService) GetRoute(ctx context.Context, max int, dbID, tableID uint64, key []byte, hasAll bool) ([]*basepb.Range, error) {
 
 	if dbID > 0 { //check db exist
 		if _, err := rs.QueryDBByID(ctx, dbID); err != nil {
@@ -155,36 +249,40 @@ func (rs *BaseService) GetRoute(ctx context.Context, max int, dbID, tableID uint
 	}
 
 	ranges, err := rs.QueryRanges(ctx, tableID)
-
 	if err != nil {
 		return nil, cblog.LogErrAndReturn(err)
+	}
+
+	if !hasAll {
+		for _, r := range ranges {
+			r.Peers = nil
+			r.PrimaryKeys = nil
+		}
 	}
 
 	sort.Slice(ranges, func(i, j int) bool {
 		return bytes.Compare(ranges[i].StartKey, ranges[j].StartKey) >= 0
 	})
 
-	start := -1
-
-	for i, rng := range ranges {
-		if len(rng.Peers) == 0 { //impossible to happen
-			return nil, errs.Error(mspb.ErrorType_NotExistRange)
-		}
-		if len(key) == 0 || bytes.Compare(key, rng.StartKey) >= 0 {
-			start = i
-			break
-		}
-	}
-
-	if start < 0 {
-		return []*basepb.Range{}, nil
-	}
-
+	var result []*basepb.Range
 	if max <= 0 {
-		return ranges[start:], nil
+		result = make([]*basepb.Range, 0, 100)
+	} else {
+		result = make([]*basepb.Range, 0, int(math.Min(float64(max), 100)))
 	}
 
-	return ranges[start:int(math.Min(float64(len(ranges)), float64(start+max)))], nil
+	for _, rng := range ranges {
+		if len(key) == 0 || bytes.Compare(key, rng.StartKey) >= 0 {
+			result = append(result, rng)
+		}
+
+		if max > 0 && len(result) >= max {
+			return result, nil
+		}
+
+	}
+
+	return result, nil
 }
 
 func (ns *BaseService) CreateRangeToNode(ctx context.Context, node *basepb.Node, old *basepb.Range) error {
@@ -216,16 +314,15 @@ func (ns *BaseService) CreateRangeToNode(ctx context.Context, node *basepb.Node,
 	}
 
 	newPeer := &basepb.Peer{
-		Id:       uint64(peerID),
-		NodeId:   node.Id,
-		RaftAddr: nodeRaftAddr(node),
-		Type:     basepb.PeerType_PeerType_Learner,
+		Id:     uint64(peerID),
+		NodeId: node.Id,
+		Type:   basepb.PeerType_PeerType_Learner,
 	}
 
 	tryTime := 0
 
 	log.Info("change member by range:[%d] newPeer:[%d]", rng.Id, newPeer.Id)
-	err = ns.dsClient.ChangeMember(ctx, nodeServerAddr(leader), &dspb.ChangeRaftMemberRequest{
+	err = ns.dsClient.ChangeMember(ctx, NodeServerAddr(leader), &dspb.ChangeRaftMemberRequest{
 		RangeId:    rng.Id,
 		RangeEpoch: rng.RangeEpoch,
 		ChangeType: dspb.ChangeRaftMemberRequest_CT_ADD,
@@ -249,7 +346,7 @@ func (ns *BaseService) CreateRangeToNode(ctx context.Context, node *basepb.Node,
 		}
 	}
 
-	return ns.dsClient.CreateRange(ctx, nodeServerAddr(node), rng)
+	return ns.dsClient.CreateRange(ctx, NodeServerAddr(node), rng)
 }
 
 func (ns *BaseService) SyncDelMemeber(ctx context.Context, old *basepb.Range, peerID uint64) error {
@@ -312,7 +409,7 @@ func (ns *BaseService) SyncDelMemeber(ctx context.Context, old *basepb.Range, pe
 		if err != nil {
 			return cblog.LogErrAndReturn(err)
 		}
-		err = ns.dsClient.ChangeMember(ctx, nodeServerAddr(leader), &dspb.ChangeRaftMemberRequest{
+		err = ns.dsClient.ChangeMember(ctx, NodeServerAddr(leader), &dspb.ChangeRaftMemberRequest{
 			RangeId:    rng.Id,
 			RangeEpoch: rng.RangeEpoch,
 			ChangeType: dspb.ChangeRaftMemberRequest_CT_REMOVE,
@@ -363,7 +460,7 @@ func (ns *BaseService) SyncDeleteRangeToNode(ctx context.Context, old *basepb.Ra
 	if removeNode, err := ns.QueryNode(ctx, removeNodeID); err != nil {
 		log.Error("query node has err :[%s]", err.Error())
 	} else {
-		if err := ns.dsClient.DeleteRange(ctx, nodeServerAddr(removeNode), rng.Id, peerID); err != nil {
+		if err := ns.dsClient.DeleteRange(ctx, NodeServerAddr(removeNode), rng.Id, peerID); err != nil {
 			log.Warn("delete range by node:[%d] err :[%s]", removeNode.Id, err.Error())
 			return err
 		} else {
@@ -385,18 +482,25 @@ func (rs *BaseService) TransferLeader(ctx context.Context, node *basepb.Node, ol
 		return cblog.LogErrAndReturn(err)
 	}
 
-	property, err := utils.ParseTableProperties(table.Properties)
-	if err != nil {
-		return cblog.LogErrAndReturn(fmt.Errorf("parse table properties err:[%s] content:[%s]", err.Error(), table.Properties))
-
+	if rng.StoreType != node.Type {
+		return cblog.LogErrAndReturn(fmt.Errorf("range:[%d] can not transferLeader because type is not equal[%v, %v]", rng.Id, rng.StoreType, node.Type))
 	}
 
-	if len(rng.Peers) < property.ReplicaNum {
-		return cblog.LogErrAndReturn(fmt.Errorf("range:[%d] transferLeader check err replica[%d / %d] num not same ", rng.Id, len(rng.Peers), property.ReplicaNum))
+	if len(rng.Peers) < int(table.ReplicaNum) {
+		return cblog.LogErrAndReturn(fmt.Errorf("range:[%d] transferLeader check err replica[%d / %d] num not same ", rng.Id, len(rng.Peers), table.ReplicaNum))
 	}
 
 	if rng.RangeEpoch.Version < old.RangeEpoch.Version || rng.RangeEpoch.ConfVer < old.RangeEpoch.ConfVer {
 		return cblog.LogErrAndReturn(fmt.Errorf("transfer range has err the version[%d, %d] old:[%d, %d] not same so skip ", rng.RangeEpoch.Version, rng.RangeEpoch.ConfVer, old.RangeEpoch.Version, old.RangeEpoch.ConfVer))
+	}
+
+	toNode, err := rs.GetNode(ctx, node.Id)
+	if err != nil {
+		return cblog.LogErrAndReturn(err)
+	}
+
+	if toNode.State != basepb.NodeState_N_Online {
+		return cblog.LogErrAndReturn(fmt.Errorf("transfer leader err because to node:[%d] state is:[%v]", toNode.Id, toNode.State))
 	}
 
 	leader, err := rs.GetNode(ctx, old.Leader)
@@ -418,7 +522,7 @@ func (rs *BaseService) TransferLeader(ctx context.Context, node *basepb.Node, ol
 		}
 	}
 
-	return rs.dsClient.TransferLeader(ctx, nodeServerAddr(node), old.Id)
+	return rs.dsClient.TransferLeader(ctx, NodeServerAddr(node), old.Id)
 }
 
 func (ns *BaseService) DsClient() client.SchClient {

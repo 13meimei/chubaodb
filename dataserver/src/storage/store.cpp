@@ -115,6 +115,16 @@ Store::KeyScope Store::fixKeyScope(const std::string& start_key, const std::stri
     return result;
 }
 
+bool Store::keyInScop(const std::string & key) const
+{
+    bool f = false;
+    if ( start_key_ <= key && key < GetEndKey()) {
+        f = true;
+    }
+
+    return f;
+}
+
 IterPtr Store::NewIterator(const std::string& start, const std::string& limit) {
     auto scope = fixKeyScope(start, limit);
     return IterPtr(db_->NewIterator(scope.first, scope.second));
@@ -184,8 +194,10 @@ void Store::addMetricWrite(uint64_t keys, uint64_t bytes) {
     g_metric.AddWrite(keys, bytes);
 }
 
-Status Store::StatSize(uint64_t split_size, uint64_t* real_size, std::string* split_key) {
+Status Store::StatSize(uint64_t split_size, uint64_t* real_size, std::string* split_key, uint64_t* kv_count_1, uint64_t *kv_count_2) {
     uint64_t total_size = 0;
+    uint64_t count_1 = 0;
+    uint64_t count_2 = 0;
 
     // The number of the same characters is greater than
     // the length of start_key_ and more than 5,
@@ -200,6 +212,7 @@ Status Store::StatSize(uint64_t split_size, uint64_t* real_size, std::string* sp
     while (it->Valid()) {
         total_size += it->KeySize();
         total_size += it->ValueSize();
+        count_1++;
 
         if (total_size >= split_size) {
             middle_key = it->Key();
@@ -214,7 +227,9 @@ Status Store::StatSize(uint64_t split_size, uint64_t* real_size, std::string* sp
         if (!it->status().ok()) {
             return it->status();
         } else {
-            return Status(Status::kUnexpected, "no more data", std::to_string(total_size));
+            *kv_count_1 = count_1;
+            kv_count_  = count_1;
+            return Status(Status::kUnexpected, "no more data", "total_size:{"+std::to_string(total_size)+"}");
         }
     }
 
@@ -225,12 +240,16 @@ Status Store::StatSize(uint64_t split_size, uint64_t* real_size, std::string* sp
         total_size += it->KeySize();
         total_size += it->ValueSize();
         it->Next();
+        count_2++;
     }
     if (!it->status().ok()) {
         return it->status();
     }
 
     *real_size = total_size;
+    *kv_count_1 = count_1;
+    *kv_count_2 = count_2;
+    kv_count_ = count_1 + count_2;
     return Status::OK();
 }
 

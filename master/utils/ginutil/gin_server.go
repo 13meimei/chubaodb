@@ -45,17 +45,6 @@ func NewGinServer(ginRouter *gin.Engine, ip string, port uint16) *GinServer {
 	return &GinServer{Server: server}
 }
 
-//func (this *GinServer) Export() error {
-//	docService, err := document.NewDocService()
-//	if err != nil {
-//		return err
-//	}
-//
-//	document.StartHttp(this.server.Handler.(*gin.Engine), *docService)
-//
-//	return nil
-//}
-
 func (this *GinServer) Run() error {
 	if err := this.Server.ListenAndServe(); err != nil {
 		return err

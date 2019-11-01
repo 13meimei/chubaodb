@@ -6,6 +6,7 @@ set(raft_SOURCES
     src/impl/raft_fsm_follower.cpp
     src/impl/raft_fsm_leader.cpp
     src/impl/raft_impl.cpp
+    src/impl/raft_read_context.cpp
     src/impl/raft_log.cpp
     src/impl/raft_log_unstable.cpp
     src/impl/raft.pb.cc
@@ -32,12 +33,12 @@ set(raft_SOURCES
     src/types.cpp
 )
 
-foreach(f IN LISTS raft_SOURCES) 
-    # remove "src/" 
-    string(SUBSTRING ${f} 4 -1 fname) 
-    set_source_files_properties(${f} PROPERTIES 
-        COMPILE_DEFINITIONS "__FNAME__=\"raft/${fname}\"") 
-endforeach() 
+foreach(f IN LISTS raft_SOURCES)
+    # remove "src/"
+    string(SUBSTRING ${f} 4 -1 fname)
+    set_source_files_properties(${f} PROPERTIES
+        COMPILE_DEFINITIONS "__FNAME__=\"raft/${fname}\"")
+endforeach()
 
 add_library(chubaodb-raft STATIC ${raft_SOURCES})
 add_dependencies(chubaodb-raft build-3rd)

@@ -48,7 +48,7 @@ protected:
 
     // version=0 means to use current version
     void MakeHeader(dspb::RangeRequest_Header *header, uint64_t version = 0, uint64_t conf_ver = 0);
-    void Process(dspb::RangeRequest& req, dspb::RangeResponse* resp);
+    void Process(const dspb::RangeRequest& req, dspb::RangeResponse* resp);
 
     Status Split();
 

@@ -155,17 +155,22 @@ func UnsafeFloat32SliceAsByteSlice(floats []float32) []byte {
 
 func ValueToByte(fa interface{}) ([]byte, error) {
 	buf := &bytes.Buffer{}
-	if err := binary.Write(buf, binary.LittleEndian, fa); err != nil {
+	if err := binary.Write(buf, binary.BigEndian, fa); err != nil {
 		return nil, err
 	}
 	return buf.Bytes(), nil
+}
+
+func Uint64ToByte(fa uint64) []byte {
+	bs, _ := ValueToByte(fa)
+	return bs
 }
 
 func ByteArray2UInt64(bs []byte) uint64 {
 	if len(bs) == 4 {
 		return uint64(binary.LittleEndian.Uint32(bs))
 	} else if len(bs) == 8 {
-		return binary.LittleEndian.Uint64(bs)
+		return binary.BigEndian.Uint64(bs)
 	} else {
 		log.Error("err byte to int len:[%d] , value:%v", len(bs), bs)
 		return 0
@@ -210,19 +215,3 @@ func ByteToFloat32(bytes []byte) float32 {
 	return math.Float32frombits(bits)
 }
 
-func ByteToFloat64(bs []byte) float64 {
-	if len(bs) == 4 {
-		return float64(ByteToFloat32(bs))
-	}
-	bits := binary.LittleEndian.Uint64(bs)
-
-	return math.Float64frombits(bits)
-}
-
-func Bytes2Int(bs []byte) int64 {
-	return int64(binary.LittleEndian.Uint64(bs))
-}
-
-func CloneBytes(b []byte) []byte {
-	return append([]byte(nil), b...)
-}

@@ -61,6 +61,10 @@ Status Range::startRaft(uint64_t leader, uint64_t log_start_index) {
             std::string(ds_config.raft_config.log_path), std::to_string(meta_.GetTableID()),
             std::to_string(id_)});
 
+    if (ds_config.b_test && !ds_config.test_config.is_leader) {
+        options.has_campaign = false;
+    }
+
     // init raft peers
     auto peers = meta_.GetAllPeers();
     if (peers.empty()) {
@@ -175,6 +179,10 @@ void Range::Dispatch(RPCRequestPtr rpc, dspb::RangeRequest& request) {
         case dspb::RangeRequest::kScan:
             txnScan(std::move(rpc), request);
             break;
+        case dspb::RangeRequest::kSelectFlow:
+            txnSelectFlow(std::move(rpc), request);
+            break;
+
         // kv
         case dspb::RangeRequest::kKvGet:
             kvGet(std::move(rpc), request);
@@ -310,6 +318,7 @@ void Range::GetRangeInfo(dspb::RangeInfo *rangeInfo) {
     // metric stats
     auto stats = rangeInfo->mutable_stats();
     stats->set_approximate_size(real_size_);
+    stats->set_kv_count(kv_count_1_ + kv_count_2_);
 
     storage::MetricStat store_stat;
     store_->CollectMetric(&store_stat);
@@ -374,6 +383,96 @@ Status Range::apply(const dspb::Command &cmd, uint64_t index) {
     }
 }
 
+Status Range::Read(const std::string& cmd, uint16_t verify_result) {
+
+    ErrorPtr err = nullptr;
+    dspb::RangeResponse resp;
+    if (!valid_) {
+        RLOG_ERROR("is invalid!");
+        return Status(Status::kInvalid, "range is invalid", "");
+    }
+    auto start = std::chrono::system_clock::now();
+
+    dspb::Command raft_cmd;
+    google::protobuf::io::ArrayInputStream input(cmd.data(), static_cast<int>(cmd.size()));
+    if(!raft_cmd.ParseFromZeroCopyStream(&input)) {
+        RLOG_ERROR("parse raft command failed");
+        return Status(Status::kCorruption, "parse raft command", EncodeToHex(cmd.data()));
+    }
+
+    if (verify_result == chubaodb::raft::READ_FAILURE) {
+        err = noLeaderError();
+    }
+
+    switch (raft_cmd.cmd_type()) {
+    case dspb::CmdType::KvGet:
+    {
+        RLOG_DEBUG("kv get key: {}", raft_cmd.kv_get_req().key());
+        auto kv_resp = resp.mutable_kv_get();
+        auto ret = store_->Get(raft_cmd.kv_get_req().key(), kv_resp->mutable_value());
+        kv_resp->set_code(static_cast<int>(ret.code()));
+        auto btime = NowMicros();
+        replySubmit(raft_cmd, resp, std::move(err), btime);
+    }
+    break;
+    case dspb::CmdType::TxnSelect:
+    {
+        RLOG_DEBUG("select {}", raft_cmd.txn_select_req().DebugString());
+        auto select_resp = resp.mutable_select();
+        auto ret = store_->TxnSelect(raft_cmd.txn_select_req(), select_resp);
+        if (!ret.ok()) {
+            RLOG_ERROR("TxnSelect from store error: {}", ret.ToString());
+            select_resp->set_code(static_cast<int>(ret.code()));
+        }
+        auto btime = NowMicros();
+        replySubmit(raft_cmd, resp, std::move(err), btime);
+    }
+    break;
+    case dspb::CmdType::TxnScan:
+    {
+        auto scan_resp = resp.mutable_scan();
+        auto ret = store_->TxnScan(raft_cmd.txn_scan_req(), scan_resp);
+
+        if (!ret.ok()) {
+            RLOG_ERROR("TxnScan from store error: {}", ret.ToString());
+            scan_resp->set_code(static_cast<int>(ret.code()));
+            break;
+        }
+
+        auto btime = NowMicros();
+        replySubmit(raft_cmd, resp, std::move(err), btime);
+    }
+    break;
+    case dspb::CmdType::TxnSelectFlow:
+    {
+        auto select_flow_resp = resp.mutable_select_flow();
+        auto ret = store_->TxnSelectFlow(raft_cmd.txn_select_flow_req(), select_flow_resp);
+
+        if (!ret.ok()) {
+            RLOG_ERROR("TxnSelectFlow from store error: {}", ret.ToString());
+            select_flow_resp->set_code(static_cast<int>(ret.code()));
+            break;
+        }
+
+        auto btime = NowMicros();
+        replySubmit(raft_cmd, resp, std::move(err), btime);
+    }
+    break;
+    default:
+        RLOG_DEBUG("xxxxxxxxxxxxxxxxxxxx");
+    }
+
+    auto end = std::chrono::system_clock::now();
+    auto elapsed_usec =
+        std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+    if (elapsed_usec > kTimeTakeWarnThresoldUSec) {
+        RLOG_WARN("apply takes too long({} ms), type: {}.", elapsed_usec / 1000,
+                dspb::CmdType_Name(raft_cmd.cmd_type()));
+    }
+
+    return Status::OK();
+}
+
 Status Range::Apply(const std::string &cmd, uint64_t index) {
     if (!valid_) {
         RLOG_ERROR("is invalid!");
@@ -415,17 +514,22 @@ Status Range::Apply(const std::string &cmd, uint64_t index) {
     return Status::OK();
 }
 
-Status Range::submit(const dspb::Command &cmd) {
+Status Range::submit(const dspb::Command &cmd, uint16_t rw_flag) {
+    std::string str_cmd;
     if (!ds_config.raft_config.disabled) {
-        if (is_leader_) {
-            std::string str_cmd = cmd.SerializeAsString();
-            if (str_cmd.empty()) {
-                return Status(Status::kCorruption, "protobuf serialize failed", "");
+        if (rw_flag == chubaodb::raft::WRITE_FLAG) {
+            if (is_leader_) {
+                str_cmd = cmd.SerializeAsString();
+                if (str_cmd.empty()) {
+                    return Status(Status::kCorruption, "protobuf serialize failed", "");
+                }
+            } else {
+                return Status(Status::kNotLeader, "Not Leader", "");
             }
-            return raft_->Submit(str_cmd);
         } else {
-            return Status(Status::kNotLeader, "Not Leader", "");
+            str_cmd = cmd.SerializeAsString();
         }
+        return raft_->Submit(str_cmd, cmd.cmd_id().seq(), rw_flag);
     } else {
         static std::atomic<uint64_t> fake_index = {0};
         apply(cmd, ++fake_index);
@@ -433,17 +537,18 @@ Status Range::submit(const dspb::Command &cmd) {
     }
 }
 
-void Range::submitCmd(RPCRequestPtr rpc, dspb::RangeRequest_Header& header,
+void Range::submitCmd(RPCRequestPtr rpc, dspb::RangeRequest_Header& header, uint16_t rw_flag,
                const std::function<void(dspb::Command &cmd)> &init) {
     dspb::Command cmd;
     init(cmd);
     // set verify epoch
     cmd.set_allocated_verify_epoch(header.release_range_epoch());
     // add to queue
+    // todo exsist conflict when application restart
     auto seq = submit_queue_.Add(std::move(rpc), cmd.cmd_type(), std::move(header));
     cmd.mutable_cmd_id()->set_node_id(node_id_);
     cmd.mutable_cmd_id()->set_seq(seq);
-    auto ret = submit(cmd);
+    auto ret = submit(cmd, rw_flag);
     if (!ret.ok()) {
         RLOG_ERROR("raft submit failed: {}", ret.ToString());
         auto ctx = submit_queue_.Remove(seq);

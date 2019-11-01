@@ -17,10 +17,13 @@ package master
 import (
 	"bytes"
 	"context"
+	"encoding/json"
+	"fmt"
 	"github.com/chubaodb/chubaodb/master/entity"
 	"github.com/chubaodb/chubaodb/master/entity/pkg/basepb"
 	"github.com/chubaodb/chubaodb/master/entity/pkg/mspb"
 	"github.com/chubaodb/chubaodb/master/service"
+	"github.com/chubaodb/chubaodb/master/utils"
 	"github.com/chubaodb/chubaodb/master/utils/ginutil"
 	"github.com/chubaodb/chubaodb/master/utils/monitoring"
 	"github.com/gin-gonic/gin"
@@ -35,16 +38,18 @@ type healthApi struct {
 	monitor monitoring.Monitor
 }
 
-func ExportToHealthHandler(router *gin.Engine, service *service.BaseService, monitor monitoring.Monitor) {
+func ExportToHealthHandler(router *gin.Engine, service *service.BaseService) {
+	m := entity.Monitor()
+	c := &healthApi{router: router, service: service, monitor: m}
+	base30 := newBaseHandler(30, m)
+	router.Handle(http.MethodGet, "/health/node_info", base30.TimeOutHandler, base30.PaincHandler(c.nodeInfo), base30.TimeOutEndHandler)
 
-	c := &healthApi{router: router, service: service, monitor: monitor}
+	router.Handle(http.MethodGet, "/health/view_info", base30.TimeOutHandler, base30.PaincHandler(c.clusterInfoView), base30.TimeOutEndHandler)
 
-	router.Handle(http.MethodGet, "/health/node_info", base30.PaincHandler, base30.TimeOutHandler, c.nodeInfo, base30.TimeOutEndHandler)
+	router.Handle(http.MethodGet, "/health/conf", base30.TimeOutHandler, base30.PaincHandler(c.config), base30.TimeOutEndHandler)
+	router.Handle(http.MethodGet, "/health/master_list", base30.TimeOutHandler, base30.PaincHandler(c.masterList), base30.TimeOutEndHandler)
 
-	router.Handle(http.MethodGet, "/health/view_info", base30.PaincHandler, base30.TimeOutHandler, c.clusterInfoView, base30.TimeOutEndHandler)
-
-	router.Handle(http.MethodGet, "/health/conf", base30.PaincHandler, base30.TimeOutHandler, c.config, base30.TimeOutEndHandler)
-
+	router.Handle(http.MethodPost, "/health/topo_check", base30.TimeOutHandler, base30.PaincHandler(c.topologyCheck), base30.TimeOutEndHandler)
 }
 
 //it not support proto api
@@ -122,7 +127,12 @@ func (ha *healthApi) clusterInfoView(c *gin.Context) {
 			continue
 		}
 		buf.WriteString("<tr>")
-		buf.WriteString("<td  bgcolor=#99CCCC width=100> Node" + cast.ToString(info.Node.Id) + ":[" + info.Node.Ip + ":" + cast.ToString(info.Node.ServerPort) + "] </td>")
+
+		if info.Node.Type == basepb.StoreType_Store_Warm {
+			buf.WriteString("<td  bgcolor=#9F9756 width=100> Node" + cast.ToString(info.Node.Id) + ":[" + info.Node.Ip + ":" + cast.ToString(info.Node.ServerPort) + "] </td>")
+		} else {
+			buf.WriteString("<td  bgcolor=#99CCCC width=100> Node" + cast.ToString(info.Node.Id) + ":[" + info.Node.Ip + ":" + cast.ToString(info.Node.ServerPort) + "] </td>")
+		}
 
 		leaderNum := 0
 		if info.Err != "" {
@@ -130,10 +140,21 @@ func (ha *healthApi) clusterInfoView(c *gin.Context) {
 		} else {
 			line := bytes.Buffer{}
 			for _, r := range info.Info.RangeInfos {
-				bg := "#FFCCCC"
-				if r.Range.Leader == info.Node.Id {
-					leaderNum++
-					bg = "#FF6666"
+
+				var bg string
+
+				if r.Range.RangeType == basepb.RangeType_RNG_Index {
+					bg = "#FFCCCC"
+					if r.Range.Leader == info.Node.Id {
+						leaderNum++
+						bg = "#FF6666"
+					}
+				} else {
+					bg = "#9999ff"
+					if r.Range.Leader == info.Node.Id {
+						leaderNum++
+						bg = "#9900ff"
+					}
 				}
 
 				line.WriteString("<td  width=50 bgcolor=" + bg)
@@ -206,4 +227,71 @@ func (ha *healthApi) configOK(ctx context.Context, val, key string, result *Conf
 		result.Error = err.Error()
 	}
 
+}
+
+func (ha *healthApi) masterList(c *gin.Context) {
+	masterList, e := json.Marshal(entity.Conf().Masters)
+	if e != nil {
+		_, _ = c.Writer.WriteString("json encode master list err.")
+		return
+	}
+
+	_, _ = c.Writer.WriteString(string(masterList))
+}
+
+func (ha *healthApi) topologyCheck(c *gin.Context) {
+	cc, _ := c.Get(Ctx)
+	var ctx = cc.(context.Context)
+
+	dbName := c.PostForm("dbName")
+	tableName := c.PostForm("tableName")
+	if dbName == "" || tableName == "" {
+		_, _ = c.Writer.WriteString(fmt.Sprintf("invalid param: dbName[%s] tableName[%s]", dbName, tableName))
+		return
+	}
+
+	dataBase, err := ha.service.QueryDBByName(ctx, dbName)
+	if err != nil {
+		_, _ = c.Writer.WriteString(fmt.Sprintf("query db by name[%s] failed, err[%s]", dbName, err.Error()))
+		return
+	}
+	table, err := ha.service.QueryTableByName(ctx, dataBase.GetId(), tableName)
+	if err != nil {
+		_, _ = c.Writer.WriteString(fmt.Sprintf("query table by name[%s] failed, err[%s]", tableName, err.Error()))
+		return
+	}
+	ranges, err := ha.service.QueryRanges(ctx, table.GetId())
+	if err != nil {
+		_, _ = c.Writer.WriteString(fmt.Sprintf("query table ranges by tableId[%d] failed, err[%s]", table.GetId(), err.Error()))
+		return
+	}
+	startKey, endKey := utils.EncodeStorePrefix(utils.Store_Prefix_KV, table.GetId())
+
+	for i := range ranges {
+		if i == 0 {
+			if bytes.Compare(startKey, ranges[i].GetStartKey()) != 0 {
+				_, _ = c.Writer.WriteString(fmt.Sprintf("check topo failed, err[%s]", "startKey not matching"))
+				return
+			}
+		}
+		if i == len(ranges)-1 {
+			if bytes.Compare(endKey, ranges[i].GetEndKey()) == 0 {
+				_, _ = c.Writer.WriteString(fmt.Sprintf("check topo failed, err[%s]", "endKey not matching"))
+				return
+			}
+		}
+		queryRange, err := ha.service.QueryRange(ctx, table.GetId(), ranges[i].GetId())
+		if err != nil {
+			_, _ = c.Writer.WriteString(fmt.Sprintf("check topo failed, cannot find range by tableId[%d] rangeId[%d]",
+				table.GetId(), ranges[i].GetId()))
+			return
+		}
+		if bytes.Compare(queryRange.GetStartKey(), ranges[i].GetStartKey()) != 0 ||
+			bytes.Compare(queryRange.GetEndKey(), ranges[i].GetEndKey()) != 0 {
+			_, _ = c.Writer.WriteString(fmt.Sprintf("check topo failed, rangeId[%d] not match", ranges[i].GetId()))
+			return
+		}
+	}
+
+	_, _ = c.Writer.WriteString("check topo succeed")
 }

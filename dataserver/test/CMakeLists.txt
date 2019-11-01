@@ -42,6 +42,7 @@ set(test_SRCS
     unittest/range_ddl_unittest.cpp
     unittest/range_meta_unittest.cpp
     unittest/range_kv_unittest.cpp
+    unittest/range_selectflow_unittest.cpp
     unittest/range_sql_unittest.cpp
     unittest/range_tree_unittest.cpp
     unittest/scaner_unittest.cpp
@@ -51,6 +52,13 @@ set(test_SRCS
     unittest/timer_unittest.cpp
     unittest/util_unittest.cpp
     unittest/wal_unittest.cpp
+    unittest/range_flow_unittest.cpp
+    unittest/range_selectflow2_unittest.cpp
+    unittest/range_selectflow_arithmetic_unittest.cpp
+    unittest/range_selectflow_cmp_unittest.cpp
+    unittest/store_flow_unittest.cpp
+    unittest/store_flow_double_unittest.cpp
+    unittest/range_selectflow_datasample_unittest.cpp
 )
 
 foreach(f IN LISTS test_SRCS)
@@ -58,11 +66,13 @@ foreach(f IN LISTS test_SRCS)
             COMPILE_DEFINITIONS "__FNAME__=\"${f}\"")
 endforeach()
 
+set(TEST_RUN_ARGS "" CACHE STRING "unittest run args")
+
 foreach(testfile ${test_SRCS})
     get_filename_component(exename ${testfile} NAME_WE)
     add_executable(${exename} ${testfile})
     target_link_libraries(${exename} ${test_DEPEND_LIBS})
     if("${exename}" MATCHES "unittest")
-        add_test(NAME ${exename} COMMAND ${exename})
+        add_test(NAME ${exename} COMMAND ${exename} ${TEST_RUN_ARGS})
     endif()
 endforeach(testfile ${TESTS})

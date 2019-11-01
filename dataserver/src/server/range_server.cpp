@@ -83,6 +83,43 @@ int RangeServer::Init(ContextServer *context) {
         return -1;
     }
 
+    if (ds_config.b_test && ranges_.Size() == 0) {
+        //todo create range by manual
+        if (ds_config.test_config.nodes.size() == 0) {
+            FLOG_ERROR("there is no raft peers, please check");
+            return -1;
+        }
+        std::string raft_str = ds_config.test_config.nodes[context->node_id];
+        if (raft_str.empty()) {
+            FLOG_ERROR("there is no raft peers, please check");
+            return -1;
+        }
+        basepb::Range rng;
+        rng.set_start_key(ds_config.test_config.start_key);
+        rng.set_end_key(ds_config.test_config.end_key);
+        rng.mutable_range_epoch()->set_conf_ver(ds_config.test_config.conf_id);
+        rng.mutable_range_epoch()->set_version(ds_config.test_config.version);
+        rng.set_id(ds_config.test_config.range_id);
+        for (auto it = ds_config.test_config.nodes.begin(); it != ds_config.test_config.nodes.end(); it++) {
+            auto peer = rng.add_peers();
+            peer->set_id(it->first);
+            peer->set_node_id(it->first);
+            peer->set_type(basepb::PeerType::PeerType_Normal);
+        }
+        auto primary_key = rng.add_primary_keys();
+        primary_key->set_name("test");
+        primary_key->set_id(0);
+        primary_key->set_data_type(basepb::Varchar);
+        primary_key->set_auto_increment(false);
+        primary_key->set_unique(false);
+
+        std::shared_ptr<range::Range> existed;
+        Status ret = createRange(rng, 0, existed);
+        if (!ret.ok()) {
+            FLOG_ERROR("node_id: {} create range: {} failed, error: {}", context_->node_id, rng.id(), ret.ToString());
+            return -1;
+        }
+    }
     FLOG_INFO("RangeServer Init end ...");
 
     return 0;
@@ -574,10 +611,10 @@ Status RangeServer::deleteRange(uint64_t range_id, uint64_t peer_id) {
     if (ret.code() == Status::kStaleRange) {
         // consider mismatch as success
         FLOG_WARN("range[{}] delete failed: {}", range_id, ret.ToString());
-        ret = Status::OK();
+        ret = Status(Status::kStaleRange, ret.ToString(), std::to_string(range_id));
     } else if (ret.code() == Status::kNotFound) {
         FLOG_WARN("range[{}] delete not found", range_id);
-        ret = Status::OK();
+        ret = Status(Status::kNotFound, ret.ToString(), std::to_string(range_id));
     } else if (ret.ok()) {
         assert(rng != nullptr);
         ret = rng->Destroy();
@@ -597,7 +634,9 @@ ErrorPtr RangeServer::deleteRange(const dspb::DeleteRangeRequest& req, dspb::Del
     FLOG_WARN("range[{}] recv delete range from master. peer_id={}", req.range_id(), req.peer_id());
 
     auto s = deleteRange(req.range_id(), req.peer_id());
-    if (!s.ok()) {
+    if (s.code() == Status::kNotFound) {
+        return newRangeNotFoundErr(req.range_id());
+    } else if (!s.ok()) {
         FLOG_ERROR("range[{}] delete failed: {}", req.range_id(), s.ToString());
         return newServerError(s.ToString());
     } else {
@@ -665,7 +704,7 @@ ErrorPtr RangeServer::nodeInfo(const dspb::NodeInfoRequest& req, dspb::NodeInfoR
         FLOG_ERROR("get db usage failed: {}", s.ToString());
     }
 
-    // collect storage metric
+   // collect storage metric
     storage::MetricStat mstat;
     storage::Metric::CollectAll(&mstat);
     stats->set_read_keys_per_sec(mstat.keys_read_per_sec);

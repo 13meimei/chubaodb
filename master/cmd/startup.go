@@ -19,11 +19,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/chubaodb/chubaodb/master"
-	"github.com/chubaodb/chubaodb/master/entity"
-	"github.com/chubaodb/chubaodb/master/utils/log"
-	"github.com/chubaodb/chubaodb/master/utils/reflect"
-	"github.com/spf13/cast"
 	"net/http"
 	"os"
 	"os/exec"
@@ -32,19 +27,33 @@ import (
 	"runtime"
 	"strings"
 	"syscall"
+
+	"github.com/chubaodb/chubaodb/master"
+	"github.com/chubaodb/chubaodb/master/entity"
+	"github.com/chubaodb/chubaodb/master/utils/log"
+	_ "github.com/chubaodb/chubaodb/master/utils/monitoring/prometheus"
+	_ "github.com/chubaodb/chubaodb/master/utils/monitoring/baudtime"
+	"github.com/chubaodb/chubaodb/master/utils/reflect"
+	"github.com/spf13/cast"
 )
 
 var (
-	confPath   string
-	masterName string
+	BuildVersion = "0.0"
+	BuildTime    = "0"
+	CommitID     = "xxxxx"
+	confPath     string
+	masterName   string
 )
 
 func init() {
 	flag.StringVar(&confPath, "conf", getDefaultConfigFile(), "baud config path")
-	flag.StringVar(&masterName, "master", "", "baud config for master name , is on local start two master must use it")
+	flag.StringVar(&masterName,   "master", "", "baud config for master name , is on local start two master must use it")
 }
 
 func main() {
+
+	log.Info("start server by version:[%s] commitID:[%s]", BuildVersion, CommitID)
+	entity.SetConfigVersion(BuildVersion, BuildTime, CommitID)
 
 	flag.Parse()
 
@@ -65,6 +74,8 @@ func main() {
 	if err := entity.Conf().Validate(); err != nil {
 		panic(err)
 	}
+	// must init monitor after load config
+	entity.InitMonitor()
 
 	server, err := master.NewServer(context.WithCancel(context.Background()))
 	if err != nil {

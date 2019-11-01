@@ -89,6 +89,31 @@ Status StoreTestFixture::testSelect(
     return Status::OK();
 }
 
+Status StoreTestFixture::testSelectFlow(
+        const std::function<void(SelectFlowRequestBuilder&)>& build_func,
+        const std::vector<std::vector<std::string>>& expected_rows) {
+    SelectFlowRequestBuilder builder(table_.get());
+    build_func(builder);
+    auto req = builder.Build();
+
+    dspb::SelectFlowResponse resp;
+    auto s = store_->TxnSelectFlow(req, &resp);
+    if (!s.ok()) {
+        return Status(Status::kUnexpected, "select", s.ToString());
+    }
+    if (resp.code() != 0) {
+        return Status(Status::kUnexpected, "select code", std::to_string(resp.code()));
+    }
+
+    // std::cout << "testSelectFlow resp:" << resp.DebugString() << std::endl;
+    SelectFlowResultParser parser(req, resp);
+    s = parser.Match(expected_rows);
+    if (!s.ok()) {
+        return Status(Status::kUnexpected, "select rows", s.ToString());
+    }
+    return Status::OK();
+}
+
 Status StoreTestFixture::testInsert(const std::vector<std::vector<std::string>> &rows, uint64_t *insert_bytes) {
     InsertRequestBuilder builder(table_.get());
     builder.AddRows(rows);
@@ -144,7 +169,7 @@ Status StoreTestFixture::putTxn(const std::string& key, const dspb::TxnValue& va
 }
 
 void StoreTestFixture::testTxn(std::vector<dspb::TxnIntent>& intents) {
-    // first one as primary row
+    // use first intent as primary
     intents[0].set_is_primary(true);
     const auto& primary = intents[0];
     for (size_t i = 1; i < intents.size(); ++i) {
@@ -194,7 +219,7 @@ void StoreTestFixture::testTxn(std::vector<dspb::TxnIntent>& intents) {
         ASSERT_EQ(txn_value.txn_status(), dspb::TXN_INIT);
 
         if (intent.is_primary()) {
-            ASSERT_EQ(txn_value.secondary_keys_size(), intents.size() - 1);
+            ASSERT_EQ(static_cast<size_t>(txn_value.secondary_keys_size()), intents.size() - 1);
             for (int i = 0; i < txn_value.secondary_keys_size(); ++i) {
                 ASSERT_EQ(txn_value.secondary_keys(i), intents[i+1].key());
             }

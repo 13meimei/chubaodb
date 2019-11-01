@@ -30,8 +30,8 @@ TEST(Monitor, Basic) {
     auto s = SystemInfo::New();
     uint64_t total = 0, available = 0;
     ASSERT_TRUE(s->GetFileSystemUsage(".", &total, &available));
-    ASSERT_GT(total, 0);
-    ASSERT_GT(available, 0);
+    ASSERT_GT(total, 0U);
+    ASSERT_GT(available, 0U);
     ASSERT_GE(total, available);
 
     ASSERT_TRUE(s->GetMemoryUsage(&total, &available));

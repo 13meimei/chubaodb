@@ -40,6 +40,7 @@ struct ThreadInfoDeleter {
 thread_local static std::unique_ptr<threadinfo, ThreadInfoDeleter> g_thread_info(createThreadInfo());
 
 RCUGuard::RCUGuard() {
+    // TODO: check reentry
     g_thread_info->rcu_start();
 }
 

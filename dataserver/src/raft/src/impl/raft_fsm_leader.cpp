@@ -63,9 +63,11 @@ void RaftFsm::becomeLeader() {
 }
 
 void RaftFsm::stepLeader(MessagePtr& msg) {
+    std::vector<EntryPtr> ents;
+    uint64_t commit_index;
+    uint64_t apply_index;
     if (msg->type() == pb::LOCAL_MSG_PROP) {
         if (replicas_.find(node_id_) != replicas_.end() && msg->entries_size() > 0) {
-            std::vector<EntryPtr> ents;
             takeEntries(msg, ents);
             auto li = raft_log_->lastIndex();
             for (auto& entry : ents) {
@@ -89,6 +91,77 @@ void RaftFsm::stepLeader(MessagePtr& msg) {
         return;
     }
 
+    if (msg->type() == pb::LOCAL_MSG_READ) {
+        FLOG_DEBUG("node_id: {}, raft: {} recv read request", node_id_, id_);
+        if (msg->entries_size() > 0) {
+            takeEntries(msg, ents);
+            commit_index = raft_log_->committed();
+            apply_index = raft_log_->applied();
+            if (sops_.read_option == LEASE_ONLY) {
+                FLOG_DEBUG("node_id: {}, raft: {} lease only", node_id_, id_);
+                if (commit_index == apply_index) {
+                    FLOG_DEBUG("node_id: {}, raft: {} commit_index equal apply_index", node_id_, id_);
+                    //commit_index is equal to apply_index, directly read and return client
+                    for (auto& entry: ents) {
+                        FLOG_DEBUG("node_id: {}, raft: {} precess uinque_seq: {}", node_id_, id_, entry->index());
+                        auto s = ReadProcess(entry, chubaodb::raft::READ_SUCCESS);
+                        if (!s.ok()) {
+                            //todo implements
+                            throw RaftException(std::string("statemachine read entry[") +
+                                                std::to_string(entry->index()) + "] error: " + s.ToString());
+                        }
+                    }
+                } else {
+                    //commit_index gt apply_index, wait apply to commit index, then return client
+                    FLOG_DEBUG("node_id: {}, raft: {} commit_index greater than apply_index", node_id_, id_);
+                    for (auto& entry: ents) {
+                        FLOG_DEBUG("node_id: {}, raft: {} precess uinque_seq: {}", node_id_, id_, entry->index());
+                        read_context_->AddReadIndex(entry->index(), commit_index, entry);
+                        //self is set active
+                        read_context_->SetVerifyResult(node_id_, entry->index(), true);
+                    }
+                }
+            } else {
+                //consensus read
+                if (replicas_.size() == 1) { //only one replicate
+                    if (commit_index == apply_index) {
+                        //commit_index is equal to apply_index, directly read and return client
+                        FLOG_DEBUG("node_id: {}, raft: {} commit_index equal apply_index", node_id_, id_);
+                        for (auto& entry: ents) {
+                            FLOG_DEBUG("node_id: {}, raft: {} precess uinque_seq: {}", node_id_, id_, entry->index());
+                            auto s = ReadProcess(entry, chubaodb::raft::READ_SUCCESS);
+                            if (!s.ok()) {
+                                //todo implements
+                                throw RaftException(std::string("statemachine read entry[") +
+                                                    std::to_string(entry->index()) + "] error: " + s.ToString());
+                            }
+                        }
+                    } else {
+                        //commit_index gt apply_index, wait apply to commit index, then return client
+                        FLOG_DEBUG("node_id: {}, raft: {} commit_index greater than apply_index", node_id_, id_);
+                        for (auto& entry: ents) {
+                            FLOG_DEBUG("node_id: {}, raft: {} precess uinque_seq: {}", node_id_, id_, entry->index());
+                            read_context_->AddReadIndex(entry->index(), commit_index, entry);
+                            //self is set active
+                            read_context_->SetVerifyResult(node_id_, entry->index(), true);
+                        }
+                    }
+                } else {
+                    for (auto& entry: ents) {
+                        FLOG_DEBUG("node_id: {}, raft: {} precess uinque_seq: {}", node_id_, id_, entry->index());
+                        read_context_->AddReadIndex(entry->index(), commit_index, entry);
+                        //self is set active
+                        read_context_->SetVerifyResult(node_id_, entry->index(), true);
+                    }
+                    FLOG_DEBUG("node_id: {}, raft: {} consensus read and replicate more than 1, so broadcast to follower", node_id_, id_);
+                    //broadcast read request to follower
+                    bcastReadAppend();
+                }
+            }
+        }
+        return;
+    }
+
     auto replica = getReplica(msg->from());
     if (replica == nullptr) {
         FLOG_WARN("node_id: {}, raft[{}] stepLeader no progress available for {}", node_id_, id_, msg->from());
@@ -97,6 +170,7 @@ void RaftFsm::stepLeader(MessagePtr& msg) {
 
     Replica& pr = *replica;
     pr.set_active();
+    pr.setAlive(true);
 
     switch (msg->type()) {
         case pb::APPEND_ENTRIES_RESPONSE:
@@ -141,15 +215,35 @@ void RaftFsm::stepLeader(MessagePtr& msg) {
                 }
             }
             return;
-
+        case pb::READ_INDEX_RESPONSE:
+            //implements process read index response
+            if (msg->reject()) {
+                FLOG_DEBUG("raft: {}, seq: {}, node_id: {} is rejected", id_, msg->read_sequence(), msg->from());
+                read_context_->SetVerifyResult(msg->from(), msg->read_sequence(), false);
+                return;
+            } else {
+                FLOG_DEBUG("raft: {}, seq: {}, node_id: {} is accepted", id_, msg->read_sequence(), msg->from());
+                pr.set_read_match(msg->read_sequence());
+                read_context_->SetVerifyResult(msg->from(), msg->read_sequence(), true);
+                // try to process read request
+                read_context_->ProcessBySequence(msg->read_sequence(), raft_log_->applied(), GetPeers().size());
+            }
+            return;
         case pb::HEARTBEAT_RESPONSE:
             pr.resume();
             if (pr.state() == ReplicaState::kReplicate && pr.inflight().full()) {
                 pr.inflight().freeFirstOne();
             }
+
             if (pr.match() < raft_log_->lastIndex() ||
                 pr.committed() < raft_log_->committed()) {
                 sendAppend(msg->from(), pr);
+            }
+            //send pending read index request to follower
+            if (read_context_->ReadRequestSize() > 0) {
+                if (pr.read_match() != read_context_->LastSeq()) {
+                    sendReadAppend(msg->from(), pr);
+                }
             }
             return;
 
@@ -197,11 +291,36 @@ void RaftFsm::stepLeader(MessagePtr& msg) {
     }
 }
 
+bool RaftFsm::activeQuorum() const {
+    int active_num = 0;
+    for (auto it = replicas_.begin(); it != replicas_.end(); it++) {
+        if (it->first == node_id_) {
+            active_num++;
+            continue;
+        }
+
+        if (it->second->alive()) {
+            active_num++;
+        }
+    }
+    return active_num >= quorum();
+}
+
 void RaftFsm::tickHeartbeat() {
     ++heartbeat_elapsed_;
-
+    ++election_elapsed_;
     if (state_ != FsmState::kLeader) {
         return;
+    }
+
+    if (election_elapsed_ >= sops_.election_tick) {
+        election_elapsed_ = 0;
+        if (!activeQuorum()) {
+            FLOG_WARN("node: {}, raft: {}, network exception, change to follower", node_id_, id_);
+            becomeFollower(term_, 0);
+            return;
+        }
+        resetAlive();
     }
 
     traverseReplicas([this](uint64_t node, Replica& pr) {
@@ -244,6 +363,12 @@ void RaftFsm::bcastAppend() {
     });
 }
 
+void RaftFsm::bcastReadAppend() {
+    traverseReplicas([this](uint64_t node, Replica& pr) {
+        if (node != node_id_) this->sendReadAppend(node, pr);
+    });
+}
+
 void RaftFsm::sendAppend(uint64_t to, Replica& pr) {
     assert(to == pr.peer().node_id);
 
@@ -267,9 +392,11 @@ void RaftFsm::sendAppend(uint64_t to, Replica& pr) {
         es = raft_log_->entries(pr.next(), sops_.max_size_per_msg, &ents);
     }
 
-    if (pr.next() < fi || !ts.ok() || !es.ok()) {
-        FLOG_INFO("node_id: {}, raft[{}] need snapshot to {}[next:{}], fi:{}, log error:{}-{}",
-                  node_id_, id_, to, pr.next(), fi, ts.ToString(), es.ToString());
+    // check if replica has no history entries, issue a snapshot
+    auto bare = pr.next() <= 1 && pr.next() < raft_log_->committed();
+    if (bare || pr.next() < fi || !ts.ok() || !es.ok()) {
+        FLOG_INFO("node_id: {}, raft[{}] need snapshot to {}[next:{}], fi:{}, committed:{}, log error:{}-{}",
+                  node_id_, id_, to, pr.next(), fi, raft_log_->committed(), ts.ToString(), es.ToString());
 
         if (sending_snap_) {
             FLOG_WARN("node_id: {}, raft[{}] sendAppend could not send snapshot to {}(other snapshot[{}] is sending)",
@@ -308,6 +435,43 @@ void RaftFsm::sendAppend(uint64_t to, Replica& pr) {
         }
         send(msg);
     }
+}
+
+void RaftFsm::sendReadAppend(uint64_t to, Replica& pr) {
+    assert(to == pr.peer().node_id);
+
+    if (pr.isPaused()) {
+        return;
+    }
+
+    if (read_context_->ReadRequestSize() == 0) {
+        return;
+    }
+    if (pr.inactive_ticks() > sops_.inactive_tick) {
+        pr.becomeProbe();
+        pr.pause();
+        return;
+    }
+    if (pr.state() != ReplicaState::kReplicate) {
+        FLOG_WARN("raft: {}, replica: {} state is not kReplicate, don't send read index", id_, to);
+        return;
+    }
+
+    uint64_t last_seq = read_context_->LastSeq();
+    auto read_state = read_context_->GetReadIndexState(last_seq);
+    if (read_state == nullptr) {
+        FLOG_CRIT("don't get read state: {} by read context, not expected", last_seq);
+        return;
+    }
+
+    MessagePtr msg(new pb::Message);
+    msg->set_type(pb::READ_INDEX_REQUEST);
+    msg->set_to(to);
+    msg->set_read_sequence(read_state->Seq());
+    msg->set_log_index(pr.next() - 1);  // prev log index
+    msg->set_log_term(term_);            // prev log term
+    msg->set_commit(read_state->CommitIndex());
+    send(msg);
 }
 
 void RaftFsm::appendEntry(const std::vector<EntryPtr>& ents) {

@@ -49,7 +49,10 @@ void RaftFsm::stepFollower(MessagePtr& msg) {
             leader_ = msg->from();
             handleAppendEntries(msg);
             return;
-
+        case pb::READ_INDEX_REQUEST:
+            election_elapsed_ = 0;
+            handleReadRequest(msg);
+            return;
         case pb::HEARTBEAT_REQUEST:
             election_elapsed_ = 0;
             leader_ = msg->from();
@@ -95,7 +98,7 @@ void RaftFsm::tickElection() {
     }
 
     ++election_elapsed_;
-    if (pastElectionTimeout()) {
+    if (pastElectionTimeout() && rops_.has_campaign) {
         election_elapsed_ = 0;
         MessagePtr msg(new pb::Message);
         msg->set_type(pb::LOCAL_MSG_HUP);
@@ -136,6 +139,26 @@ void RaftFsm::handleAppendEntries(MessagePtr& msg) {
         resp_msg->set_reject_hint(raft_log_->lastIndex());
         send(resp_msg);
     }
+}
+
+void RaftFsm::handleReadRequest(MessagePtr& msg) {
+    bool reject = false;
+    uint64_t leader;
+    uint64_t term;
+    if (leader_ != msg->from() || term_ != msg->term()) {
+        reject = true;
+    }
+    MessagePtr resp_msg(new pb::Message);
+    resp_msg->set_type(pb::READ_INDEX_RESPONSE);
+    resp_msg->set_to(msg->from());
+    resp_msg->set_reject(reject);
+    if (reject) {
+        resp_msg->set_reject_hint(leader_);
+    }
+    resp_msg->set_read_sequence(msg->read_sequence());
+    resp_msg->set_log_index(msg->log_index());
+    resp_msg->set_commit(raft_log_->committed());
+    send(resp_msg);
 }
 
 void RaftFsm::handleSnapshot(MessagePtr& msg) {
@@ -180,8 +203,9 @@ Status RaftFsm::applySnapshot(MessagePtr& msg) {
     }
 
     if (!checkSnapshot(snapshot.meta())) {
-        FLOG_WARN("node_id: {}, raft[{}] [commit: {}] ignored snapshot [index: {}, term: {}].",
-                  node_id_, id_, raft_log_->committed(), snapshot.meta().index(), snapshot.meta().term());
+        FLOG_WARN("node_id: {}, raft[{}] [commit: {}] ignored snapshot [index: {}, term: {}, uuid: {}].",
+                  node_id_, id_, raft_log_->committed(), snapshot.meta().index(),
+                  snapshot.meta().term(), snapshot.uuid());
 
         MessagePtr resp(new pb::Message);
         resp->set_type(pb::APPEND_ENTRIES_RESPONSE);
@@ -198,6 +222,10 @@ Status RaftFsm::applySnapshot(MessagePtr& msg) {
     ctx.id = id_;
     ctx.term = term_;
     ctx.to = node_id_;
+
+    FLOG_INFO("node_id: {}, raft[{}] [commit: {}] start to apply snapshot [index: {}, term: {}, uuid: {}].",
+              node_id_, id_, raft_log_->committed(), snapshot.meta().index(),
+              snapshot.meta().term(), snapshot.uuid());
 
     // new apply task
     applying_snap_ = std::make_shared<ApplySnapTask>(ctx, sm_);

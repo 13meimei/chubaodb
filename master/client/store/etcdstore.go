@@ -190,7 +190,7 @@ func (store *EtcdStore) PrefixScan(ctx context.Context, prefix string) ([][]byte
 func (store *EtcdStore) Delete(ctx context.Context, key string) error {
 	resp, err := store.cli.Delete(ctx, key)
 	if err != nil {
-		return fmt.Errorf("Failed to delete %s from etcd store!, the error is :%s", key, err.Error())
+		return fmt.Errorf("failed to delete %s from etcd store!, the error is :%s", key, err.Error())
 	}
 	if resp.Deleted != 1 {
 		return fmt.Errorf("key not exist error, key:%v", key)

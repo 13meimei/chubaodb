@@ -23,6 +23,7 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"sync"
 
 	"github.com/BurntSushi/toml"
 	"github.com/pkg/errors"
@@ -36,6 +37,31 @@ func Conf() *Config {
 	return single
 }
 
+var (
+	versionOnce  sync.Once
+	buildVersion = "0.0"
+	buildTime    = "0"
+	commitID     = "xxxxx"
+)
+
+func SetConfigVersion(bv, bt, ci string) {
+	versionOnce.Do(func() {
+		buildVersion = bv
+		buildTime = bt
+		commitID = ci
+	})
+}
+
+func GetBuildVersion() string {
+	return buildVersion
+}
+func GetBuildTime() string {
+	return buildTime
+}
+func GetCommitID() string {
+	return commitID
+}
+
 const (
 	LocalSingleAddr = "127.0.0.1"
 	LocalCastAddr   = "0.0.0.0"
@@ -47,6 +73,7 @@ type Config struct {
 }
 
 type GlobalCfg struct {
+	Name           string  `toml:"name,omitempty" json:"name"`
 	Log            string  `toml:"log,omitempty" json:"log"`
 	Data           string  `toml:"data,omitempty" json:"data"`
 	Level          string  `toml:"level,omitempty" json:"level"`
@@ -56,6 +83,11 @@ type GlobalCfg struct {
 	ScheduleSecond int     `toml:"schedule_second,omitempty" json:"schedule_second"`
 	PeerDownSecond int     `toml:"peer_down_second,omitempty" json:"peer_down_second"`
 	MemoryRatio    float64 `toml:"memory_ratio,omitempty" json:"memory_ratio"`
+
+	MonitorEnable  bool    `toml:"monitor_enable,omitempty" json:"monitor_enable"`
+	Monitor        string  `toml:"monitor,omitempty" json:"monitor"`
+	PushGateway    string  `toml:"push_gateway,omitempty" json:"push_gateway"`
+	PushInterval   int     `toml:"push_interval,omitempty" json:"push_interval"`
 }
 
 type Masters []*MasterCfg
@@ -76,7 +108,6 @@ func (ms Masters) Self() *MasterCfg {
 		}
 	}
 	return nil
-
 }
 
 type MasterCfg struct {
@@ -167,29 +198,29 @@ func LoadConfig(conf *Config, path string) {
 
 //CurrentByMasterNameDomainIp find this machine domain.The main purpose of this function is to find the master from from multiple masters and set it‘s Field:self to true.
 //The only criterion for judging is: Is the IP address the same with one of the masters?
-func (config *Config) CurrentByMasterNameDomainIp(masterName string) (err error) {
+func (config *Config) CurrentByMasterNameDomainIp(masterName string) error {
 
 	//find local all ip
 	addrMap := config.addrMap()
 
 	var found bool
-	for _, m := range config.Masters {
-		if !isIP(m.Address) {
-			host := m.Address
-			if m.Address, err = url2Ip(host); err != nil {
-				return fmt.Errorf("addr:[%s] to ip has err:[%s]", host, err.Error())
-			}
-		}
+	if config.Global.Name != "" && masterName != "" && config.Global.Name != masterName {
+		return errors.New("server name confusion")
 	}
-
 	for _, m := range config.Masters {
 		if m.Name == masterName {
 			m.Self = true
 			found = true
+			if masterName != "" {
+				config.Global.Name = masterName
+			}
 		} else if addrMap[m.Address] {
 			log.Info("found local master successfully :master's name:[%s] master's ip:[%s] and local master's name:[%s]", m.Name, m.Address, masterName)
 			m.Self = true
 			found = true
+			if masterName != "" {
+				config.Global.Name = masterName
+			}
 		} else {
 			log.Info("find local master failed:master's name:[%s] master's ip:[%s] and local master's name:[%s]", m.Name, m.Address, masterName)
 		}
@@ -198,23 +229,10 @@ func (config *Config) CurrentByMasterNameDomainIp(masterName string) (err error)
 	if !found {
 		return errors.New("None of the masters has the same ip address as current local master server's ip")
 	}
-
+    if config.Global.Name == "" {
+    	return errors.New("server must has a name")
+    }
 	return nil
-}
-
-func url2Ip(addr string) (string, error) {
-	ipAddr, err := net.ResolveIPAddr("ip", addr)
-	if err != nil {
-		return "", err
-	}
-	return ipAddr.String(), nil
-}
-
-func isIP(ip string) (b bool) {
-	if m, _ := regexp.MatchString("^(25[0-5]|2[0-4]\\d|[0-1]\\d{2}|[1-9]?\\d)\\.(25[0-5]|2[0-4]\\d|[0-1]\\d{2}|[1-9]?\\d)\\.(25[0-5]|2[0-4]\\d|[0-1]\\d{2}|[1-9]?\\d)\\.(25[0-5]|2[0-4]\\d|[0-1]\\d{2}|[1-9]?\\d)$", ip); !m {
-		return false
-	}
-	return true
 }
 
 func (config *Config) addrMap() map[string]bool {
@@ -248,6 +266,26 @@ func (config *Config) Validate() error {
 
 	if masterNum > 1 {
 		return fmt.Errorf("in one machine has two masters")
+	}
+	if config.Global.MonitorEnable {
+		if config.Global.Name == "" {
+			config.Global.Name = "chubaoDB"
+		}
+		if config.Global.PushInterval == 0 {
+			// default push interval 5s
+			config.Global.PushInterval = 5
+		}
+		if config.Global.PushGateway == "" {
+			return fmt.Errorf("invalid push gateway url")
+		}
+		if config.Global.Monitor == "" {
+			config.Global.Monitor = "prometheus"
+		}
+		switch config.Global.Monitor {
+		case "prometheus", "baudtime":
+		default:
+			return fmt.Errorf("invalid monitor %s", config.Global.Monitor)
+		}
 	}
 
 	return nil
