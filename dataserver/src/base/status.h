@@ -55,6 +55,8 @@ public:
         kOutOfBound = 24,
 
         kNotChange = 25,
+        kNoMoreData = 26,
+        kTypeConflict = 27,
 
         kUnknown = 255,
     };

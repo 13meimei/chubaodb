@@ -15,19 +15,20 @@
 package schedule
 
 import (
-	"context"
-	"github.com/chubaodb/chubaodb/master/entity"
 	"github.com/chubaodb/chubaodb/master/entity/pkg/basepb"
 	"github.com/chubaodb/chubaodb/master/entity/pkg/dspb"
 	"github.com/chubaodb/chubaodb/master/service"
 	"github.com/chubaodb/chubaodb/master/utils/log"
 	"math"
-	"math/rand"
 	"sort"
+	"sync"
 	"time"
+	"github.com/chubaodb/chubaodb/master/entity"
 )
 
 var _ ProcessJob = &BalanceJob{}
+
+const CHANGE_NUM_CROSS = math.MaxInt32
 
 // check master distribution
 // check range num in diff node is balanced , one job only move one range
@@ -35,205 +36,291 @@ type BalanceJob struct {
 	service *service.BaseService
 }
 
-func (gc *BalanceJob) process(ctx context.Context, stop *bool, nodeMap map[uint64]*basepb.Node, nodeInfoMap map[uint64]*dspb.NodeInfoResponse, nodeRangeNum map[uint64]int, ranges []*basepb.Range, rangeGroup map[[2]uint64][]*basepb.Range, tableMap map[uint64]*basepb.Table, dbMap map[uint64]*basepb.DataBase) {
-	if len(nodeInfoMap) <= 2 || !gc.service.ConfigBalanced(ctx) {
+func (bj *BalanceJob) process(ctx *processContext) {
+	if len(ctx.nodeHandlerMap) <= 2 || !bj.service.ConfigBalanced(ctx) {
 		return
 	}
-	if *stop {
+	if ctx.stop {
 		log.Info("got stop so skip BalanceJob")
 		return
 	}
 
 	log.Info("start BalanceJob begin")
 
-	kvList := sortToList(nodeRangeNum)
+	bj.balanceMaster(ctx)
 
-	gc.balanceMaster(ctx, stop, nodeMap, nodeInfoMap)
+	nHbyType := ctx.nodeHandlerMap.SortRangesByType(basepb.StoreType_Store_Hot)
+	if len(nHbyType) > 2 && len(nHbyType[len(nHbyType)-1].RangeHanders)-len(nHbyType[0].RangeHanders) >= 3 {
+		log.Info("start balance hot range begin")
+		bj.balanceRange(ctx, nHbyType)
+	}
 
-	if kvList[len(kvList)-1].num-kvList[0].num >= 3 {
-		log.Info("start balance range begin")
-		gc.balanceRange(ctx, stop, kvList, nodeRangeNum, nodeMap, nodeInfoMap)
-		*stop = true
+	nHbyType = ctx.nodeHandlerMap.SortRangesByType(basepb.StoreType_Store_Warm)
+	if len(nHbyType) > 2 && len(nHbyType[len(nHbyType)-1].RangeHanders)-len(nHbyType[0].RangeHanders) >= 3 {
+		log.Info("start balance warm range begin")
+		bj.balanceRange(ctx, nHbyType)
 	}
 
 }
 
-func (gc *BalanceJob) balanceMaster(ctx context.Context, stop *bool, nodeMap map[uint64]*basepb.Node, nodeInfoMap map[uint64]*dspb.NodeInfoResponse) {
-	nodeMasterNum := gc.groupNodeInfoMaster(nodeInfoMap)
+func (bj *BalanceJob) balanceMaster(ctx *processContext) {
 
-	allMaster := 0
-	for _, v := range nodeMasterNum {
-		allMaster += v
+	nhs := ctx.nodeHandlerMap.SortLeadersNum(0)
+	hotLeaderNum, hotNum := 0, 0
+	warmLeaderNum, warmNum := 0, 0
+
+	for _, v := range nhs {
+		if v.Type == basepb.StoreType_Store_Hot {
+			hotLeaderNum += v.LeaderNum
+			hotNum++
+		} else {
+			warmLeaderNum += v.LeaderNum
+			warmNum++
+		}
+
+	}
+	var avgHot, avgWarm int
+	if hotNum > 0 {
+		avgHot = hotLeaderNum/hotNum + 1
+	}
+	if warmNum > 0 {
+		avgWarm = warmLeaderNum/warmNum + 1
 	}
 
-	kvList := sortToList(nodeMasterNum)
+	for i := len(nhs) - 1; i >= 0; i-- {
+		maxNode := nhs[i]
 
-	maxNode := kvList[len(kvList)-1]
+		if maxNode.Type == basepb.StoreType_Store_Hot {
+			if maxNode.LeaderNum <= avgHot {
+				continue
+			}
+		} else {
+			if maxNode.LeaderNum <= avgWarm {
+				continue
+			}
+		}
 
-	for _, kv := range kvList {
-		if maxNode.num-kv.num >= 3 {
-			midNum := float64((maxNode.num - kv.num) / 2)
-			average := float64(allMaster/len(nodeMasterNum) - kv.num)
-			log.Info("start balance leader begin")
-			if gc.transferLeader(ctx, int(math.Max(math.Min(midNum, average), 1)), maxNode.nodeID, kv.nodeID, nodeMap, nodeInfoMap) {
-				*stop = true
-				return
+		for _, to := range nhs {
+			if maxNode.Type != to.Type {
+				continue
 			}
 
+			if maxNode.LeaderNum-to.LeaderNum >= 3 {
+				midNum := float64((maxNode.LeaderNum - to.LeaderNum) / 2)
+
+				if midNum == 0 {
+					continue
+				}
+
+				var average float64
+				if to.Type == basepb.StoreType_Store_Hot {
+					average = float64(avgHot - to.LeaderNum)
+				} else {
+					average = float64(avgWarm - to.LeaderNum)
+				}
+
+				transferNum := int(math.Min(midNum, average))
+
+				if transferNum == 0 {
+					continue
+				}
+
+				log.Info("start balance leader begin")
+				if bj.transferLeader(ctx, transferNum, maxNode.Id, to.Id) {
+					ctx.stop = true
+				}
+
+			}
 		}
 	}
+
 }
 
-func (bj *BalanceJob) transferLeader(ctx context.Context, num int, from uint64, to uint64, nodeMap map[uint64]*basepb.Node, nodeInfoMap map[uint64]*dspb.NodeInfoResponse) bool {
+func (bj *BalanceJob) transferLeader(ctx *processContext, num int, from uint64, to uint64) bool {
 
 	log.Info("try transferLeader num:[%d]", num)
 
-	fromInfo := nodeInfoMap[from]
-	toInfo := nodeInfoMap[to]
+	fromNh := ctx.nodeHandlerMap[from]
+	toNh := ctx.nodeHandlerMap[to]
+    m := entity.Monitor()
+	for _, fromRh := range fromNh.RangeHanders {
+		if !fromRh.IsLeader {
+			continue
+		}
 
-	rand.Shuffle(len(fromInfo.RangeInfos), func(i, j int) {
-		fromInfo.RangeInfos[i], fromInfo.RangeInfos[j] = fromInfo.RangeInfos[j], fromInfo.RangeInfos[i]
-	})
+		if err := fromRh.CanChangeLeader(ctx.nodeHandlerMap); err != nil {
+			log.Error(err.Error())
+			return false
+		}
 
-	for _, ri := range fromInfo.RangeInfos {
-		if ri.Range.Leader == fromInfo.NodeId {
-
-			//if has not health peer not transfer leader
-			for _, prs := range ri.PeersStatus {
-				if prs.Snapshotting || prs.Peer.Type != basepb.PeerType_PeerType_Normal || prs.DownSeconds > 0 {
-					log.Warn("node:[%d] range:[%d] peer:[%d] not health so skip this balance range", prs.Peer.NodeId, ri.Range.Id, prs.Peer.Id)
-					goto next
+		toRh := toNh.RangeHanders[fromRh.Id]
+		if toRh != nil && toRh.VersionEqual(fromRh) {
+			if err := bj.service.TransferLeader(ctx, toNh.Node, toRh.Range); err != nil {
+				log.Error("leader balance to node:[%d] rangeID:[%d] has err:[%s] ", toNh.Id, toRh.Id, err.Error())
+				if m != nil {
+					m.GetGauge(m.GetCluster(), "schedule", "event", "transfer_leader", "fail").Add(1)
+				}
+			} else {
+				fromNh.LeaderNum--
+				toNh.LeaderNum++
+				num--
+				log.Info("leader balance to node:[%d] rangeID:[%d] ok need num:[%d]", toNh.Id, toRh.Id, num)
+				if m != nil {
+					m.GetGauge(m.GetCluster(), "schedule", "event", "transfer_leader", "success").Add(1)
+				}
+				if num <= 0 {
+					return true
 				}
 			}
-
-			for _, tR := range toInfo.RangeInfos {
-				if tR.Range.Id == ri.Range.Id && tR.Range.Leader != toInfo.NodeId {
-					if err := bj.service.TransferLeader(ctx, nodeMap[toInfo.NodeId], tR.Range); err != nil {
-						log.Error("leader balance to node:[%d] rangeID:[%d] has err:[%s] ", toInfo.NodeId, tR.Range.Id, err.Error())
-					} else {
-						log.Info("leader balance to node:[%d] rangeID:[%d] ok need num:[%d]", toInfo.NodeId, tR.Range.Id, num)
-						num--
-						if num == 0 {
-							return true
-						}
-					}
-					break
-				}
-			}
-		next:
 		}
 	}
 
-	return false
+	return num <= 0
 }
 
-func (gc *BalanceJob) balanceRange(ctx context.Context, stop *bool, kvList []*kvStruct, nodeRangeNum map[uint64]int, nodeMap map[uint64]*basepb.Node, nodeInfoMap map[uint64]*dspb.NodeInfoResponse) {
-
-	//has snapshot
-	for _, ni := range nodeInfoMap {
-		for _, ri := range ni.RangeInfos {
-			for _, prs := range ri.PeersStatus {
-				if prs.Snapshotting || prs.Peer.Type != basepb.PeerType_PeerType_Normal {
-					log.Warn("node:[%d] range:[%d] peer:[%d] has snapshot so skip this balance range", prs.Peer.NodeId, ri.Range.Id, prs.Peer.Id)
-					return
-				}
-			}
+func (bj *BalanceJob) balanceRange(ctx *processContext, nhs []*service.NodeHandler) {
+	for i := len(nhs) - 1; i >= 0; i-- {
+		if bj.balanceRangeByFromIndex(ctx, nhs, i) != 0 {
+			break
 		}
 	}
+}
 
+func (bj *BalanceJob) balanceRangeByFromIndex(ctx *processContext, nhs []*service.NodeHandler, index int) int {
+
+	changeNum := 0
 	allCount := 0
-	for _, v := range kvList {
-		allCount += v.num
+	average := 0
+
+	for _, nh := range nhs {
+		allCount += nh.RangeNum
+	}
+	if len(nhs) > 0 {
+		average = int(math.Max(float64(allCount/len(nhs)), 1))
 	}
 
-	average := math.Max(float64(allCount/len(kvList)), 1)
+	fromNh := nhs[index]
+	toNh := nhs[0]
 
-	from := kvList[len(kvList)-1]
-
-	fromInfo := nodeInfoMap[from.nodeID]
-
-	count := 0
-
-	to := kvList[0]
-	toInfo := nodeInfoMap[to.nodeID]
 	//check memory size
-	if float64(toInfo.Stats.UsedSize)/float64(toInfo.Stats.Capacity) >= entity.Conf().Global.MemoryRatio {
-		log.Error("node:[%d] used memory:[%d] gather config memory_ration[%d] so skip check", to.nodeID, float64(toInfo.Stats.UsedSize)/float64(toInfo.Stats.Capacity), entity.Conf().Global.MemoryRatio)
-		return
+	if err := toNh.CheckMemory(); err != nil {
+		log.Error(err.Error())
+		return CHANGE_NUM_CROSS
 	}
 
-	if to.num >= int(average) {
-		log.Info("the nodeNum:[%d] is average:[%d] so skip blance ", to.num, average)
-		return
+	if toNh.RangeNum >= average {
+		log.Info("the nodeNum:[%d] is average:[%d] so skip blance ", toNh.RangeNum, average)
+		return CHANGE_NUM_CROSS
 	}
 
+	locker := sync.Mutex{}
+    m := entity.Monitor()
 	//shuffle because master is often continuous
-	rand.Shuffle(len(fromInfo.RangeInfos), func(i, j int) {
-		fromInfo.RangeInfos[i], fromInfo.RangeInfos[j] = fromInfo.RangeInfos[j], fromInfo.RangeInfos[i]
-	})
+	for _, fromRh := range fromNh.RangeHanders {
 
-	for _, fromRangeInfo := range fromInfo.RangeInfos {
-
-		for _, toRangeInfo := range toInfo.RangeInfos {
-			if fromRangeInfo.Range.Id == toRangeInfo.Range.Id {
-				goto skip
-			}
+		if toNh.GetRH(fromRh.Id) != nil {
+			continue
 		}
 
-		if err := gc.service.CreateRangeToNode(ctx, nodeMap[to.nodeID], fromRangeInfo.Range); err != nil {
+		if !fromRh.IsLeader {
+			continue
+		}
+
+		if err := fromRh.CanCreateRange(ctx.nodeHandlerMap); err != nil {
+			log.Warn("node:[%d] range:[%d] peer:[%d] has err so skip this balance err:[%s]", fromRh.Peer.NodeId, fromRh.Id, fromRh.Peer.Id, err.Error())
+			return CHANGE_NUM_CROSS
+		}
+
+		if err := bj.service.CreateRangeToNode(ctx, toNh.Node, fromRh.Range); err != nil {
 			log.Error("balance range to node err:[%s]", err.Error())
+			if m != nil {
+				m.GetGauge(m.GetCluster(), "schedule", "event", "create_range", "fail").Add(1)
+			}
 		} else {
-			count++
-			from.num--
-			to.num++
-			*stop = true
-			log.Info("create range to node:[%d] range:[%d]", to.nodeID, fromRangeInfo.Range.Id)
+			locker.Lock()
+			changeNum++
+			toNh.RangeNum++
+			toNh.InSnapshot++
+			fromNh.OutSnapshot++
+			locker.Unlock()
+			ctx.stop = true
+			log.Info("create range to node:[%d] range:[%d]", toNh.Id, fromRh.Id)
+			if m != nil {
+				m.GetGauge(m.GetCluster(), "schedule", "event", "create_range", "success").Add(1)
+			}
+			//wait snapshot ok
+			go func(tableID, rangeID uint64, from, to *service.NodeHandler) {
+				time.Sleep(1 * time.Second)
+				select {
+				case <-ctx.Done():
+					return
+				default:
+
+				}
+
+				log.Info("check add range to node is ok ")
+
+				for {
+
+					select {
+					case <-ctx.Done():
+						return
+					default:
+
+					}
+
+					log.Info("to wait node:[%d] range:[%d] status to normal ", to.Id, rangeID)
+
+					if rng, err := bj.service.QueryRange(ctx, tableID, rangeID); err != nil {
+						log.Error(err.Error())
+					} else {
+						for _, peer := range rng.Peers {
+							if peer.NodeId != to.Id {
+								continue
+							}
+
+							if peer.Type == basepb.PeerType_PeerType_Normal {
+								locker.Lock()
+								toNh.InSnapshot--
+								fromNh.OutSnapshot--
+								locker.Unlock()
+								return
+							}
+						}
+					}
+					time.Sleep(2 * time.Second)
+				}
+
+			}(fromRh.TableId, fromRh.Id, fromNh, toNh)
 		}
 
-		if from.num-to.num <= 3 || to.num >= int(average) {
-			return
+		if fromNh.RangeNum-toNh.RangeNum <= 3 || toNh.RangeNum >= average {
+			return CHANGE_NUM_CROSS
 		}
 
-		for count >= 5 { //wait for over got to next
+		for fromNh.OutSnapshot >= 5 { //wait for over got to next
 
-			time.Sleep(5 * time.Second)
+			time.Sleep(3 * time.Second)
 			select {
 			case <-ctx.Done():
-				return
+				return CHANGE_NUM_CROSS
 			default:
 
 			}
 
-			snapNum := 0
-			for nodeID, _ := range nodeMap {
-				response, err := gc.service.NodeInfo(ctx, nodeMap[nodeID])
-				if err != nil {
-					log.Error("get node:[%d] info err:[%s]", nodeID, err.Error())
-					return
-				}
-				snapNum := 0
-				for _, ri := range response.RangeInfos {
-					for _, prs := range ri.PeersStatus {
-						if prs.Snapshotting || prs.Peer.Type != basepb.PeerType_PeerType_Normal {
-							snapNum++
-						}
-					}
-				}
-			}
-
-			log.Info("balance range not ok now wait snapshot num:[%d] to next step", snapNum)
-			count = snapNum
+			log.Info("balance range not ok now wait snapshot num:[%d] to next step", fromNh.OutSnapshot)
 
 		}
 
-	skip:
 	}
+
+	return changeNum
 }
 
-func sortToList(nodeRangeNum map[uint64]int) []*kvStruct {
-	kvList := make([]*kvStruct, 0, len(nodeRangeNum))
-	for k, v := range nodeRangeNum {
-		kvList = append(kvList, &kvStruct{nodeID: k, num: v})
+func sortToList(nhMap service.NodeHandlerMap) []*kvStruct {
+	kvList := make([]*kvStruct, 0, len(nhMap))
+	for k, v := range nhMap {
+		kvList = append(kvList, &kvStruct{nodeID: k, num: v.LeaderNum})
 	}
 
 	sort.Slice(kvList, func(i, j int) bool {
@@ -243,7 +330,7 @@ func sortToList(nodeRangeNum map[uint64]int) []*kvStruct {
 }
 
 //it return num of not master
-func (gc *BalanceJob) groupNodeInfoMaster(nodeInfoMap map[uint64]*dspb.NodeInfoResponse) map[uint64]int {
+func (bj *BalanceJob) groupNodeInfoMaster(nodeInfoMap map[uint64]*dspb.NodeInfoResponse) map[uint64]int {
 	nodeMasterNum := make(map[uint64]int)
 
 	for nodeID, _ := range nodeInfoMap {

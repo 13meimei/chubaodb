@@ -15,6 +15,7 @@
 #include "node_address.h"
 
 #include "common/logger.h"
+#include "common/server_config.h"
 
 namespace chubaodb {
 namespace ds {
@@ -34,6 +35,10 @@ std::string NodeAddress::GetNodeAddress(uint64_t node_id) {
     }
 
     std::string addr;
+    if (ds_config.b_test) {
+        FLOG_ERROR("get raft address failed by node_id: {}", node_id);
+        return addr;
+    }
     auto s = master_server_->GetRaftAddress(node_id, &addr);
     if (!s.ok()) {
         FLOG_ERROR("get raft address to {} failed: {}",  node_id, s.ToString().c_str());
@@ -43,6 +48,17 @@ std::string NodeAddress::GetNodeAddress(uint64_t node_id) {
     }
 
     return addr;
+}
+
+bool NodeAddress::AddNodeAddress(uint64_t node_id, std::string address) {
+    chubaodb::shared_lock<chubaodb::shared_mutex> lock(mutex_);
+    auto it = address_map_.find(node_id);
+    if (it != address_map_.end()) {
+        FLOG_WARN("node_id: {} old address: {} is exsist, don't set new address: {}", node_id, it->second, address);
+        return false;
+    }
+    address_map_[node_id] = address;
+    return true;
 }
 
 }  // namespace server

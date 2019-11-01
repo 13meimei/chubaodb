@@ -15,8 +15,10 @@
 #include "rpc_request.h"
 
 #include <google/protobuf/io/zero_copy_stream_impl_lite.h>
+
 #include "base/util.h"
-#include "logger.h"
+#include "common/logger.h"
+#include "common/server_config.h"
 #include "proto/gen/dspb/function.pb.h"
 
 namespace chubaodb {
@@ -29,7 +31,7 @@ RPCRequest::RPCRequest(const net::Context& req_ctx, const net::MessagePtr& req_m
     if (msg->head.timeout != 0) {
         expire_time += msg->head.timeout;
     } else {
-        expire_time += kDefaultRPCRequestTimeoutMS;
+        expire_time += ds_config.worker_config.task_timeout_ms;
     };
 }
 
@@ -59,6 +61,15 @@ void RPCRequest::Reply(const google::protobuf::Message& proto_resp) {
         }
     } else {
         FLOG_ERROR("serialize response failed, msg: {}", proto_resp.ShortDebugString());
+    }
+}
+
+void SetResponseHeader(dspb::RangeResponse_Header* resp,
+                       const dspb::RangeRequest_Header &req, ErrorPtr err) {
+    resp->set_trace_id(req.trace_id());
+    resp->set_cluster_id(req.cluster_id());
+    if (err != nullptr) {
+        resp->set_allocated_error(err.release());
     }
 }
 

@@ -23,13 +23,13 @@ import (
 
 //ids sequence key for etcd
 const (
-	SequenceNodeID  = "/sequence/node/"
-	SequenceRangeID = "/sequence/range/"
-	SequenceTableID = "/sequence/table/"
-	SequencePeerID  = "/sequence/peer/"
-	SequenceDBID    = "/sequence/db/"
-	SequenceIndexID = "/sequence/index/"
-	sequenceProxyID = "/sequence/proxy/"
+	SequenceNodeID     = "/sequence/node/"
+	SequenceRangeID    = "/sequence/range/"
+	SequenceTableID    = "/sequence/table/"
+	SequencePeerID     = "/sequence/peer/"
+	SequenceDBID       = "/sequence/db/"
+	SequenceIndexID    = "/sequence/index/"
+	sequenceDocumentID = "/sequence/doc/"
 )
 
 const (
@@ -102,8 +102,8 @@ func DBKeys(id uint64, name string) (dbKey, nameKey string) {
 	return
 }
 
-func SequenceProxyID(dbID, tableID uint64) string {
-	return fmt.Sprintf("%s%d/%d", sequenceProxyID, dbID, tableID)
+func SequenceDocument(dbID, tableID uint64) string {
+	return fmt.Sprintf("%s%d/%d", sequenceDocumentID, dbID, tableID)
 }
 
 func OK() *mspb.ResponseHeader {
@@ -118,7 +118,6 @@ func Err(e error) *mspb.ResponseHeader {
 }
 
 type TableProperty struct {
-	Columns    []*basepb.Column `json:"columns"`
-	Indexes    []*basepb.Index  `json:"indexes"`
-	ReplicaNum int              `json:"replica_num"`
+	Columns []*basepb.Column `json:"columns"`
+	Indexes []*basepb.Index  `json:"indexes"`
 }

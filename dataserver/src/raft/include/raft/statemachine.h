@@ -33,6 +33,7 @@ public:
 
     virtual Status Apply(const std::string& cmd, uint64_t index) = 0;
     virtual Status ApplyMemberChange(const ConfChange& cc, uint64_t index) = 0;
+    virtual Status Read(const std::string& cmd, uint16_t verify_result) = 0;
 
     virtual uint64_t PersistApplied() = 0;
 

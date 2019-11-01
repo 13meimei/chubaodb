@@ -18,9 +18,12 @@ import (
 	"context"
 	"fmt"
 	"github.com/chubaodb/chubaodb/master/entity"
+	"github.com/chubaodb/chubaodb/master/entity/pkg/basepb"
 	"github.com/chubaodb/chubaodb/master/entity/pkg/mspb"
 	"github.com/chubaodb/chubaodb/master/service"
+	"github.com/chubaodb/chubaodb/master/utils/bytes"
 	"github.com/chubaodb/chubaodb/master/utils/ginutil"
+	"github.com/chubaodb/chubaodb/master/utils/log"
 	"github.com/chubaodb/chubaodb/master/utils/monitoring"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -32,33 +35,49 @@ type clusterApi struct {
 	monitor monitoring.Monitor
 }
 
-func ExportToClusterHandler(router *gin.Engine, service *service.BaseService, monitor monitoring.Monitor) {
-
-	c := &clusterApi{router: router, service: service, monitor: monitor}
+func ExportToClusterHandler(router *gin.Engine, service *service.BaseService) {
+	m := entity.Monitor()
+	c := &clusterApi{router: router, service: service, monitor: m}
 
 	//database handler
-	router.Handle(http.MethodPost, "/db/list", base30.PaincHandler, base30.TimeOutHandler, c.listDB, base30.TimeOutEndHandler)
-	router.Handle(http.MethodPost, "/db/get", base30.PaincHandler, base30.TimeOutHandler, c.getDB, base30.TimeOutEndHandler)
-	router.Handle(http.MethodPost, "/db/create", base30.PaincHandler, base30.TimeOutHandler, c.createDatabase, base30.TimeOutEndHandler)
-	router.Handle(http.MethodPost, "/db/delete", base30.PaincHandler, base30.TimeOutHandler, c.deleteDatabase, base30.TimeOutEndHandler)
+	base30 := newBaseHandler(30, m)
+	base60 := newBaseHandler(60, m)
+
+	router.Handle(http.MethodGet, "/", base30.TimeOutHandler, base30.PaincHandler(c.clusterInfo), base30.TimeOutEndHandler)
+	router.Handle(http.MethodPost, "/", base30.TimeOutHandler, base30.PaincHandler(c.clusterInfo), base30.TimeOutEndHandler)
+
+	router.Handle(http.MethodPost, "/db/list", base30.TimeOutHandler, base30.PaincHandler(c.listDB), base30.TimeOutEndHandler)
+	router.Handle(http.MethodPost, "/db/get", base30.TimeOutHandler, base30.PaincHandler(c.getDB), base30.TimeOutEndHandler)
+	router.Handle(http.MethodPost, "/db/create", base30.TimeOutHandler, base30.PaincHandler(c.createDatabase), base30.TimeOutEndHandler)
+	router.Handle(http.MethodPost, "/db/delete", base30.TimeOutHandler, base30.PaincHandler(c.deleteDatabase), base30.TimeOutEndHandler)
 
 	//table handler
-	router.Handle(http.MethodPost, "/table/create", base30.PaincHandler, base300.TimeOutHandler, c.createTable, base30.TimeOutEndHandler)
-	router.Handle(http.MethodPost, "/table/update", base30.PaincHandler, base300.TimeOutHandler, c.updateTable, base30.TimeOutEndHandler)
-	router.Handle(http.MethodPost, "/table/get", base30.PaincHandler, base30.TimeOutHandler, c.getTable, base30.TimeOutEndHandler)
-	router.Handle(http.MethodPost, "/table/list", base30.PaincHandler, base30.TimeOutHandler, c.listTable, base30.TimeOutEndHandler)
-	router.Handle(http.MethodPost, "/table/delete", base30.PaincHandler, base30.TimeOutHandler, c.deleteTable, base30.TimeOutEndHandler)
+	router.Handle(http.MethodPost, "/table/create", base60.TimeOutHandler, base60.PaincHandler(c.createTable), base30.TimeOutEndHandler)
+	router.Handle(http.MethodPost, "/table/update", base60.TimeOutHandler, base60.PaincHandler(c.updateTable), base30.TimeOutEndHandler)
+	router.Handle(http.MethodPost, "/table/get", base30.TimeOutHandler, base30.PaincHandler(c.getTable), base30.TimeOutEndHandler)
+	router.Handle(http.MethodPost, "/table/list", base30.TimeOutHandler, base30.PaincHandler(c.listTable), base30.TimeOutEndHandler)
+	router.Handle(http.MethodPost, "/table/delete", base30.TimeOutHandler, base30.PaincHandler(c.deleteTable), base30.TimeOutEndHandler)
+	router.Handle(http.MethodPost, "/table/count", base30.TimeOutHandler, base30.PaincHandler(c.countTable), base30.TimeOutEndHandler)
 
 	//column handler
-	router.Handle(http.MethodPost, "/column/list", base30.PaincHandler, base30.TimeOutHandler, c.listColumn, base30.TimeOutEndHandler)
-	router.Handle(http.MethodPost, "/column/get", base30.PaincHandler, base30.TimeOutHandler, c.getColumn, base30.TimeOutEndHandler)
+	router.Handle(http.MethodPost, "/column/list", base30.TimeOutHandler, base30.PaincHandler(c.listColumn), base30.TimeOutEndHandler)
+	router.Handle(http.MethodPost, "/column/get", base30.TimeOutHandler, base30.PaincHandler(c.getColumn), base30.TimeOutEndHandler)
 
 	//proxy id handler
-	router.Handle(http.MethodPost, "/proxy/id", base30.PaincHandler, base30.TimeOutHandler, c.proxyID, base30.TimeOutEndHandler)
+	router.Handle(http.MethodPost, "/table/auto_increment_id", base30.TimeOutHandler, base30.PaincHandler(c.docAutoIncrement), base30.TimeOutEndHandler)
 
 	//clean lock
-	router.Handle(http.MethodGet, "/clean_lock", base30.PaincHandler, base30.TimeOutHandler, c.cleanLock, base30.TimeOutEndHandler)
+	router.Handle(http.MethodGet, "/clean_lock", base30.TimeOutHandler, base30.PaincHandler(c.cleanLock), base30.TimeOutEndHandler)
 
+}
+
+func (ca *clusterApi) clusterInfo(c *gin.Context) {
+	ginutil.NewAutoMehtodName(c, ca.monitor).Send(&mspb.ClusterInfoResponse{
+		Header:       entity.OK(),
+		BuildVersion: entity.GetBuildVersion(),
+		BuildTime:    entity.GetBuildTime(),
+		CommitId:     entity.GetCommitID(),
+	})
 }
 
 //clean lock for admin , when space locked , waring make sure not create space ing , only support json
@@ -178,6 +197,38 @@ func (ca *clusterApi) deleteTable(c *gin.Context) {
 	ginutil.NewAutoMehtodName(c, ca.monitor).Send(&mspb.DelTableResponse{Header: entity.OK(), Table: table})
 }
 
+func (ca *clusterApi) countTable(c *gin.Context) {
+	ctx, _ := c.Get(Ctx)
+
+	req := &mspb.CountTableRequest{}
+	if err := bind(c, req); err != nil {
+		ginutil.NewAutoMehtodName(c, ca.monitor).Send(&mspb.CountTableResponse{Header: entity.Err(err)})
+		return
+	}
+
+	dbTableCount, err := ca.service.TableDocNum(ctx.(context.Context))
+	if err != nil {
+		ginutil.NewAutoMehtodName(c, ca.monitor).Send(&mspb.CountTableResponse{Header: entity.Err(err)})
+		return
+	}
+
+	resp := &mspb.CountTableResponse{
+		Header: entity.OK(),
+	}
+
+	for dbID, tableMap := range dbTableCount {
+		for tableID, count := range tableMap {
+			resp.List = append(resp.List, &mspb.Counter{
+				DbId:    dbID,
+				TableId: tableID,
+				Count:   count,
+			})
+		}
+	}
+
+	ginutil.NewAutoMehtodName(c, ca.monitor).Send(resp)
+}
+
 //Get all columns by db_id and table_id
 func (ca *clusterApi) listColumn(c *gin.Context) {
 	ctx, _ := c.Get(Ctx)
@@ -264,7 +315,33 @@ func (ca *clusterApi) createTable(c *gin.Context) {
 		return
 	}
 
-	table, err := ca.service.CreateTable(ctx.(context.Context), req.DbName, req.TableName, req.Properties, req.RangeKeys)
+	var storeType basepb.StoreType
+
+	switch req.StoreType {
+	case "hot", "":
+		storeType = basepb.StoreType_Store_Hot
+	case "warm":
+		storeType = basepb.StoreType_Store_Warm
+	case "mix":
+		storeType = basepb.StoreType_Store_Mix
+	default:
+		ginutil.NewAutoMehtodName(c, ca.monitor).Send(&mspb.CreateTableResponse{Header: entity.Err(fmt.Errorf("store type err:[%s] only support ['hot','warm','min']", req.StoreType))})
+		return
+	}
+
+	if req.ReplicaNum == 0 {
+		req.ReplicaNum = uint64(entity.Conf().Global.ReplicaNum)
+	}
+
+	if req.ReplicaNum <= 0 {
+		req.ReplicaNum = 3
+	}
+
+	if req.DataRangeNum == 0 {
+		req.DataRangeNum = 2
+	}
+
+	table, err := ca.service.CreateTable(ctx.(context.Context), req.DbName, req.TableName, req.Properties, storeType, req.ReplicaNum, req.DataRangeNum)
 	if err != nil {
 		ginutil.NewAutoMehtodName(c, ca.monitor).Send(&mspb.CreateTableResponse{Header: entity.Err(err)})
 		return
@@ -293,7 +370,7 @@ func (ca *clusterApi) updateTable(c *gin.Context) {
 }
 
 // create table
-func (ca *clusterApi) proxyID(c *gin.Context) {
+func (ca *clusterApi) docAutoIncrement(c *gin.Context) {
 	ctx, _ := c.Get(Ctx)
 
 	req := &mspb.GetAutoIncIdRequest{}
@@ -307,11 +384,26 @@ func (ca *clusterApi) proxyID(c *gin.Context) {
 		return
 	}
 
-	ids, err := ca.service.AutoIncIds(ctx.(context.Context), entity.SequenceProxyID(req.DbId, req.TableId), int(req.Size_))
+	ids, err := ca.service.AutoIncIds(ctx.(context.Context), req.DbId, req.TableId, uint64(req.Size_))
 	if err != nil {
 		ginutil.NewAutoMehtodName(c, ca.monitor).Send(&mspb.GetAutoIncIdResponse{Header: entity.Err(err)})
 		return
 	}
 
-	ginutil.NewAutoMehtodName(c, ca.monitor).Send(&mspb.GetAutoIncIdResponse{Header: entity.OK(), Ids: ids})
+	if len(ids)%2 != 0 {
+		ginutil.NewAutoMehtodName(c, ca.monitor).Send(&mspb.GetAutoIncIdResponse{Header: entity.Err(fmt.Errorf("id create has err need double num but go :[%v]", ids))})
+		return
+	}
+
+	pairs := make([]*mspb.IdPair, 0, len(ids)/2)
+
+	for i := 0; i < len(ids); i += 2 {
+		log.Debug("auto increment id [%d]/[%d]", ids[i], ids[i+1])
+		pairs = append(pairs, &mspb.IdPair{
+			IdStart: bytes.Uint64ToByte(ids[i]),
+			IdEnd:   bytes.Uint64ToByte(ids[i+1]),
+		})
+	}
+
+	ginutil.NewAutoMehtodName(c, ca.monitor).Send(&mspb.GetAutoIncIdResponse{Header: entity.OK(), IdPairs: pairs})
 }

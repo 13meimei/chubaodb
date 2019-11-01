@@ -13,6 +13,7 @@
 // permissions and limitations under the License.
 
 #include "kv_fetcher.h"
+#include <random>
 
 namespace chubaodb {
 namespace ds {
@@ -30,6 +31,87 @@ std::unique_ptr<KvFetcher> KvFetcher::Create(Store& store, const dspb::ScanReque
     return std::unique_ptr<KvFetcher>(new TxnRangeKvFetcher(store, req.start_key(), req.end_key()));
 }
 
+std::unique_ptr<KvFetcher> KvFetcher::Create(
+        Store& store,
+        const dspb::TableRead & req,
+        const std::string & start_key,
+        const std::string & end_key
+) {
+
+    if (req.type() == dspb::DEFAULT_RANGE_TYPE) {
+        return Create(store, start_key, end_key);
+    } else if (req.type() == dspb::PRIMARY_KEY_TYPE) {
+        std::vector<std::string> vec;
+        vec.resize(req.pk_keys_size());
+        for (const auto & key : req.pk_keys()) {
+            vec.push_back(key);
+        }
+
+        return std::unique_ptr<KvFetcher>( new PointersKvFetcher( store, vec, false ) );
+    } else if (req.type() == dspb::KEYS_RANGE_TYPE) {
+
+        return std::unique_ptr<KvFetcher>( new TxnRangeKvFetcher( store, req.range().start_key(), req.range().end_key()));
+    } else {
+
+        return nullptr;// nerver to here.
+    }
+
+    return nullptr;
+
+}
+
+std::unique_ptr<KvFetcher> KvFetcher::Create(
+        Store& store,
+        const dspb::IndexRead & req,
+        const std::string & start_key,
+        const std::string & end_key
+) {
+
+    if (req.type() == dspb::DEFAULT_RANGE_TYPE) {
+        return Create(store, start_key, end_key);
+    } else if (req.type() == dspb::PRIMARY_KEY_TYPE) {
+        std::vector<std::string> vec;
+        vec.resize(req.index_keys_size());
+        for (const auto & key : req.index_keys()) {
+            vec.push_back(key);
+        }
+
+        return std::unique_ptr<KvFetcher>( new PointersKvFetcher( store, vec, false ) );
+    } else if (req.type() == dspb::KEYS_RANGE_TYPE) {
+
+        return std::unique_ptr<KvFetcher>( new TxnRangeKvFetcher( store, req.range().start_key(), req.range().end_key()));
+    } else {
+
+        return nullptr;// nerver to here.
+    }
+
+    return nullptr;
+}
+
+std::unique_ptr<KvFetcher> KvFetcher::Create(
+        Store& store,
+        const dspb::DataSample & req,
+        const std::string & start_key,
+        const std::string & end_key
+) {
+
+    uint64_t kv_count = store.KvCount();
+    double ratio = req.ratio();
+
+    if (ratio <= 0 || ratio > 1 ) {
+        return nullptr;
+    } else {
+        uint64_t sample_count = kv_count * req.ratio();
+        return std::unique_ptr<KvFetcher>(
+                new RangeKvSampleFetcher( store, req.range().start_key(), req.range().end_key(), sample_count)
+        );
+    }
+}
+
+std::unique_ptr<KvFetcher> KvFetcher::Create(Store& store, const std::string & start_key, const std::string & end_key)
+{
+    return std::unique_ptr<KvFetcher>( new TxnRangeKvFetcher( store, start_key, end_key));
+}
 
 PointerKvFetcher::PointerKvFetcher(Store& s, const std::string& key, bool fetch_intent) :
     store_(s), key_(key), fetch_intent_(fetch_intent) {
@@ -67,10 +149,64 @@ Status PointerKvFetcher::Next(KvRecord& rec) {
     return Status::OK();
 }
 
-RangeKvFetcher::RangeKvFetcher(Store& s, const std::string& start, const std::string& limit) :
-    iter_(s.NewIterator(start, limit)) {
-    if (iter_ == nullptr) {
-        status_ = Status(Status::kIOError, "create iterator failed", "null");
+PointersKvFetcher::PointersKvFetcher(Store& s, const std::vector<std::string> & keys, bool fetch_intent)
+        : store_(s),
+          keys_(keys),
+          fetch_intent_(fetch_intent)
+{
+
+    iter_ = keys_.begin();
+}
+
+Status PointersKvFetcher::Next(KvRecord& rec) {
+    rec.Clear();
+
+    while (iter_ != keys_.end()) {
+        if (store_.keyInScop(*iter_)) {
+            break;
+        } else {
+            ++iter_;
+        }
+    }
+
+    if (iter_ == keys_.end()) {
+        return Status( Status::kNoMoreData, "PointersKvFetcher iter_ reached the end", "");
+    }
+
+    auto s = store_.Get(*iter_, &rec.value, false);
+    if (s.ok()) {
+        rec.MarkHasValue();
+    } else if (s.code() != Status::kNotFound) { // error
+        return s;
+    }
+
+    if (fetch_intent_) {
+        s = store_.GetTxnValue(*iter_, rec.intent);
+        if (s.ok()) {
+            rec.MarkHasIntent();
+        } else if (s.code() != Status::kNotFound) { // error
+            return s;
+        }
+    }
+
+    if (rec.Valid()) {
+        rec.key = *iter_;
+    }
+
+    ++iter_;
+
+    return Status::OK();
+}
+
+RangeKvFetcher::RangeKvFetcher(Store& s, const std::string& start, const std::string& limit) {
+
+    if (start > limit) {
+        status_ = Status(Status::kOutOfBound, "range error. ", "[" + start + "," + limit + ")");
+    } else {
+        iter_ = s.NewIterator(start, limit);
+        if (iter_ == nullptr) {
+            status_ = Status(Status::kIOError, "create iterator failed", "null");
+        }
     }
 }
 
@@ -95,7 +231,11 @@ Status RangeKvFetcher::Next(KvRecord& rec) {
 }
 
 TxnRangeKvFetcher::TxnRangeKvFetcher(Store& s, const std::string& start, const std::string& limit) {
-    status_ = s.NewIterators(data_iter_, txn_iter_, start, limit);
+    if (start > limit) {
+        status_ = Status(Status::kOutOfBound, "range error. ", "[" + start + "," + limit + ")");
+    } else {
+        status_ = s.NewIterators(data_iter_, txn_iter_, start, limit);
+    }
 }
 
 bool TxnRangeKvFetcher::valid() {
@@ -167,6 +307,89 @@ Status TxnRangeKvFetcher::Next(KvRecord& rec) {
 
     return Status::OK();
 }
+
+RangeKvSampleFetcher::RangeKvSampleFetcher(Store& s, const std::string& start,
+        const std::string& limit, const uint64_t num) {
+
+    if (start > limit) {
+        status_ = Status(Status::kOutOfBound, "range error. ", "[" + start + "," + limit + ")");
+    } else {
+        iter_ = s.NewIterator(start, limit);
+        if (iter_ == nullptr) {
+            status_ = Status(Status::kIOError, "create iterator failed", "null");
+        }
+    }
+
+    is_sample_over_ = false;
+    count_ = 0;
+    max_sample_num_ = num;
+    if (max_sample_num_ == 0) {
+        status_ = Status(Status::kInvalidArgument, "max sample num is 0 ", "");
+    }
+}
+
+Status RangeKvSampleFetcher::Sample(){
+
+    if (!status_.ok()) {
+        return status_;
+    }
+
+    std::random_device rd;
+    std::mt19937_64 gen(rd());
+    std::uniform_int_distribution<unsigned long long> rng (0, UINT32_MAX);
+
+    KvRecord kv;
+    while (iter_->Valid()) {
+
+        if( pool_sample_.size() <= max_sample_num_-1) {
+            kv.key = iter_->Key();
+            kv.value = iter_->Value();
+            kv.MarkHasValue();
+            pool_sample_.push_back(kv);
+        } else {
+            if (rng(gen, std::uniform_int_distribution<unsigned long long>::param_type(0, count_)) < max_sample_num_ ) {
+                auto pos = rng(gen, std::uniform_int_distribution<unsigned long long>::param_type(0, max_sample_num_-1));
+                pool_sample_[pos].key = iter_->Key();
+                pool_sample_[pos].value = iter_->Value();
+            }
+        }
+        count_++;
+        iter_->Next();
+    }
+
+    status_ = iter_->status();
+    return status_;
+}
+
+Status RangeKvSampleFetcher::Next(KvRecord& rec) {
+    rec.Clear();
+
+    if (!status_.ok()) {
+        return status_;
+    }
+
+    if (!is_sample_over_) {
+
+        status_ = Sample();
+        if (!status_.ok()) {
+            return status_;
+        }
+        is_sample_over_ = true;
+        pool_iter_ = pool_sample_.begin();
+    }
+
+    if (pool_iter_ == pool_sample_.end()) {
+        status_ = Status( Status::kNoMoreData, "RangeKvSampleFetcher pool_iter_ reached the end", "");
+    } else {
+        rec.key = pool_iter_->key;
+        rec.value = pool_iter_->value;
+        rec.MarkHasValue();
+        ++pool_iter_;
+    }
+
+    return status_;
+}
+
 
 } // namespace storage
 } // namespace ds

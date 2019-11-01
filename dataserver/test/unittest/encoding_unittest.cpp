@@ -190,7 +190,7 @@ TEST(Encoding, BytesValue) {
     ASSERT_TRUE(DecodeValueTag(buf, offset, &actual_col_id, &type));
     ASSERT_LE(offset, buf.size());
     ASSERT_EQ(type, EncodeType::Bytes);
-    ASSERT_EQ(actual_col_id, 123);
+    ASSERT_EQ(actual_col_id, 123U);
 }
 
 TEST(Encoding, AscInt) {

@@ -10,6 +10,7 @@ import (
 	proto "github.com/golang/protobuf/proto"
 	io "io"
 	math "math"
+	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -21,7 +22,7 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 type ChangeRaftMemberRequest_ChangeType int32
 
@@ -81,7 +82,7 @@ func (m *SchReuqest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return xxx_messageInfo_SchReuqest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -107,25 +108,25 @@ type isSchReuqest_Req interface {
 }
 
 type SchReuqest_CreateRange struct {
-	CreateRange *CreateRangeRequest `protobuf:"bytes,2,opt,name=create_range,json=createRange,proto3,oneof"`
+	CreateRange *CreateRangeRequest `protobuf:"bytes,2,opt,name=create_range,json=createRange,proto3,oneof" json:"create_range,omitempty"`
 }
 type SchReuqest_DeleteRange struct {
-	DeleteRange *DeleteRangeRequest `protobuf:"bytes,3,opt,name=delete_range,json=deleteRange,proto3,oneof"`
+	DeleteRange *DeleteRangeRequest `protobuf:"bytes,3,opt,name=delete_range,json=deleteRange,proto3,oneof" json:"delete_range,omitempty"`
 }
 type SchReuqest_TransferRangeLeader struct {
-	TransferRangeLeader *TransferRangeLeaderRequest `protobuf:"bytes,4,opt,name=transfer_range_leader,json=transferRangeLeader,proto3,oneof"`
+	TransferRangeLeader *TransferRangeLeaderRequest `protobuf:"bytes,4,opt,name=transfer_range_leader,json=transferRangeLeader,proto3,oneof" json:"transfer_range_leader,omitempty"`
 }
 type SchReuqest_GetPeerInfo struct {
-	GetPeerInfo *GetPeerInfoRequest `protobuf:"bytes,5,opt,name=get_peer_info,json=getPeerInfo,proto3,oneof"`
+	GetPeerInfo *GetPeerInfoRequest `protobuf:"bytes,5,opt,name=get_peer_info,json=getPeerInfo,proto3,oneof" json:"get_peer_info,omitempty"`
 }
 type SchReuqest_IsAlive struct {
-	IsAlive *IsAliveRequest `protobuf:"bytes,6,opt,name=is_alive,json=isAlive,proto3,oneof"`
+	IsAlive *IsAliveRequest `protobuf:"bytes,6,opt,name=is_alive,json=isAlive,proto3,oneof" json:"is_alive,omitempty"`
 }
 type SchReuqest_NodeInfo struct {
-	NodeInfo *NodeInfoRequest `protobuf:"bytes,7,opt,name=node_info,json=nodeInfo,proto3,oneof"`
+	NodeInfo *NodeInfoRequest `protobuf:"bytes,7,opt,name=node_info,json=nodeInfo,proto3,oneof" json:"node_info,omitempty"`
 }
 type SchReuqest_ChangeRaftMember struct {
-	ChangeRaftMember *ChangeRaftMemberRequest `protobuf:"bytes,8,opt,name=change_raft_member,json=changeRaftMember,proto3,oneof"`
+	ChangeRaftMember *ChangeRaftMemberRequest `protobuf:"bytes,8,opt,name=change_raft_member,json=changeRaftMember,proto3,oneof" json:"change_raft_member,omitempty"`
 }
 
 func (*SchReuqest_CreateRange) isSchReuqest_Req()         {}
@@ -199,9 +200,9 @@ func (m *SchReuqest) GetChangeRaftMember() *ChangeRaftMemberRequest {
 	return nil
 }
 
-// XXX_OneofFuncs is for the internal use of the proto package.
-func (*SchReuqest) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
-	return _SchReuqest_OneofMarshaler, _SchReuqest_OneofUnmarshaler, _SchReuqest_OneofSizer, []interface{}{
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*SchReuqest) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
 		(*SchReuqest_CreateRange)(nil),
 		(*SchReuqest_DeleteRange)(nil),
 		(*SchReuqest_TransferRangeLeader)(nil),
@@ -210,162 +211,6 @@ func (*SchReuqest) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) er
 		(*SchReuqest_NodeInfo)(nil),
 		(*SchReuqest_ChangeRaftMember)(nil),
 	}
-}
-
-func _SchReuqest_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
-	m := msg.(*SchReuqest)
-	// req
-	switch x := m.Req.(type) {
-	case *SchReuqest_CreateRange:
-		_ = b.EncodeVarint(2<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.CreateRange); err != nil {
-			return err
-		}
-	case *SchReuqest_DeleteRange:
-		_ = b.EncodeVarint(3<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.DeleteRange); err != nil {
-			return err
-		}
-	case *SchReuqest_TransferRangeLeader:
-		_ = b.EncodeVarint(4<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.TransferRangeLeader); err != nil {
-			return err
-		}
-	case *SchReuqest_GetPeerInfo:
-		_ = b.EncodeVarint(5<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.GetPeerInfo); err != nil {
-			return err
-		}
-	case *SchReuqest_IsAlive:
-		_ = b.EncodeVarint(6<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.IsAlive); err != nil {
-			return err
-		}
-	case *SchReuqest_NodeInfo:
-		_ = b.EncodeVarint(7<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.NodeInfo); err != nil {
-			return err
-		}
-	case *SchReuqest_ChangeRaftMember:
-		_ = b.EncodeVarint(8<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.ChangeRaftMember); err != nil {
-			return err
-		}
-	case nil:
-	default:
-		return fmt.Errorf("SchReuqest.Req has unexpected type %T", x)
-	}
-	return nil
-}
-
-func _SchReuqest_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
-	m := msg.(*SchReuqest)
-	switch tag {
-	case 2: // req.create_range
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(CreateRangeRequest)
-		err := b.DecodeMessage(msg)
-		m.Req = &SchReuqest_CreateRange{msg}
-		return true, err
-	case 3: // req.delete_range
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(DeleteRangeRequest)
-		err := b.DecodeMessage(msg)
-		m.Req = &SchReuqest_DeleteRange{msg}
-		return true, err
-	case 4: // req.transfer_range_leader
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(TransferRangeLeaderRequest)
-		err := b.DecodeMessage(msg)
-		m.Req = &SchReuqest_TransferRangeLeader{msg}
-		return true, err
-	case 5: // req.get_peer_info
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(GetPeerInfoRequest)
-		err := b.DecodeMessage(msg)
-		m.Req = &SchReuqest_GetPeerInfo{msg}
-		return true, err
-	case 6: // req.is_alive
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(IsAliveRequest)
-		err := b.DecodeMessage(msg)
-		m.Req = &SchReuqest_IsAlive{msg}
-		return true, err
-	case 7: // req.node_info
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(NodeInfoRequest)
-		err := b.DecodeMessage(msg)
-		m.Req = &SchReuqest_NodeInfo{msg}
-		return true, err
-	case 8: // req.change_raft_member
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(ChangeRaftMemberRequest)
-		err := b.DecodeMessage(msg)
-		m.Req = &SchReuqest_ChangeRaftMember{msg}
-		return true, err
-	default:
-		return false, nil
-	}
-}
-
-func _SchReuqest_OneofSizer(msg proto.Message) (n int) {
-	m := msg.(*SchReuqest)
-	// req
-	switch x := m.Req.(type) {
-	case *SchReuqest_CreateRange:
-		s := proto.Size(x.CreateRange)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *SchReuqest_DeleteRange:
-		s := proto.Size(x.DeleteRange)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *SchReuqest_TransferRangeLeader:
-		s := proto.Size(x.TransferRangeLeader)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *SchReuqest_GetPeerInfo:
-		s := proto.Size(x.GetPeerInfo)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *SchReuqest_IsAlive:
-		s := proto.Size(x.IsAlive)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *SchReuqest_NodeInfo:
-		s := proto.Size(x.NodeInfo)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *SchReuqest_ChangeRaftMember:
-		s := proto.Size(x.ChangeRaftMember)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case nil:
-	default:
-		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
-	}
-	return n
 }
 
 type SchReuqest_Header struct {
@@ -389,7 +234,7 @@ func (m *SchReuqest_Header) XXX_Marshal(b []byte, deterministic bool) ([]byte, e
 		return xxx_messageInfo_SchReuqest_Header.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -445,7 +290,7 @@ func (m *SchResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) 
 		return xxx_messageInfo_SchResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -471,25 +316,25 @@ type isSchResponse_Resp interface {
 }
 
 type SchResponse_CreateRange struct {
-	CreateRange *CreateRangeResponse `protobuf:"bytes,2,opt,name=create_range,json=createRange,proto3,oneof"`
+	CreateRange *CreateRangeResponse `protobuf:"bytes,2,opt,name=create_range,json=createRange,proto3,oneof" json:"create_range,omitempty"`
 }
 type SchResponse_DeleteRange struct {
-	DeleteRange *DeleteRangeResponse `protobuf:"bytes,3,opt,name=delete_range,json=deleteRange,proto3,oneof"`
+	DeleteRange *DeleteRangeResponse `protobuf:"bytes,3,opt,name=delete_range,json=deleteRange,proto3,oneof" json:"delete_range,omitempty"`
 }
 type SchResponse_TransferRangeLeader struct {
-	TransferRangeLeader *TransferRangeLeaderResponse `protobuf:"bytes,4,opt,name=transfer_range_leader,json=transferRangeLeader,proto3,oneof"`
+	TransferRangeLeader *TransferRangeLeaderResponse `protobuf:"bytes,4,opt,name=transfer_range_leader,json=transferRangeLeader,proto3,oneof" json:"transfer_range_leader,omitempty"`
 }
 type SchResponse_GetPeerInfo struct {
-	GetPeerInfo *GetPeerInfoResponse `protobuf:"bytes,5,opt,name=get_peer_info,json=getPeerInfo,proto3,oneof"`
+	GetPeerInfo *GetPeerInfoResponse `protobuf:"bytes,5,opt,name=get_peer_info,json=getPeerInfo,proto3,oneof" json:"get_peer_info,omitempty"`
 }
 type SchResponse_IsAlive struct {
-	IsAlive *IsAliveResponse `protobuf:"bytes,6,opt,name=is_alive,json=isAlive,proto3,oneof"`
+	IsAlive *IsAliveResponse `protobuf:"bytes,6,opt,name=is_alive,json=isAlive,proto3,oneof" json:"is_alive,omitempty"`
 }
 type SchResponse_NodeInfo struct {
-	NodeInfo *NodeInfoResponse `protobuf:"bytes,7,opt,name=node_info,json=nodeInfo,proto3,oneof"`
+	NodeInfo *NodeInfoResponse `protobuf:"bytes,7,opt,name=node_info,json=nodeInfo,proto3,oneof" json:"node_info,omitempty"`
 }
 type SchResponse_ChangeRaftMember struct {
-	ChangeRaftMember *ChangeRaftMemberResponse `protobuf:"bytes,8,opt,name=change_raft_member,json=changeRaftMember,proto3,oneof"`
+	ChangeRaftMember *ChangeRaftMemberResponse `protobuf:"bytes,8,opt,name=change_raft_member,json=changeRaftMember,proto3,oneof" json:"change_raft_member,omitempty"`
 }
 
 func (*SchResponse_CreateRange) isSchResponse_Resp()         {}
@@ -563,9 +408,9 @@ func (m *SchResponse) GetChangeRaftMember() *ChangeRaftMemberResponse {
 	return nil
 }
 
-// XXX_OneofFuncs is for the internal use of the proto package.
-func (*SchResponse) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
-	return _SchResponse_OneofMarshaler, _SchResponse_OneofUnmarshaler, _SchResponse_OneofSizer, []interface{}{
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*SchResponse) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
 		(*SchResponse_CreateRange)(nil),
 		(*SchResponse_DeleteRange)(nil),
 		(*SchResponse_TransferRangeLeader)(nil),
@@ -574,162 +419,6 @@ func (*SchResponse) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) e
 		(*SchResponse_NodeInfo)(nil),
 		(*SchResponse_ChangeRaftMember)(nil),
 	}
-}
-
-func _SchResponse_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
-	m := msg.(*SchResponse)
-	// resp
-	switch x := m.Resp.(type) {
-	case *SchResponse_CreateRange:
-		_ = b.EncodeVarint(2<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.CreateRange); err != nil {
-			return err
-		}
-	case *SchResponse_DeleteRange:
-		_ = b.EncodeVarint(3<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.DeleteRange); err != nil {
-			return err
-		}
-	case *SchResponse_TransferRangeLeader:
-		_ = b.EncodeVarint(4<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.TransferRangeLeader); err != nil {
-			return err
-		}
-	case *SchResponse_GetPeerInfo:
-		_ = b.EncodeVarint(5<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.GetPeerInfo); err != nil {
-			return err
-		}
-	case *SchResponse_IsAlive:
-		_ = b.EncodeVarint(6<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.IsAlive); err != nil {
-			return err
-		}
-	case *SchResponse_NodeInfo:
-		_ = b.EncodeVarint(7<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.NodeInfo); err != nil {
-			return err
-		}
-	case *SchResponse_ChangeRaftMember:
-		_ = b.EncodeVarint(8<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.ChangeRaftMember); err != nil {
-			return err
-		}
-	case nil:
-	default:
-		return fmt.Errorf("SchResponse.Resp has unexpected type %T", x)
-	}
-	return nil
-}
-
-func _SchResponse_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
-	m := msg.(*SchResponse)
-	switch tag {
-	case 2: // resp.create_range
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(CreateRangeResponse)
-		err := b.DecodeMessage(msg)
-		m.Resp = &SchResponse_CreateRange{msg}
-		return true, err
-	case 3: // resp.delete_range
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(DeleteRangeResponse)
-		err := b.DecodeMessage(msg)
-		m.Resp = &SchResponse_DeleteRange{msg}
-		return true, err
-	case 4: // resp.transfer_range_leader
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(TransferRangeLeaderResponse)
-		err := b.DecodeMessage(msg)
-		m.Resp = &SchResponse_TransferRangeLeader{msg}
-		return true, err
-	case 5: // resp.get_peer_info
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(GetPeerInfoResponse)
-		err := b.DecodeMessage(msg)
-		m.Resp = &SchResponse_GetPeerInfo{msg}
-		return true, err
-	case 6: // resp.is_alive
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(IsAliveResponse)
-		err := b.DecodeMessage(msg)
-		m.Resp = &SchResponse_IsAlive{msg}
-		return true, err
-	case 7: // resp.node_info
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(NodeInfoResponse)
-		err := b.DecodeMessage(msg)
-		m.Resp = &SchResponse_NodeInfo{msg}
-		return true, err
-	case 8: // resp.change_raft_member
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(ChangeRaftMemberResponse)
-		err := b.DecodeMessage(msg)
-		m.Resp = &SchResponse_ChangeRaftMember{msg}
-		return true, err
-	default:
-		return false, nil
-	}
-}
-
-func _SchResponse_OneofSizer(msg proto.Message) (n int) {
-	m := msg.(*SchResponse)
-	// resp
-	switch x := m.Resp.(type) {
-	case *SchResponse_CreateRange:
-		s := proto.Size(x.CreateRange)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *SchResponse_DeleteRange:
-		s := proto.Size(x.DeleteRange)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *SchResponse_TransferRangeLeader:
-		s := proto.Size(x.TransferRangeLeader)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *SchResponse_GetPeerInfo:
-		s := proto.Size(x.GetPeerInfo)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *SchResponse_IsAlive:
-		s := proto.Size(x.IsAlive)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *SchResponse_NodeInfo:
-		s := proto.Size(x.NodeInfo)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *SchResponse_ChangeRaftMember:
-		s := proto.Size(x.ChangeRaftMember)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case nil:
-	default:
-		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
-	}
-	return n
 }
 
 type SchResponse_Header struct {
@@ -754,7 +443,7 @@ func (m *SchResponse_Header) XXX_Marshal(b []byte, deterministic bool) ([]byte, 
 		return xxx_messageInfo_SchResponse_Header.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -810,7 +499,7 @@ func (m *CreateRangeRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, 
 		return xxx_messageInfo_CreateRangeRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -863,7 +552,7 @@ func (m *CreateRangeResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte,
 		return xxx_messageInfo_CreateRangeResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -905,7 +594,7 @@ func (m *DeleteRangeRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, 
 		return xxx_messageInfo_DeleteRangeRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -958,7 +647,7 @@ func (m *DeleteRangeResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte,
 		return xxx_messageInfo_DeleteRangeResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -999,7 +688,7 @@ func (m *TransferRangeLeaderRequest) XXX_Marshal(b []byte, deterministic bool) (
 		return xxx_messageInfo_TransferRangeLeaderRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -1045,7 +734,7 @@ func (m *TransferRangeLeaderResponse) XXX_Marshal(b []byte, deterministic bool) 
 		return xxx_messageInfo_TransferRangeLeaderResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -1086,7 +775,7 @@ func (m *GetPeerInfoRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, 
 		return xxx_messageInfo_GetPeerInfoRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -1136,7 +825,7 @@ func (m *GetPeerInfoResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte,
 		return xxx_messageInfo_GetPeerInfoResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -1204,7 +893,7 @@ func (m *IsAliveRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, erro
 		return xxx_messageInfo_IsAliveRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -1244,7 +933,7 @@ func (m *IsAliveResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, err
 		return xxx_messageInfo_IsAliveResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -1291,7 +980,7 @@ func (m *NodeInfoRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, err
 		return xxx_messageInfo_NodeInfoRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -1316,6 +1005,7 @@ type RangeStats struct {
 	ReadBytessPerSec     uint64   `protobuf:"varint,3,opt,name=read_bytess_per_sec,json=readBytessPerSec,proto3" json:"read_bytess_per_sec,omitempty"`
 	ReadKeysPerSec       uint64   `protobuf:"varint,4,opt,name=read_keys_per_sec,json=readKeysPerSec,proto3" json:"read_keys_per_sec,omitempty"`
 	ApproximateSize      uint64   `protobuf:"varint,5,opt,name=approximate_size,json=approximateSize,proto3" json:"approximate_size,omitempty"`
+	KvCount              uint64   `protobuf:"varint,6,opt,name=kv_count,json=kvCount,proto3" json:"kv_count,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -1335,7 +1025,7 @@ func (m *RangeStats) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return xxx_messageInfo_RangeStats.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -1389,6 +1079,13 @@ func (m *RangeStats) GetApproximateSize() uint64 {
 	return 0
 }
 
+func (m *RangeStats) GetKvCount() uint64 {
+	if m != nil {
+		return m.KvCount
+	}
+	return 0
+}
+
 type RangeInfo struct {
 	Range *basepb.Range `protobuf:"bytes,1,opt,name=range,proto3" json:"range,omitempty"`
 	// range metric stats
@@ -1416,7 +1113,7 @@ func (m *RangeInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return xxx_messageInfo_RangeInfo.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -1494,7 +1191,7 @@ func (m *NodeStats) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return xxx_messageInfo_NodeStats.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -1617,7 +1314,7 @@ func (m *NodeInfoResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, er
 		return xxx_messageInfo_NodeInfoResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -1688,7 +1385,7 @@ func (m *ChangeRaftMemberRequest) XXX_Marshal(b []byte, deterministic bool) ([]b
 		return xxx_messageInfo_ChangeRaftMemberRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -1755,7 +1452,7 @@ func (m *ChangeRaftMemberResponse) XXX_Marshal(b []byte, deterministic bool) ([]
 		return xxx_messageInfo_ChangeRaftMemberResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -1802,91 +1499,92 @@ func init() {
 func init() { proto.RegisterFile("dspb/schedule.proto", fileDescriptor_c6c20e567d17a2e8) }
 
 var fileDescriptor_c6c20e567d17a2e8 = []byte{
-	// 1246 bytes of a gzipped FileDescriptorProto
+	// 1263 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x57, 0xcd, 0x72, 0x1b, 0x45,
 	0x10, 0x8e, 0xac, 0xb5, 0x2c, 0xb7, 0x6c, 0x6b, 0x3d, 0x8a, 0x13, 0xd9, 0xa9, 0x18, 0x67, 0x29,
 	0x48, 0x42, 0xb0, 0x1c, 0x1c, 0x42, 0x4e, 0x84, 0xf2, 0x5f, 0x11, 0x41, 0x12, 0xc2, 0xca, 0x15,
-	0x8e, 0x5b, 0xab, 0xdd, 0xb6, 0xb4, 0x85, 0xa4, 0xdd, 0xcc, 0x8c, 0x20, 0xca, 0x91, 0xa7, 0xe0,
-	0xc0, 0x8d, 0x27, 0xe0, 0xcc, 0x0b, 0x70, 0xa4, 0x8a, 0x17, 0xa0, 0xc2, 0x85, 0x0b, 0xef, 0x40,
-	0xcd, 0xf4, 0x48, 0xbb, 0x96, 0xd6, 0xaa, 0xf8, 0xa4, 0x99, 0xfe, 0xbe, 0xee, 0xe9, 0x99, 0xfe,
-	0xa6, 0x67, 0x05, 0xb5, 0x50, 0x24, 0xed, 0x3d, 0x11, 0x74, 0x31, 0x1c, 0xf6, 0xb0, 0x91, 0xf0,
-	0x58, 0xc6, 0xcc, 0x52, 0xc6, 0xad, 0xdd, 0x4e, 0x24, 0xbb, 0xc3, 0x76, 0x23, 0x88, 0xfb, 0x7b,
-	0x9d, 0xb8, 0x13, 0xef, 0x69, 0xb0, 0x3d, 0x3c, 0xd3, 0x33, 0x3d, 0xd1, 0x23, 0x72, 0xda, 0xfa,
-	0x2c, 0x43, 0x0f, 0xba, 0xc3, 0xb6, 0x1f, 0x87, 0xed, 0x74, 0x40, 0xf4, 0xb6, 0x2f, 0x30, 0x69,
-	0x9b, 0x1f, 0xe3, 0x67, 0xeb, 0x0c, 0x90, 0xf3, 0x98, 0x93, 0xc5, 0xf9, 0xdd, 0x02, 0x68, 0x05,
-	0x5d, 0x17, 0x87, 0xaf, 0x50, 0x48, 0xb6, 0x07, 0xa5, 0x2e, 0xfa, 0x21, 0xf2, 0x7a, 0x61, 0xa7,
-	0x70, 0xa7, 0xb2, 0x7f, 0xbd, 0xa1, 0x3c, 0x1a, 0x29, 0xa3, 0xf1, 0x44, 0xc3, 0xae, 0xa1, 0xb1,
-	0xcf, 0x61, 0x25, 0xe0, 0xe8, 0x4b, 0xf4, 0xb8, 0x3f, 0xe8, 0x60, 0x7d, 0x41, 0xbb, 0xd5, 0xc9,
-	0xed, 0x48, 0x23, 0xae, 0x02, 0x5c, 0x7c, 0x35, 0x44, 0x21, 0x9f, 0x5c, 0x71, 0x2b, 0x41, 0x6a,
-	0x55, 0xee, 0x21, 0xf6, 0x70, 0xe2, 0x5e, 0xcc, 0xba, 0x1f, 0x6b, 0x64, 0xda, 0x3d, 0x4c, 0xad,
-	0xec, 0x25, 0x6c, 0x48, 0xee, 0x0f, 0xc4, 0x19, 0x72, 0x0a, 0xe0, 0xf5, 0x28, 0x7b, 0x4b, 0xc7,
-	0xd9, 0xa1, 0x38, 0xa7, 0x86, 0xa2, 0x7d, 0x9e, 0x52, 0xfe, 0x93, 0x78, 0x35, 0x39, 0x8b, 0xb2,
-	0xc7, 0xb0, 0xda, 0x41, 0xe9, 0x25, 0x88, 0xdc, 0x8b, 0x06, 0x67, 0x71, 0x7d, 0x31, 0x9b, 0xd7,
-	0x97, 0x28, 0x5f, 0x20, 0xf2, 0xe6, 0xe0, 0x2c, 0xce, 0xe4, 0xd5, 0x49, 0xad, 0xec, 0x13, 0x28,
-	0x47, 0xc2, 0xf3, 0x7b, 0xd1, 0x0f, 0x58, 0x2f, 0x69, 0xd7, 0xab, 0xe4, 0xda, 0x14, 0x07, 0xca,
-	0x98, 0xba, 0x2d, 0x45, 0x64, 0x61, 0x9f, 0xc2, 0xf2, 0x20, 0x0e, 0x91, 0x96, 0x5b, 0xd2, 0x3e,
-	0x1b, 0xe4, 0xf3, 0x3c, 0x0e, 0xf1, 0xfc, 0x5a, 0xe5, 0x81, 0x31, 0xb1, 0x67, 0xc0, 0x82, 0xae,
-	0xde, 0x38, 0xf7, 0xcf, 0xa4, 0xd7, 0xc7, 0x7e, 0x1b, 0x79, 0xbd, 0xac, 0xdd, 0x6f, 0x9a, 0x22,
-	0x68, 0xdc, 0xf5, 0xcf, 0xe4, 0x33, 0x8d, 0xa6, 0x61, 0xec, 0x60, 0x0a, 0xda, 0xba, 0x0d, 0x25,
-	0xaa, 0x2f, 0xbb, 0x09, 0x10, 0xf4, 0x86, 0x42, 0xaa, 0x03, 0x08, 0xb5, 0x18, 0x2c, 0x77, 0xd9,
-	0x58, 0x9a, 0xe1, 0xe1, 0x22, 0x14, 0x39, 0xbe, 0x72, 0xfe, 0xb5, 0xa0, 0xa2, 0xb5, 0x21, 0x92,
-	0x78, 0x20, 0x90, 0xdd, 0x9f, 0x92, 0x4f, 0x3d, 0x23, 0x1f, 0xa2, 0x4c, 0xeb, 0xe7, 0x71, 0xae,
-	0x7e, 0x36, 0x73, 0xf4, 0x43, 0xfe, 0xd3, 0x02, 0x7a, 0x9c, 0x2b, 0xa0, 0xcd, 0x1c, 0x01, 0xa5,
-	0xfe, 0x59, 0x05, 0x7d, 0x37, 0x5f, 0x41, 0xb7, 0xe6, 0x28, 0x68, 0x12, 0x30, 0x57, 0x42, 0x5f,
-	0xe4, 0x4b, 0x68, 0x33, 0x47, 0x42, 0x69, 0x66, 0x59, 0x0d, 0xed, 0xcf, 0x68, 0x68, 0x63, 0x4a,
-	0x43, 0x13, 0xbf, 0x89, 0x88, 0x1e, 0xce, 0x8a, 0xe8, 0xda, 0xb4, 0x88, 0x26, 0x5e, 0xa9, 0x8a,
-	0x9e, 0xcf, 0x51, 0xd1, 0xf6, 0x45, 0x2a, 0x9a, 0xc4, 0x99, 0x95, 0xd1, 0x57, 0xef, 0x28, 0x23,
-	0x76, 0x0b, 0x16, 0x75, 0x33, 0x32, 0x65, 0xaf, 0xd0, 0x5a, 0x27, 0xca, 0xe4, 0x12, 0x72, 0x58,
-	0x02, 0x8b, 0xa3, 0x48, 0x9c, 0x6f, 0x81, 0xcd, 0xb6, 0x13, 0xf6, 0x3e, 0x2c, 0x52, 0xdd, 0x49,
-	0x6f, 0xab, 0x0d, 0xd3, 0xee, 0x88, 0x44, 0x18, 0xbb, 0x06, 0x25, 0x53, 0xd4, 0x05, 0x9d, 0x80,
-	0x99, 0x39, 0x1b, 0x50, 0xcb, 0x51, 0x98, 0xf3, 0x04, 0xd8, 0x6c, 0xe7, 0x61, 0x9b, 0x50, 0x26,
-	0x7d, 0x4c, 0xf6, 0xb1, 0xa4, 0xe7, 0xcd, 0x90, 0x5d, 0x87, 0x25, 0x2a, 0x73, 0x38, 0x5e, 0x40,
-	0x4d, 0x9b, 0xa1, 0x5a, 0x20, 0x47, 0x82, 0xce, 0x23, 0xd8, 0xba, 0xb8, 0x25, 0xcd, 0x59, 0xc8,
-	0xb9, 0x09, 0x37, 0xe6, 0x28, 0xd1, 0xd9, 0x03, 0x36, 0xdb, 0x9a, 0xe6, 0xc5, 0xfb, 0xa9, 0x00,
-	0xb5, 0x1c, 0x25, 0xb2, 0xbb, 0xb0, 0xc4, 0x31, 0xe9, 0x45, 0x81, 0x6f, 0xce, 0xb5, 0x3a, 0x39,
-	0x57, 0x32, 0xbb, 0x63, 0x9c, 0x5d, 0x85, 0xc5, 0x68, 0x10, 0xe2, 0x6b, 0xb3, 0x73, 0x9a, 0x30,
-	0x06, 0x96, 0x44, 0xde, 0xd7, 0xb7, 0xd1, 0x72, 0xf5, 0x58, 0x55, 0x21, 0x88, 0xfb, 0xfd, 0x48,
-	0xea, 0xab, 0x65, 0xb9, 0x66, 0xe6, 0xd8, 0xb0, 0x76, 0xbe, 0x2b, 0x3a, 0xb7, 0xa1, 0x3a, 0xa5,
-	0x71, 0xb5, 0x0c, 0xdd, 0x04, 0x95, 0x4f, 0xd9, 0xa5, 0x89, 0xb3, 0x0e, 0xd5, 0xa9, 0xe6, 0xe8,
-	0xfc, 0x57, 0x00, 0xd0, 0x67, 0xd3, 0x92, 0xbe, 0x14, 0x6c, 0x17, 0x6a, 0x3f, 0xf2, 0x48, 0xa2,
-	0xd7, 0x1e, 0x49, 0x14, 0x5e, 0x82, 0xdc, 0x13, 0x18, 0x98, 0x73, 0xb0, 0x35, 0x74, 0xa8, 0x90,
-	0x17, 0xc8, 0x5b, 0x18, 0xb0, 0x7b, 0xc0, 0x88, 0xfe, 0x3d, 0x8e, 0x52, 0x36, 0x6d, 0xad, 0xaa,
-	0x91, 0xaf, 0x71, 0x34, 0x26, 0xef, 0x42, 0x8d, 0xa3, 0x1f, 0x52, 0xe8, 0x94, 0x4d, 0x7b, 0xb6,
-	0x15, 0xa4, 0x43, 0x8f, 0xe9, 0x77, 0x61, 0x5d, 0xd3, 0xcf, 0x85, 0xa6, 0xa3, 0x58, 0x53, 0x40,
-	0x26, 0xf2, 0x5d, 0xb0, 0xfd, 0x24, 0xe1, 0xf1, 0xeb, 0xa8, 0xaf, 0x3a, 0xa3, 0x88, 0xde, 0xa0,
-	0x6e, 0x1f, 0x96, 0x5b, 0xcd, 0xd8, 0x5b, 0xd1, 0x1b, 0x74, 0x7e, 0x2d, 0xc0, 0xb2, 0xde, 0xaf,
-	0xbe, 0xc8, 0xef, 0x74, 0x1d, 0x3e, 0x84, 0x45, 0xa1, 0x0e, 0xc7, 0x5c, 0x3a, 0x9b, 0x2e, 0x5d,
-	0x7a, 0x68, 0x2e, 0xc1, 0xb9, 0x45, 0x7c, 0x08, 0x2b, 0x4a, 0xdb, 0xc2, 0x53, 0x94, 0xa1, 0xa8,
-	0x5b, 0x3b, 0xc5, 0x3b, 0x95, 0x7d, 0x36, 0x5e, 0x47, 0x29, 0xa9, 0xa5, 0x11, 0xb7, 0xa2, 0x79,
-	0x34, 0x71, 0xfe, 0x2a, 0xc2, 0xb2, 0xaa, 0x14, 0x15, 0xe5, 0x3d, 0xa8, 0x90, 0x22, 0x83, 0x78,
-	0x38, 0x90, 0x3a, 0xd7, 0x55, 0x17, 0xb4, 0xe9, 0x48, 0x59, 0xd8, 0x47, 0xb0, 0x4e, 0x04, 0x91,
-	0xf4, 0x22, 0x69, 0x68, 0x0b, 0x9a, 0x56, 0xd5, 0x40, 0x4b, 0xd9, 0x89, 0xfb, 0x31, 0x30, 0x31,
-	0xf0, 0x13, 0x4f, 0xe0, 0x20, 0x8c, 0x06, 0x1d, 0x43, 0x2e, 0x6a, 0xb2, 0xad, 0x90, 0x16, 0x01,
-	0xc4, 0x6e, 0x40, 0x4d, 0xb3, 0xfd, 0x24, 0xe9, 0x8d, 0x52, 0xba, 0xa5, 0xe9, 0xeb, 0x0a, 0x3a,
-	0x30, 0xc8, 0x24, 0x7a, 0xf6, 0x55, 0x30, 0xf4, 0x12, 0x45, 0xe7, 0xe9, 0x1d, 0x24, 0xf6, 0x16,
-	0x94, 0x03, 0x3f, 0xf1, 0x83, 0x48, 0x8e, 0x74, 0xf7, 0xb5, 0xdc, 0xc9, 0x9c, 0xdd, 0x80, 0xe5,
-	0xa1, 0xc0, 0x90, 0x8a, 0x59, 0x26, 0x50, 0x19, 0x54, 0x15, 0x2f, 0x92, 0x29, 0x5c, 0x4a, 0xa6,
-	0x95, 0x4b, 0xc9, 0x74, 0xe5, 0x32, 0x32, 0x5d, 0xcd, 0x93, 0xa9, 0xf3, 0x5b, 0x01, 0xec, 0xe9,
-	0x77, 0x45, 0x35, 0x43, 0x7a, 0x82, 0xc6, 0xdd, 0xa6, 0xa4, 0x9f, 0x99, 0x90, 0x7d, 0x70, 0x5e,
-	0x76, 0xd5, 0xf4, 0x5d, 0x3a, 0xa7, 0xba, 0x7b, 0xb0, 0x1e, 0x89, 0xb8, 0xe7, 0x4b, 0x0c, 0x3d,
-	0xd3, 0x64, 0x44, 0xbd, 0xb8, 0x53, 0x54, 0xc9, 0x8e, 0x01, 0xd3, 0x85, 0x04, 0xbb, 0x3f, 0x56,
-	0x92, 0x7a, 0xf0, 0xc6, 0x6a, 0xac, 0x66, 0x04, 0xad, 0x53, 0x23, 0x69, 0xa9, 0xa1, 0x70, 0x7e,
-	0x59, 0x80, 0xeb, 0x17, 0x7c, 0x11, 0xcd, 0x6b, 0xf1, 0x0f, 0xc6, 0x0b, 0x61, 0x12, 0x07, 0x5d,
-	0xb3, 0x05, 0x76, 0xee, 0x7a, 0x9d, 0x28, 0xc4, 0xac, 0xa5, 0xc7, 0xac, 0x09, 0x15, 0xf3, 0xac,
-	0xca, 0x51, 0x42, 0x9f, 0x26, 0x6b, 0xfb, 0x77, 0xe6, 0x7e, 0x95, 0x19, 0xfb, 0xe9, 0x28, 0x41,
-	0x17, 0x82, 0xc9, 0x98, 0xed, 0x42, 0x45, 0xfa, 0x7c, 0xfc, 0x41, 0x61, 0x3e, 0x4e, 0x56, 0xb2,
-	0xd7, 0xce, 0x05, 0x22, 0xa8, 0xb1, 0xf3, 0x08, 0x20, 0x0d, 0xc4, 0xd6, 0x00, 0x8e, 0x4e, 0xbd,
-	0xe6, 0xf3, 0x97, 0x07, 0x4f, 0x9b, 0xc7, 0xf6, 0x15, 0x06, 0x50, 0x3a, 0x3a, 0xf5, 0x0e, 0x8e,
-	0x8f, 0xed, 0x02, 0x5b, 0x85, 0xe5, 0xa3, 0x53, 0xcf, 0x3d, 0x79, 0xf6, 0xcd, 0xcb, 0x13, 0x7b,
-	0xc1, 0xd9, 0x82, 0xfa, 0x45, 0x2f, 0xfd, 0xa1, 0xfd, 0xc7, 0xdb, 0xed, 0xc2, 0x9f, 0x6f, 0xb7,
-	0x0b, 0x7f, 0xbf, 0xdd, 0x2e, 0xfc, 0xfc, 0xcf, 0xf6, 0x95, 0x76, 0x49, 0xff, 0x87, 0x78, 0xf0,
-	0x7f, 0x00, 0x00, 0x00, 0xff, 0xff, 0x03, 0x52, 0x75, 0xe3, 0xd9, 0x0c, 0x00, 0x00,
+	0x8e, 0x5b, 0xab, 0xdd, 0xb6, 0xb4, 0x15, 0x49, 0xbb, 0xd9, 0x59, 0x85, 0x28, 0x47, 0x4e, 0x3c,
+	0x02, 0x07, 0x6e, 0x3c, 0x01, 0x67, 0x5e, 0x80, 0x23, 0x55, 0xbc, 0x00, 0x15, 0x2e, 0x3c, 0x06,
+	0x35, 0xdd, 0x23, 0xed, 0x5a, 0x5a, 0xab, 0x92, 0x93, 0x66, 0xfa, 0xfb, 0xba, 0xa7, 0x67, 0xfa,
+	0x9b, 0x9e, 0x15, 0xd4, 0x7c, 0x19, 0xb5, 0xf7, 0xa4, 0xd7, 0x45, 0x7f, 0xd8, 0xc3, 0x46, 0x14,
+	0x87, 0x49, 0x28, 0x0c, 0x65, 0xdc, 0xda, 0xed, 0x04, 0x49, 0x77, 0xd8, 0x6e, 0x78, 0x61, 0x7f,
+	0xaf, 0x13, 0x76, 0xc2, 0x3d, 0x02, 0xdb, 0xc3, 0x33, 0x9a, 0xd1, 0x84, 0x46, 0xec, 0xb4, 0xf5,
+	0x45, 0x86, 0xee, 0x75, 0x87, 0x6d, 0x37, 0xf4, 0xdb, 0xe9, 0x80, 0xe9, 0x6d, 0x57, 0x62, 0xd4,
+	0xd6, 0x3f, 0xda, 0xcf, 0xa4, 0x0c, 0x30, 0x8e, 0xc3, 0x98, 0x2d, 0xd6, 0x1f, 0x06, 0x40, 0xcb,
+	0xeb, 0xda, 0x38, 0x7c, 0x89, 0x32, 0x11, 0x7b, 0x50, 0xea, 0xa2, 0xeb, 0x63, 0x5c, 0x2f, 0xec,
+	0x14, 0x6e, 0x55, 0xf6, 0xaf, 0x36, 0x94, 0x47, 0x23, 0x65, 0x34, 0x1e, 0x11, 0x6c, 0x6b, 0x9a,
+	0xf8, 0x12, 0x56, 0xbc, 0x18, 0xdd, 0x04, 0x9d, 0xd8, 0x1d, 0x74, 0xb0, 0xbe, 0x40, 0x6e, 0x75,
+	0x76, 0x3b, 0x22, 0xc4, 0x56, 0x80, 0x8d, 0x2f, 0x87, 0x28, 0x93, 0x47, 0x97, 0xec, 0x8a, 0x97,
+	0x5a, 0x95, 0xbb, 0x8f, 0x3d, 0x9c, 0xb8, 0x17, 0xb3, 0xee, 0xc7, 0x84, 0x4c, 0xbb, 0xfb, 0xa9,
+	0x55, 0x3c, 0x87, 0x8d, 0x24, 0x76, 0x07, 0xf2, 0x0c, 0x63, 0x0e, 0xe0, 0xf4, 0x38, 0x7b, 0x83,
+	0xe2, 0xec, 0x70, 0x9c, 0x53, 0x4d, 0x21, 0x9f, 0xc7, 0x9c, 0xff, 0x24, 0x5e, 0x2d, 0x99, 0x45,
+	0xc5, 0x43, 0x58, 0xed, 0x60, 0xe2, 0x44, 0x88, 0xb1, 0x13, 0x0c, 0xce, 0xc2, 0xfa, 0x62, 0x36,
+	0xaf, 0xaf, 0x31, 0x79, 0x86, 0x18, 0x37, 0x07, 0x67, 0x61, 0x26, 0xaf, 0x4e, 0x6a, 0x15, 0x9f,
+	0x41, 0x39, 0x90, 0x8e, 0xdb, 0x0b, 0x5e, 0x61, 0xbd, 0x44, 0xae, 0x97, 0xd9, 0xb5, 0x29, 0x0f,
+	0x94, 0x31, 0x75, 0x5b, 0x0a, 0xd8, 0x22, 0x3e, 0x87, 0xe5, 0x41, 0xe8, 0x23, 0x2f, 0xb7, 0x44,
+	0x3e, 0x1b, 0xec, 0xf3, 0x34, 0xf4, 0xf1, 0xfc, 0x5a, 0xe5, 0x81, 0x36, 0x89, 0x27, 0x20, 0xbc,
+	0x2e, 0x6d, 0x3c, 0x76, 0xcf, 0x12, 0xa7, 0x8f, 0xfd, 0x36, 0xc6, 0xf5, 0x32, 0xb9, 0x5f, 0xd7,
+	0x45, 0x20, 0xdc, 0x76, 0xcf, 0x92, 0x27, 0x84, 0xa6, 0x61, 0x4c, 0x6f, 0x0a, 0xda, 0xba, 0x09,
+	0x25, 0xae, 0xaf, 0xb8, 0x0e, 0xe0, 0xf5, 0x86, 0x32, 0x51, 0x07, 0xe0, 0x93, 0x18, 0x0c, 0x7b,
+	0x59, 0x5b, 0x9a, 0xfe, 0xe1, 0x22, 0x14, 0x63, 0x7c, 0x69, 0xfd, 0x67, 0x40, 0x85, 0xb4, 0x21,
+	0xa3, 0x70, 0x20, 0x51, 0xdc, 0x9d, 0x92, 0x4f, 0x3d, 0x23, 0x1f, 0xa6, 0x4c, 0xeb, 0xe7, 0x61,
+	0xae, 0x7e, 0x36, 0x73, 0xf4, 0xc3, 0xfe, 0xd3, 0x02, 0x7a, 0x98, 0x2b, 0xa0, 0xcd, 0x1c, 0x01,
+	0xa5, 0xfe, 0x59, 0x05, 0xfd, 0x30, 0x5f, 0x41, 0x37, 0xe6, 0x28, 0x68, 0x12, 0x30, 0x57, 0x42,
+	0x5f, 0xe5, 0x4b, 0x68, 0x33, 0x47, 0x42, 0x69, 0x66, 0x59, 0x0d, 0xed, 0xcf, 0x68, 0x68, 0x63,
+	0x4a, 0x43, 0x13, 0xbf, 0x89, 0x88, 0xee, 0xcf, 0x8a, 0xe8, 0xca, 0xb4, 0x88, 0x26, 0x5e, 0xa9,
+	0x8a, 0x9e, 0xce, 0x51, 0xd1, 0xf6, 0x45, 0x2a, 0x9a, 0xc4, 0x99, 0x95, 0xd1, 0x37, 0xef, 0x28,
+	0x23, 0x71, 0x03, 0x16, 0xa9, 0x19, 0xe9, 0xb2, 0x57, 0x78, 0xad, 0x13, 0x65, 0xb2, 0x19, 0x39,
+	0x2c, 0x81, 0x11, 0xa3, 0x8c, 0xac, 0xef, 0x41, 0xcc, 0xb6, 0x13, 0xf1, 0x21, 0x2c, 0x72, 0xdd,
+	0x59, 0x6f, 0xab, 0x0d, 0xdd, 0xee, 0x98, 0xc4, 0x98, 0xb8, 0x02, 0x25, 0x5d, 0xd4, 0x05, 0x4a,
+	0x40, 0xcf, 0xac, 0x0d, 0xa8, 0xe5, 0x28, 0xcc, 0x7a, 0x04, 0x62, 0xb6, 0xf3, 0x88, 0x4d, 0x28,
+	0xb3, 0x3e, 0x26, 0xfb, 0x58, 0xa2, 0x79, 0xd3, 0x17, 0x57, 0x61, 0x89, 0xcb, 0xec, 0x8f, 0x17,
+	0x50, 0xd3, 0xa6, 0xaf, 0x16, 0xc8, 0x91, 0xa0, 0xf5, 0x00, 0xb6, 0x2e, 0x6e, 0x49, 0x73, 0x16,
+	0xb2, 0xae, 0xc3, 0xb5, 0x39, 0x4a, 0xb4, 0xf6, 0x40, 0xcc, 0xb6, 0xa6, 0x79, 0xf1, 0x7e, 0x2a,
+	0x40, 0x2d, 0x47, 0x89, 0xe2, 0x36, 0x2c, 0xc5, 0x18, 0xf5, 0x02, 0xcf, 0xd5, 0xe7, 0x5a, 0x9d,
+	0x9c, 0x2b, 0x9b, 0xed, 0x31, 0x2e, 0x2e, 0xc3, 0x62, 0x30, 0xf0, 0xf1, 0xb5, 0xde, 0x39, 0x4f,
+	0x84, 0x00, 0x23, 0xc1, 0xb8, 0x4f, 0xb7, 0xd1, 0xb0, 0x69, 0xac, 0xaa, 0xe0, 0x85, 0xfd, 0x7e,
+	0x90, 0xd0, 0xd5, 0x32, 0x6c, 0x3d, 0xb3, 0x4c, 0x58, 0x3b, 0xdf, 0x15, 0xad, 0x9b, 0x50, 0x9d,
+	0xd2, 0xb8, 0x5a, 0x86, 0x6f, 0x82, 0xca, 0xa7, 0x6c, 0xf3, 0xc4, 0x5a, 0x87, 0xea, 0x54, 0x73,
+	0xb4, 0x7e, 0x5e, 0x00, 0xa0, 0xb3, 0x69, 0x25, 0x6e, 0x22, 0xc5, 0x2e, 0xd4, 0x7e, 0x8c, 0x83,
+	0x04, 0x9d, 0xf6, 0x28, 0x41, 0xe9, 0x44, 0x18, 0x3b, 0x12, 0x3d, 0x7d, 0x0e, 0x26, 0x41, 0x87,
+	0x0a, 0x79, 0x86, 0x71, 0x0b, 0x3d, 0x71, 0x07, 0x04, 0xd3, 0x5f, 0xe0, 0x28, 0x65, 0xf3, 0xd6,
+	0xaa, 0x84, 0x7c, 0x8b, 0xa3, 0x31, 0x79, 0x17, 0x6a, 0x31, 0xba, 0x3e, 0x87, 0x4e, 0xd9, 0xbc,
+	0x67, 0x53, 0x41, 0x14, 0x7a, 0x4c, 0xbf, 0x0d, 0xeb, 0x44, 0x3f, 0x17, 0x9a, 0x8f, 0x62, 0x4d,
+	0x01, 0x99, 0xc8, 0xb7, 0xc1, 0x74, 0xa3, 0x28, 0x0e, 0x5f, 0x07, 0x7d, 0xd5, 0x19, 0x65, 0xf0,
+	0x06, 0xa9, 0x7d, 0x18, 0x76, 0x35, 0x63, 0x6f, 0x05, 0x6f, 0x50, 0x55, 0xf7, 0xc5, 0x2b, 0xc7,
+	0x0b, 0x87, 0x83, 0x84, 0xba, 0x84, 0x61, 0x2f, 0xbd, 0x78, 0x75, 0xa4, 0xa6, 0xd6, 0x6f, 0x05,
+	0x58, 0xa6, 0xa3, 0xa0, 0x3b, 0xfe, 0x4e, 0x37, 0xe5, 0x63, 0x58, 0x94, 0xea, 0xdc, 0xf4, 0x7d,
+	0x34, 0xf9, 0x3e, 0xa6, 0xe7, 0x69, 0x33, 0x9c, 0x5b, 0xdf, 0xfb, 0xb0, 0xa2, 0x64, 0x2f, 0x1d,
+	0x45, 0x19, 0xca, 0xba, 0xb1, 0x53, 0xbc, 0x55, 0xd9, 0x17, 0xe3, 0x75, 0x94, 0xc8, 0x5a, 0x84,
+	0xd8, 0x15, 0xe2, 0xf1, 0xc4, 0xfa, 0xbb, 0x08, 0xcb, 0xaa, 0x88, 0x5c, 0xaf, 0x0f, 0xa0, 0xc2,
+	0x62, 0xe5, 0x1d, 0xa9, 0x5c, 0x57, 0x6d, 0x20, 0x13, 0x6d, 0x4a, 0x7c, 0x02, 0xeb, 0x4c, 0x90,
+	0x51, 0x2f, 0x48, 0x34, 0x6d, 0x81, 0x68, 0x55, 0x02, 0x5a, 0xca, 0xce, 0xdc, 0x4f, 0x41, 0xc8,
+	0x81, 0x1b, 0x39, 0x12, 0x07, 0x7e, 0x30, 0xe8, 0x68, 0x72, 0x91, 0xc8, 0xa6, 0x42, 0x5a, 0x0c,
+	0x30, 0xbb, 0x01, 0x35, 0x62, 0xbb, 0x51, 0xd4, 0x1b, 0xa5, 0x74, 0x83, 0xe8, 0xeb, 0x0a, 0x3a,
+	0xd0, 0xc8, 0x24, 0x7a, 0xf6, 0xc1, 0xc8, 0xd4, 0x60, 0xd5, 0x36, 0xe3, 0xf4, 0x7a, 0x32, 0x7b,
+	0x0b, 0xca, 0x9e, 0x1b, 0xb9, 0x5e, 0x90, 0x8c, 0xa8, 0x31, 0x1b, 0xf6, 0x64, 0x2e, 0xae, 0xc1,
+	0xf2, 0x50, 0xa2, 0xcf, 0x75, 0x2e, 0x33, 0xa8, 0x0c, 0x54, 0xe0, 0x0b, 0x14, 0x0c, 0xef, 0xa5,
+	0xe0, 0xca, 0x7b, 0x29, 0x78, 0xe5, 0x7d, 0x14, 0xbc, 0x9a, 0xa7, 0x60, 0xeb, 0xf7, 0x02, 0x98,
+	0xd3, 0x4f, 0x8e, 0xea, 0x93, 0xfc, 0x3a, 0x8d, 0x1b, 0x51, 0x89, 0x5e, 0x20, 0x5f, 0x7c, 0x74,
+	0x5e, 0x76, 0xd5, 0xf4, 0xc9, 0x3a, 0xa7, 0xba, 0x3b, 0xb0, 0x1e, 0xc8, 0xb0, 0xe7, 0x26, 0xe8,
+	0x3b, 0xba, 0xff, 0xc8, 0x7a, 0x71, 0xa7, 0xa8, 0x92, 0x1d, 0x03, 0xba, 0x41, 0x49, 0x71, 0x77,
+	0xac, 0x24, 0xf5, 0x16, 0x8e, 0xd5, 0x58, 0xcd, 0x08, 0x9a, 0x52, 0x63, 0x69, 0xa9, 0xa1, 0xb4,
+	0x7e, 0x5d, 0x80, 0xab, 0x17, 0x7c, 0x2c, 0xcd, 0xeb, 0xfe, 0xf7, 0xc6, 0x0b, 0x61, 0x14, 0x7a,
+	0x5d, 0xbd, 0x05, 0x71, 0xee, 0x7a, 0x9d, 0x28, 0x44, 0xaf, 0x45, 0x63, 0xd1, 0x84, 0x8a, 0x7e,
+	0x71, 0x93, 0x51, 0xc4, 0x5f, 0x2d, 0x6b, 0xfb, 0xb7, 0xe6, 0x7e, 0xb0, 0x69, 0xfb, 0xe9, 0x28,
+	0x42, 0x1b, 0xbc, 0xc9, 0x58, 0xec, 0x42, 0x25, 0x71, 0xe3, 0xf1, 0xb7, 0x86, 0xfe, 0x6e, 0x59,
+	0xc9, 0x5e, 0x3b, 0x1b, 0x98, 0xa0, 0xc6, 0xd6, 0x03, 0x80, 0x34, 0x90, 0x58, 0x03, 0x38, 0x3a,
+	0x75, 0x9a, 0x4f, 0x9f, 0x1f, 0x3c, 0x6e, 0x1e, 0x9b, 0x97, 0x04, 0x40, 0xe9, 0xe8, 0xd4, 0x39,
+	0x38, 0x3e, 0x36, 0x0b, 0x62, 0x15, 0x96, 0x8f, 0x4e, 0x1d, 0xfb, 0xe4, 0xc9, 0x77, 0xcf, 0x4f,
+	0xcc, 0x05, 0x6b, 0x0b, 0xea, 0x17, 0x7d, 0x04, 0x1c, 0x9a, 0x7f, 0xbe, 0xdd, 0x2e, 0xfc, 0xf5,
+	0x76, 0xbb, 0xf0, 0xcf, 0xdb, 0xed, 0xc2, 0x2f, 0xff, 0x6e, 0x5f, 0x6a, 0x97, 0xe8, 0xef, 0xc5,
+	0xbd, 0xff, 0x03, 0x00, 0x00, 0xff, 0xff, 0xb8, 0x44, 0x24, 0x69, 0xf4, 0x0c, 0x00, 0x00,
 }
 
 func (m *SchReuqest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -1894,135 +1592,194 @@ func (m *SchReuqest) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *SchReuqest) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *SchReuqest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.Header != nil {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(m.Header.Size()))
-		n1, err := m.Header.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n1
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
 	if m.Req != nil {
-		nn2, err := m.Req.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size := m.Req.Size()
+			i -= size
+			if _, err := m.Req.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
 		}
-		i += nn2
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+	if m.Header != nil {
+		{
+			size, err := m.Header.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintSchedule(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0xa
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 
 func (m *SchReuqest_CreateRange) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *SchReuqest_CreateRange) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.CreateRange != nil {
-		dAtA[i] = 0x12
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(m.CreateRange.Size()))
-		n3, err := m.CreateRange.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.CreateRange.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintSchedule(dAtA, i, uint64(size))
 		}
-		i += n3
+		i--
+		dAtA[i] = 0x12
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *SchReuqest_DeleteRange) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *SchReuqest_DeleteRange) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.DeleteRange != nil {
-		dAtA[i] = 0x1a
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(m.DeleteRange.Size()))
-		n4, err := m.DeleteRange.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.DeleteRange.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintSchedule(dAtA, i, uint64(size))
 		}
-		i += n4
+		i--
+		dAtA[i] = 0x1a
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *SchReuqest_TransferRangeLeader) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *SchReuqest_TransferRangeLeader) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.TransferRangeLeader != nil {
-		dAtA[i] = 0x22
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(m.TransferRangeLeader.Size()))
-		n5, err := m.TransferRangeLeader.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.TransferRangeLeader.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintSchedule(dAtA, i, uint64(size))
 		}
-		i += n5
+		i--
+		dAtA[i] = 0x22
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *SchReuqest_GetPeerInfo) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *SchReuqest_GetPeerInfo) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.GetPeerInfo != nil {
-		dAtA[i] = 0x2a
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(m.GetPeerInfo.Size()))
-		n6, err := m.GetPeerInfo.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.GetPeerInfo.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintSchedule(dAtA, i, uint64(size))
 		}
-		i += n6
+		i--
+		dAtA[i] = 0x2a
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *SchReuqest_IsAlive) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *SchReuqest_IsAlive) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.IsAlive != nil {
-		dAtA[i] = 0x32
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(m.IsAlive.Size()))
-		n7, err := m.IsAlive.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.IsAlive.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintSchedule(dAtA, i, uint64(size))
 		}
-		i += n7
+		i--
+		dAtA[i] = 0x32
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *SchReuqest_NodeInfo) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *SchReuqest_NodeInfo) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.NodeInfo != nil {
-		dAtA[i] = 0x3a
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(m.NodeInfo.Size()))
-		n8, err := m.NodeInfo.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.NodeInfo.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintSchedule(dAtA, i, uint64(size))
 		}
-		i += n8
+		i--
+		dAtA[i] = 0x3a
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *SchReuqest_ChangeRaftMember) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *SchReuqest_ChangeRaftMember) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.ChangeRaftMember != nil {
-		dAtA[i] = 0x42
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(m.ChangeRaftMember.Size()))
-		n9, err := m.ChangeRaftMember.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.ChangeRaftMember.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintSchedule(dAtA, i, uint64(size))
 		}
-		i += n9
+		i--
+		dAtA[i] = 0x42
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *SchReuqest_Header) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -2030,25 +1787,31 @@ func (m *SchReuqest_Header) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *SchReuqest_Header) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *SchReuqest_Header) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.ClusterId != 0 {
-		dAtA[i] = 0x8
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(m.ClusterId))
-	}
 	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	return i, nil
+	if m.ClusterId != 0 {
+		i = encodeVarintSchedule(dAtA, i, uint64(m.ClusterId))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
 }
 
 func (m *SchResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -2056,135 +1819,194 @@ func (m *SchResponse) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *SchResponse) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *SchResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.Header != nil {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(m.Header.Size()))
-		n10, err := m.Header.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n10
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
 	if m.Resp != nil {
-		nn11, err := m.Resp.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size := m.Resp.Size()
+			i -= size
+			if _, err := m.Resp.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
 		}
-		i += nn11
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+	if m.Header != nil {
+		{
+			size, err := m.Header.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintSchedule(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0xa
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 
 func (m *SchResponse_CreateRange) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *SchResponse_CreateRange) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.CreateRange != nil {
-		dAtA[i] = 0x12
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(m.CreateRange.Size()))
-		n12, err := m.CreateRange.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.CreateRange.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintSchedule(dAtA, i, uint64(size))
 		}
-		i += n12
+		i--
+		dAtA[i] = 0x12
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *SchResponse_DeleteRange) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *SchResponse_DeleteRange) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.DeleteRange != nil {
-		dAtA[i] = 0x1a
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(m.DeleteRange.Size()))
-		n13, err := m.DeleteRange.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.DeleteRange.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintSchedule(dAtA, i, uint64(size))
 		}
-		i += n13
+		i--
+		dAtA[i] = 0x1a
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *SchResponse_TransferRangeLeader) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *SchResponse_TransferRangeLeader) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.TransferRangeLeader != nil {
-		dAtA[i] = 0x22
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(m.TransferRangeLeader.Size()))
-		n14, err := m.TransferRangeLeader.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.TransferRangeLeader.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintSchedule(dAtA, i, uint64(size))
 		}
-		i += n14
+		i--
+		dAtA[i] = 0x22
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *SchResponse_GetPeerInfo) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *SchResponse_GetPeerInfo) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.GetPeerInfo != nil {
-		dAtA[i] = 0x2a
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(m.GetPeerInfo.Size()))
-		n15, err := m.GetPeerInfo.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.GetPeerInfo.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintSchedule(dAtA, i, uint64(size))
 		}
-		i += n15
+		i--
+		dAtA[i] = 0x2a
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *SchResponse_IsAlive) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *SchResponse_IsAlive) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.IsAlive != nil {
-		dAtA[i] = 0x32
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(m.IsAlive.Size()))
-		n16, err := m.IsAlive.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.IsAlive.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintSchedule(dAtA, i, uint64(size))
 		}
-		i += n16
+		i--
+		dAtA[i] = 0x32
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *SchResponse_NodeInfo) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *SchResponse_NodeInfo) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.NodeInfo != nil {
-		dAtA[i] = 0x3a
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(m.NodeInfo.Size()))
-		n17, err := m.NodeInfo.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.NodeInfo.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintSchedule(dAtA, i, uint64(size))
 		}
-		i += n17
+		i--
+		dAtA[i] = 0x3a
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *SchResponse_ChangeRaftMember) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *SchResponse_ChangeRaftMember) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.ChangeRaftMember != nil {
-		dAtA[i] = 0x42
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(m.ChangeRaftMember.Size()))
-		n18, err := m.ChangeRaftMember.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.ChangeRaftMember.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintSchedule(dAtA, i, uint64(size))
 		}
-		i += n18
+		i--
+		dAtA[i] = 0x42
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *SchResponse_Header) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -2192,35 +2014,43 @@ func (m *SchResponse_Header) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *SchResponse_Header) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *SchResponse_Header) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.ClusterId != 0 {
-		dAtA[i] = 0x8
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(m.ClusterId))
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
 	if m.Error != nil {
-		dAtA[i] = 0x12
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(m.Error.Size()))
-		n19, err := m.Error.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.Error.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintSchedule(dAtA, i, uint64(size))
 		}
-		i += n19
+		i--
+		dAtA[i] = 0x12
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+	if m.ClusterId != 0 {
+		i = encodeVarintSchedule(dAtA, i, uint64(m.ClusterId))
+		i--
+		dAtA[i] = 0x8
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 
 func (m *CreateRangeRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -2228,35 +2058,43 @@ func (m *CreateRangeRequest) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *CreateRangeRequest) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *CreateRangeRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.Range != nil {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(m.Range.Size()))
-		n20, err := m.Range.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n20
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
 	if m.Leader != 0 {
-		dAtA[i] = 0x10
-		i++
 		i = encodeVarintSchedule(dAtA, i, uint64(m.Leader))
+		i--
+		dAtA[i] = 0x10
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+	if m.Range != nil {
+		{
+			size, err := m.Range.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintSchedule(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0xa
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 
 func (m *CreateRangeResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -2264,20 +2102,26 @@ func (m *CreateRangeResponse) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *CreateRangeResponse) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *CreateRangeResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
 	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 
 func (m *DeleteRangeRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -2285,30 +2129,36 @@ func (m *DeleteRangeRequest) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *DeleteRangeRequest) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *DeleteRangeRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.RangeId != 0 {
-		dAtA[i] = 0x8
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(m.RangeId))
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
 	if m.PeerId != 0 {
-		dAtA[i] = 0x10
-		i++
 		i = encodeVarintSchedule(dAtA, i, uint64(m.PeerId))
+		i--
+		dAtA[i] = 0x10
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+	if m.RangeId != 0 {
+		i = encodeVarintSchedule(dAtA, i, uint64(m.RangeId))
+		i--
+		dAtA[i] = 0x8
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 
 func (m *DeleteRangeResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -2316,20 +2166,26 @@ func (m *DeleteRangeResponse) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *DeleteRangeResponse) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *DeleteRangeResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
 	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 
 func (m *TransferRangeLeaderRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -2337,25 +2193,31 @@ func (m *TransferRangeLeaderRequest) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *TransferRangeLeaderRequest) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *TransferRangeLeaderRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.RangeId != 0 {
-		dAtA[i] = 0x8
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(m.RangeId))
-	}
 	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	return i, nil
+	if m.RangeId != 0 {
+		i = encodeVarintSchedule(dAtA, i, uint64(m.RangeId))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
 }
 
 func (m *TransferRangeLeaderResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -2363,20 +2225,26 @@ func (m *TransferRangeLeaderResponse) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *TransferRangeLeaderResponse) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *TransferRangeLeaderResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
 	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 
 func (m *GetPeerInfoRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -2384,25 +2252,31 @@ func (m *GetPeerInfoRequest) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *GetPeerInfoRequest) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *GetPeerInfoRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.RangeId != 0 {
-		dAtA[i] = 0x8
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(m.RangeId))
-	}
 	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	return i, nil
+	if m.RangeId != 0 {
+		i = encodeVarintSchedule(dAtA, i, uint64(m.RangeId))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
 }
 
 func (m *GetPeerInfoResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -2410,45 +2284,53 @@ func (m *GetPeerInfoResponse) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *GetPeerInfoResponse) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *GetPeerInfoResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.Replica != nil {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(m.Replica.Size()))
-		n21, err := m.Replica.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n21
-	}
-	if m.Index != 0 {
-		dAtA[i] = 0x10
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(m.Index))
-	}
-	if m.Term != 0 {
-		dAtA[i] = 0x18
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(m.Term))
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
 	if m.Commit != 0 {
-		dAtA[i] = 0x20
-		i++
 		i = encodeVarintSchedule(dAtA, i, uint64(m.Commit))
+		i--
+		dAtA[i] = 0x20
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+	if m.Term != 0 {
+		i = encodeVarintSchedule(dAtA, i, uint64(m.Term))
+		i--
+		dAtA[i] = 0x18
 	}
-	return i, nil
+	if m.Index != 0 {
+		i = encodeVarintSchedule(dAtA, i, uint64(m.Index))
+		i--
+		dAtA[i] = 0x10
+	}
+	if m.Replica != nil {
+		{
+			size, err := m.Replica.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintSchedule(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
 }
 
 func (m *IsAliveRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -2456,20 +2338,26 @@ func (m *IsAliveRequest) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *IsAliveRequest) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *IsAliveRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
 	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 
 func (m *IsAliveResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -2477,30 +2365,36 @@ func (m *IsAliveResponse) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *IsAliveResponse) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *IsAliveResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
+	}
 	if m.Alive {
-		dAtA[i] = 0x8
-		i++
+		i--
 		if m.Alive {
 			dAtA[i] = 1
 		} else {
 			dAtA[i] = 0
 		}
-		i++
+		i--
+		dAtA[i] = 0x8
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 
 func (m *NodeInfoRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -2508,20 +2402,26 @@ func (m *NodeInfoRequest) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *NodeInfoRequest) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *NodeInfoRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
 	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 
 func (m *RangeStats) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -2529,45 +2429,56 @@ func (m *RangeStats) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *RangeStats) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *RangeStats) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.WriteBytesPerSec != 0 {
-		dAtA[i] = 0x8
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(m.WriteBytesPerSec))
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	if m.WriteKeysPerSec != 0 {
-		dAtA[i] = 0x10
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(m.WriteKeysPerSec))
-	}
-	if m.ReadBytessPerSec != 0 {
-		dAtA[i] = 0x18
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(m.ReadBytessPerSec))
-	}
-	if m.ReadKeysPerSec != 0 {
-		dAtA[i] = 0x20
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(m.ReadKeysPerSec))
+	if m.KvCount != 0 {
+		i = encodeVarintSchedule(dAtA, i, uint64(m.KvCount))
+		i--
+		dAtA[i] = 0x30
 	}
 	if m.ApproximateSize != 0 {
-		dAtA[i] = 0x28
-		i++
 		i = encodeVarintSchedule(dAtA, i, uint64(m.ApproximateSize))
+		i--
+		dAtA[i] = 0x28
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+	if m.ReadKeysPerSec != 0 {
+		i = encodeVarintSchedule(dAtA, i, uint64(m.ReadKeysPerSec))
+		i--
+		dAtA[i] = 0x20
 	}
-	return i, nil
+	if m.ReadBytessPerSec != 0 {
+		i = encodeVarintSchedule(dAtA, i, uint64(m.ReadBytessPerSec))
+		i--
+		dAtA[i] = 0x18
+	}
+	if m.WriteKeysPerSec != 0 {
+		i = encodeVarintSchedule(dAtA, i, uint64(m.WriteKeysPerSec))
+		i--
+		dAtA[i] = 0x10
+	}
+	if m.WriteBytesPerSec != 0 {
+		i = encodeVarintSchedule(dAtA, i, uint64(m.WriteBytesPerSec))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
 }
 
 func (m *RangeInfo) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -2575,57 +2486,69 @@ func (m *RangeInfo) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *RangeInfo) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *RangeInfo) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.Range != nil {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(m.Range.Size()))
-		n22, err := m.Range.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n22
-	}
-	if m.Stats != nil {
-		dAtA[i] = 0x12
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(m.Stats.Size()))
-		n23, err := m.Stats.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n23
-	}
-	if m.Term != 0 {
-		dAtA[i] = 0x18
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(m.Term))
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
 	if len(m.PeersStatus) > 0 {
-		for _, msg := range m.PeersStatus {
+		for iNdEx := len(m.PeersStatus) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.PeersStatus[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintSchedule(dAtA, i, uint64(size))
+			}
+			i--
 			dAtA[i] = 0x22
-			i++
-			i = encodeVarintSchedule(dAtA, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(dAtA[i:])
+		}
+	}
+	if m.Term != 0 {
+		i = encodeVarintSchedule(dAtA, i, uint64(m.Term))
+		i--
+		dAtA[i] = 0x18
+	}
+	if m.Stats != nil {
+		{
+			size, err := m.Stats.MarshalToSizedBuffer(dAtA[:i])
 			if err != nil {
 				return 0, err
 			}
-			i += n
+			i -= size
+			i = encodeVarintSchedule(dAtA, i, uint64(size))
 		}
+		i--
+		dAtA[i] = 0x12
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+	if m.Range != nil {
+		{
+			size, err := m.Range.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintSchedule(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0xa
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 
 func (m *NodeStats) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -2633,75 +2556,81 @@ func (m *NodeStats) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *NodeStats) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *NodeStats) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.RangeCount != 0 {
-		dAtA[i] = 0x8
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(m.RangeCount))
-	}
-	if m.RangeSplitCount != 0 {
-		dAtA[i] = 0x10
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(m.RangeSplitCount))
-	}
-	if m.SnapSendingCount != 0 {
-		dAtA[i] = 0x18
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(m.SnapSendingCount))
-	}
-	if m.SnapApplyingCount != 0 {
-		dAtA[i] = 0x20
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(m.SnapApplyingCount))
-	}
-	if m.RangeLeaderCount != 0 {
-		dAtA[i] = 0x30
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(m.RangeLeaderCount))
-	}
-	if m.Capacity != 0 {
-		dAtA[i] = 0x38
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(m.Capacity))
-	}
-	if m.UsedSize != 0 {
-		dAtA[i] = 0x40
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(m.UsedSize))
-	}
-	if m.WriteBytesPerSec != 0 {
-		dAtA[i] = 0x50
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(m.WriteBytesPerSec))
-	}
-	if m.WriteKeysPerSec != 0 {
-		dAtA[i] = 0x58
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(m.WriteKeysPerSec))
-	}
-	if m.ReadBytessPerSec != 0 {
-		dAtA[i] = 0x60
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(m.ReadBytessPerSec))
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
 	if m.ReadKeysPerSec != 0 {
-		dAtA[i] = 0x68
-		i++
 		i = encodeVarintSchedule(dAtA, i, uint64(m.ReadKeysPerSec))
+		i--
+		dAtA[i] = 0x68
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+	if m.ReadBytessPerSec != 0 {
+		i = encodeVarintSchedule(dAtA, i, uint64(m.ReadBytessPerSec))
+		i--
+		dAtA[i] = 0x60
 	}
-	return i, nil
+	if m.WriteKeysPerSec != 0 {
+		i = encodeVarintSchedule(dAtA, i, uint64(m.WriteKeysPerSec))
+		i--
+		dAtA[i] = 0x58
+	}
+	if m.WriteBytesPerSec != 0 {
+		i = encodeVarintSchedule(dAtA, i, uint64(m.WriteBytesPerSec))
+		i--
+		dAtA[i] = 0x50
+	}
+	if m.UsedSize != 0 {
+		i = encodeVarintSchedule(dAtA, i, uint64(m.UsedSize))
+		i--
+		dAtA[i] = 0x40
+	}
+	if m.Capacity != 0 {
+		i = encodeVarintSchedule(dAtA, i, uint64(m.Capacity))
+		i--
+		dAtA[i] = 0x38
+	}
+	if m.RangeLeaderCount != 0 {
+		i = encodeVarintSchedule(dAtA, i, uint64(m.RangeLeaderCount))
+		i--
+		dAtA[i] = 0x30
+	}
+	if m.SnapApplyingCount != 0 {
+		i = encodeVarintSchedule(dAtA, i, uint64(m.SnapApplyingCount))
+		i--
+		dAtA[i] = 0x20
+	}
+	if m.SnapSendingCount != 0 {
+		i = encodeVarintSchedule(dAtA, i, uint64(m.SnapSendingCount))
+		i--
+		dAtA[i] = 0x18
+	}
+	if m.RangeSplitCount != 0 {
+		i = encodeVarintSchedule(dAtA, i, uint64(m.RangeSplitCount))
+		i--
+		dAtA[i] = 0x10
+	}
+	if m.RangeCount != 0 {
+		i = encodeVarintSchedule(dAtA, i, uint64(m.RangeCount))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
 }
 
 func (m *NodeInfoResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -2709,64 +2638,75 @@ func (m *NodeInfoResponse) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *NodeInfoResponse) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *NodeInfoResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.NodeId != 0 {
-		dAtA[i] = 0x8
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(m.NodeId))
-	}
-	if m.Stats != nil {
-		dAtA[i] = 0x12
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(m.Stats.Size()))
-		n24, err := m.Stats.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n24
-	}
-	if len(m.IsolatedReplicas) > 0 {
-		dAtA26 := make([]byte, len(m.IsolatedReplicas)*10)
-		var j25 int
-		for _, num := range m.IsolatedReplicas {
-			for num >= 1<<7 {
-				dAtA26[j25] = uint8(uint64(num)&0x7f | 0x80)
-				num >>= 7
-				j25++
-			}
-			dAtA26[j25] = uint8(num)
-			j25++
-		}
-		dAtA[i] = 0x1a
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(j25))
-		i += copy(dAtA[i:], dAtA26[:j25])
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
 	if len(m.RangeInfos) > 0 {
-		for _, msg := range m.RangeInfos {
+		for iNdEx := len(m.RangeInfos) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.RangeInfos[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintSchedule(dAtA, i, uint64(size))
+			}
+			i--
 			dAtA[i] = 0x22
-			i++
-			i = encodeVarintSchedule(dAtA, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(dAtA[i:])
+		}
+	}
+	if len(m.IsolatedReplicas) > 0 {
+		dAtA23 := make([]byte, len(m.IsolatedReplicas)*10)
+		var j22 int
+		for _, num := range m.IsolatedReplicas {
+			for num >= 1<<7 {
+				dAtA23[j22] = uint8(uint64(num)&0x7f | 0x80)
+				num >>= 7
+				j22++
+			}
+			dAtA23[j22] = uint8(num)
+			j22++
+		}
+		i -= j22
+		copy(dAtA[i:], dAtA23[:j22])
+		i = encodeVarintSchedule(dAtA, i, uint64(j22))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if m.Stats != nil {
+		{
+			size, err := m.Stats.MarshalToSizedBuffer(dAtA[:i])
 			if err != nil {
 				return 0, err
 			}
-			i += n
+			i -= size
+			i = encodeVarintSchedule(dAtA, i, uint64(size))
 		}
+		i--
+		dAtA[i] = 0x12
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+	if m.NodeId != 0 {
+		i = encodeVarintSchedule(dAtA, i, uint64(m.NodeId))
+		i--
+		dAtA[i] = 0x8
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 
 func (m *ChangeRaftMemberRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -2774,50 +2714,60 @@ func (m *ChangeRaftMemberRequest) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *ChangeRaftMemberRequest) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *ChangeRaftMemberRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.RangeId != 0 {
-		dAtA[i] = 0x8
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(m.RangeId))
-	}
-	if m.RangeEpoch != nil {
-		dAtA[i] = 0x12
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(m.RangeEpoch.Size()))
-		n27, err := m.RangeEpoch.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n27
-	}
-	if m.ChangeType != 0 {
-		dAtA[i] = 0x18
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(m.ChangeType))
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
 	if m.TargetPeer != nil {
-		dAtA[i] = 0x22
-		i++
-		i = encodeVarintSchedule(dAtA, i, uint64(m.TargetPeer.Size()))
-		n28, err := m.TargetPeer.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.TargetPeer.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintSchedule(dAtA, i, uint64(size))
 		}
-		i += n28
+		i--
+		dAtA[i] = 0x22
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+	if m.ChangeType != 0 {
+		i = encodeVarintSchedule(dAtA, i, uint64(m.ChangeType))
+		i--
+		dAtA[i] = 0x18
 	}
-	return i, nil
+	if m.RangeEpoch != nil {
+		{
+			size, err := m.RangeEpoch.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintSchedule(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	if m.RangeId != 0 {
+		i = encodeVarintSchedule(dAtA, i, uint64(m.RangeId))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
 }
 
 func (m *ChangeRaftMemberResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -2825,24 +2775,32 @@ func (m *ChangeRaftMemberResponse) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *ChangeRaftMemberResponse) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *ChangeRaftMemberResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
 	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 
 func encodeVarintSchedule(dAtA []byte, offset int, v uint64) int {
+	offset -= sovSchedule(v)
+	base := offset
 	for v >= 1<<7 {
 		dAtA[offset] = uint8(v&0x7f | 0x80)
 		v >>= 7
 		offset++
 	}
 	dAtA[offset] = uint8(v)
-	return offset + 1
+	return base
 }
 func (m *SchReuqest) Size() (n int) {
 	if m == nil {
@@ -3272,6 +3230,9 @@ func (m *RangeStats) Size() (n int) {
 	if m.ApproximateSize != 0 {
 		n += 1 + sovSchedule(uint64(m.ApproximateSize))
 	}
+	if m.KvCount != 0 {
+		n += 1 + sovSchedule(uint64(m.KvCount))
+	}
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
 	}
@@ -3423,14 +3384,7 @@ func (m *ChangeRaftMemberResponse) Size() (n int) {
 }
 
 func sovSchedule(x uint64) (n int) {
-	for {
-		n++
-		x >>= 7
-		if x == 0 {
-			break
-		}
-	}
-	return n
+	return (math_bits.Len64(x|1) + 6) / 7
 }
 func sozSchedule(x uint64) (n int) {
 	return sovSchedule(uint64((x << 1) ^ uint64((int64(x) >> 63))))
@@ -5249,6 +5203,25 @@ func (m *RangeStats) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
+		case 6:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field KvCount", wireType)
+			}
+			m.KvCount = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSchedule
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.KvCount |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipSchedule(dAtA[iNdEx:])
@@ -6156,6 +6129,7 @@ func (m *ChangeRaftMemberResponse) Unmarshal(dAtA []byte) error {
 func skipSchedule(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0
+	depth := 0
 	for iNdEx < l {
 		var wire uint64
 		for shift := uint(0); ; shift += 7 {
@@ -6187,10 +6161,8 @@ func skipSchedule(dAtA []byte) (n int, err error) {
 					break
 				}
 			}
-			return iNdEx, nil
 		case 1:
 			iNdEx += 8
-			return iNdEx, nil
 		case 2:
 			var length int
 			for shift := uint(0); ; shift += 7 {
@@ -6211,55 +6183,30 @@ func skipSchedule(dAtA []byte) (n int, err error) {
 				return 0, ErrInvalidLengthSchedule
 			}
 			iNdEx += length
-			if iNdEx < 0 {
-				return 0, ErrInvalidLengthSchedule
-			}
-			return iNdEx, nil
 		case 3:
-			for {
-				var innerWire uint64
-				var start int = iNdEx
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return 0, ErrIntOverflowSchedule
-					}
-					if iNdEx >= l {
-						return 0, io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					innerWire |= (uint64(b) & 0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				innerWireType := int(innerWire & 0x7)
-				if innerWireType == 4 {
-					break
-				}
-				next, err := skipSchedule(dAtA[start:])
-				if err != nil {
-					return 0, err
-				}
-				iNdEx = start + next
-				if iNdEx < 0 {
-					return 0, ErrInvalidLengthSchedule
-				}
-			}
-			return iNdEx, nil
+			depth++
 		case 4:
-			return iNdEx, nil
+			if depth == 0 {
+				return 0, ErrUnexpectedEndOfGroupSchedule
+			}
+			depth--
 		case 5:
 			iNdEx += 4
-			return iNdEx, nil
 		default:
 			return 0, fmt.Errorf("proto: illegal wireType %d", wireType)
 		}
+		if iNdEx < 0 {
+			return 0, ErrInvalidLengthSchedule
+		}
+		if depth == 0 {
+			return iNdEx, nil
+		}
 	}
-	panic("unreachable")
+	return 0, io.ErrUnexpectedEOF
 }
 
 var (
-	ErrInvalidLengthSchedule = fmt.Errorf("proto: negative length found during unmarshaling")
-	ErrIntOverflowSchedule   = fmt.Errorf("proto: integer overflow")
+	ErrInvalidLengthSchedule        = fmt.Errorf("proto: negative length found during unmarshaling")
+	ErrIntOverflowSchedule          = fmt.Errorf("proto: integer overflow")
+	ErrUnexpectedEndOfGroupSchedule = fmt.Errorf("proto: unexpected end of group")
 )

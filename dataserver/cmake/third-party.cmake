@@ -1,8 +1,12 @@
 include(ExternalProject)
-set(EXTERNAL_DIR ${PROJECT_SOURCE_DIR}/.external)
+
+set(EXTERNAL_PATH "${PROJECT_SOURCE_DIR}/.external" CACHE PATH "external deps path")
 
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/external)
 
+include(github/repos)
+
+include(asio)
 include(tbb)
 include(protobuf)
 include(rocksdb)

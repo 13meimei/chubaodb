@@ -8,6 +8,7 @@ import (
 	proto "github.com/golang/protobuf/proto"
 	io "io"
 	math "math"
+	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -19,7 +20,7 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 type AdminAuth_AuthMethod int32
 
@@ -153,7 +154,7 @@ func (m *AdminAuth) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return xxx_messageInfo_AdminAuth.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -225,7 +226,7 @@ func (m *AdminRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error)
 		return xxx_messageInfo_AdminRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -251,31 +252,31 @@ type isAdminRequest_Req interface {
 }
 
 type AdminRequest_SetCfg struct {
-	SetCfg *SetConfigRequest `protobuf:"bytes,10,opt,name=set_cfg,json=setCfg,proto3,oneof"`
+	SetCfg *SetConfigRequest `protobuf:"bytes,10,opt,name=set_cfg,json=setCfg,proto3,oneof" json:"set_cfg,omitempty"`
 }
 type AdminRequest_GetCfg struct {
-	GetCfg *GetConfigRequest `protobuf:"bytes,11,opt,name=get_cfg,json=getCfg,proto3,oneof"`
+	GetCfg *GetConfigRequest `protobuf:"bytes,11,opt,name=get_cfg,json=getCfg,proto3,oneof" json:"get_cfg,omitempty"`
 }
 type AdminRequest_GetInfo struct {
-	GetInfo *GetInfoRequest `protobuf:"bytes,12,opt,name=get_info,json=getInfo,proto3,oneof"`
+	GetInfo *GetInfoRequest `protobuf:"bytes,12,opt,name=get_info,json=getInfo,proto3,oneof" json:"get_info,omitempty"`
 }
 type AdminRequest_ForceSplit struct {
-	ForceSplit *ForceSplitRequest `protobuf:"bytes,13,opt,name=force_split,json=forceSplit,proto3,oneof"`
+	ForceSplit *ForceSplitRequest `protobuf:"bytes,13,opt,name=force_split,json=forceSplit,proto3,oneof" json:"force_split,omitempty"`
 }
 type AdminRequest_Compaction struct {
-	Compaction *CompactionRequest `protobuf:"bytes,14,opt,name=compaction,proto3,oneof"`
+	Compaction *CompactionRequest `protobuf:"bytes,14,opt,name=compaction,proto3,oneof" json:"compaction,omitempty"`
 }
 type AdminRequest_ClearQueue struct {
-	ClearQueue *ClearQueueRequest `protobuf:"bytes,15,opt,name=clear_queue,json=clearQueue,proto3,oneof"`
+	ClearQueue *ClearQueueRequest `protobuf:"bytes,15,opt,name=clear_queue,json=clearQueue,proto3,oneof" json:"clear_queue,omitempty"`
 }
 type AdminRequest_GetPendings struct {
-	GetPendings *GetPendingsRequest `protobuf:"bytes,16,opt,name=get_pendings,json=getPendings,proto3,oneof"`
+	GetPendings *GetPendingsRequest `protobuf:"bytes,16,opt,name=get_pendings,json=getPendings,proto3,oneof" json:"get_pendings,omitempty"`
 }
 type AdminRequest_FlushDb struct {
-	FlushDb *FlushDBRequest `protobuf:"bytes,17,opt,name=flush_db,json=flushDb,proto3,oneof"`
+	FlushDb *FlushDBRequest `protobuf:"bytes,17,opt,name=flush_db,json=flushDb,proto3,oneof" json:"flush_db,omitempty"`
 }
 type AdminRequest_Profile struct {
-	Profile *ProfileRequest `protobuf:"bytes,18,opt,name=profile,proto3,oneof"`
+	Profile *ProfileRequest `protobuf:"bytes,18,opt,name=profile,proto3,oneof" json:"profile,omitempty"`
 }
 
 func (*AdminRequest_SetCfg) isAdminRequest_Req()      {}
@@ -365,9 +366,9 @@ func (m *AdminRequest) GetProfile() *ProfileRequest {
 	return nil
 }
 
-// XXX_OneofFuncs is for the internal use of the proto package.
-func (*AdminRequest) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
-	return _AdminRequest_OneofMarshaler, _AdminRequest_OneofUnmarshaler, _AdminRequest_OneofSizer, []interface{}{
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*AdminRequest) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
 		(*AdminRequest_SetCfg)(nil),
 		(*AdminRequest_GetCfg)(nil),
 		(*AdminRequest_GetInfo)(nil),
@@ -378,198 +379,6 @@ func (*AdminRequest) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) 
 		(*AdminRequest_FlushDb)(nil),
 		(*AdminRequest_Profile)(nil),
 	}
-}
-
-func _AdminRequest_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
-	m := msg.(*AdminRequest)
-	// req
-	switch x := m.Req.(type) {
-	case *AdminRequest_SetCfg:
-		_ = b.EncodeVarint(10<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.SetCfg); err != nil {
-			return err
-		}
-	case *AdminRequest_GetCfg:
-		_ = b.EncodeVarint(11<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.GetCfg); err != nil {
-			return err
-		}
-	case *AdminRequest_GetInfo:
-		_ = b.EncodeVarint(12<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.GetInfo); err != nil {
-			return err
-		}
-	case *AdminRequest_ForceSplit:
-		_ = b.EncodeVarint(13<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.ForceSplit); err != nil {
-			return err
-		}
-	case *AdminRequest_Compaction:
-		_ = b.EncodeVarint(14<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Compaction); err != nil {
-			return err
-		}
-	case *AdminRequest_ClearQueue:
-		_ = b.EncodeVarint(15<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.ClearQueue); err != nil {
-			return err
-		}
-	case *AdminRequest_GetPendings:
-		_ = b.EncodeVarint(16<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.GetPendings); err != nil {
-			return err
-		}
-	case *AdminRequest_FlushDb:
-		_ = b.EncodeVarint(17<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.FlushDb); err != nil {
-			return err
-		}
-	case *AdminRequest_Profile:
-		_ = b.EncodeVarint(18<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Profile); err != nil {
-			return err
-		}
-	case nil:
-	default:
-		return fmt.Errorf("AdminRequest.Req has unexpected type %T", x)
-	}
-	return nil
-}
-
-func _AdminRequest_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
-	m := msg.(*AdminRequest)
-	switch tag {
-	case 10: // req.set_cfg
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(SetConfigRequest)
-		err := b.DecodeMessage(msg)
-		m.Req = &AdminRequest_SetCfg{msg}
-		return true, err
-	case 11: // req.get_cfg
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(GetConfigRequest)
-		err := b.DecodeMessage(msg)
-		m.Req = &AdminRequest_GetCfg{msg}
-		return true, err
-	case 12: // req.get_info
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(GetInfoRequest)
-		err := b.DecodeMessage(msg)
-		m.Req = &AdminRequest_GetInfo{msg}
-		return true, err
-	case 13: // req.force_split
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(ForceSplitRequest)
-		err := b.DecodeMessage(msg)
-		m.Req = &AdminRequest_ForceSplit{msg}
-		return true, err
-	case 14: // req.compaction
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(CompactionRequest)
-		err := b.DecodeMessage(msg)
-		m.Req = &AdminRequest_Compaction{msg}
-		return true, err
-	case 15: // req.clear_queue
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(ClearQueueRequest)
-		err := b.DecodeMessage(msg)
-		m.Req = &AdminRequest_ClearQueue{msg}
-		return true, err
-	case 16: // req.get_pendings
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(GetPendingsRequest)
-		err := b.DecodeMessage(msg)
-		m.Req = &AdminRequest_GetPendings{msg}
-		return true, err
-	case 17: // req.flush_db
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(FlushDBRequest)
-		err := b.DecodeMessage(msg)
-		m.Req = &AdminRequest_FlushDb{msg}
-		return true, err
-	case 18: // req.profile
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(ProfileRequest)
-		err := b.DecodeMessage(msg)
-		m.Req = &AdminRequest_Profile{msg}
-		return true, err
-	default:
-		return false, nil
-	}
-}
-
-func _AdminRequest_OneofSizer(msg proto.Message) (n int) {
-	m := msg.(*AdminRequest)
-	// req
-	switch x := m.Req.(type) {
-	case *AdminRequest_SetCfg:
-		s := proto.Size(x.SetCfg)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *AdminRequest_GetCfg:
-		s := proto.Size(x.GetCfg)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *AdminRequest_GetInfo:
-		s := proto.Size(x.GetInfo)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *AdminRequest_ForceSplit:
-		s := proto.Size(x.ForceSplit)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *AdminRequest_Compaction:
-		s := proto.Size(x.Compaction)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *AdminRequest_ClearQueue:
-		s := proto.Size(x.ClearQueue)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *AdminRequest_GetPendings:
-		s := proto.Size(x.GetPendings)
-		n += 2 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *AdminRequest_FlushDb:
-		s := proto.Size(x.FlushDb)
-		n += 2 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *AdminRequest_Profile:
-		s := proto.Size(x.Profile)
-		n += 2 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case nil:
-	default:
-		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
-	}
-	return n
 }
 
 type AdminResponse struct {
@@ -605,7 +414,7 @@ func (m *AdminResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error
 		return xxx_messageInfo_AdminResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -631,31 +440,31 @@ type isAdminResponse_Resp interface {
 }
 
 type AdminResponse_SetCfg struct {
-	SetCfg *SetConfigResponse `protobuf:"bytes,10,opt,name=set_cfg,json=setCfg,proto3,oneof"`
+	SetCfg *SetConfigResponse `protobuf:"bytes,10,opt,name=set_cfg,json=setCfg,proto3,oneof" json:"set_cfg,omitempty"`
 }
 type AdminResponse_GetCfg struct {
-	GetCfg *GetConfigResponse `protobuf:"bytes,11,opt,name=get_cfg,json=getCfg,proto3,oneof"`
+	GetCfg *GetConfigResponse `protobuf:"bytes,11,opt,name=get_cfg,json=getCfg,proto3,oneof" json:"get_cfg,omitempty"`
 }
 type AdminResponse_GetInfo struct {
-	GetInfo *GetInfoResponse `protobuf:"bytes,12,opt,name=get_info,json=getInfo,proto3,oneof"`
+	GetInfo *GetInfoResponse `protobuf:"bytes,12,opt,name=get_info,json=getInfo,proto3,oneof" json:"get_info,omitempty"`
 }
 type AdminResponse_ForceSplit struct {
-	ForceSplit *ForceSplitResponse `protobuf:"bytes,13,opt,name=force_split,json=forceSplit,proto3,oneof"`
+	ForceSplit *ForceSplitResponse `protobuf:"bytes,13,opt,name=force_split,json=forceSplit,proto3,oneof" json:"force_split,omitempty"`
 }
 type AdminResponse_Compaction struct {
-	Compaction *CompactionResponse `protobuf:"bytes,14,opt,name=compaction,proto3,oneof"`
+	Compaction *CompactionResponse `protobuf:"bytes,14,opt,name=compaction,proto3,oneof" json:"compaction,omitempty"`
 }
 type AdminResponse_ClearQueue struct {
-	ClearQueue *ClearQueueResponse `protobuf:"bytes,15,opt,name=clear_queue,json=clearQueue,proto3,oneof"`
+	ClearQueue *ClearQueueResponse `protobuf:"bytes,15,opt,name=clear_queue,json=clearQueue,proto3,oneof" json:"clear_queue,omitempty"`
 }
 type AdminResponse_GetPendings struct {
-	GetPendings *GetPendingsResponse `protobuf:"bytes,16,opt,name=get_pendings,json=getPendings,proto3,oneof"`
+	GetPendings *GetPendingsResponse `protobuf:"bytes,16,opt,name=get_pendings,json=getPendings,proto3,oneof" json:"get_pendings,omitempty"`
 }
 type AdminResponse_FlushDb struct {
-	FlushDb *FlushDBResponse `protobuf:"bytes,17,opt,name=flush_db,json=flushDb,proto3,oneof"`
+	FlushDb *FlushDBResponse `protobuf:"bytes,17,opt,name=flush_db,json=flushDb,proto3,oneof" json:"flush_db,omitempty"`
 }
 type AdminResponse_Profile struct {
-	Profile *ProfileResponse `protobuf:"bytes,18,opt,name=profile,proto3,oneof"`
+	Profile *ProfileResponse `protobuf:"bytes,18,opt,name=profile,proto3,oneof" json:"profile,omitempty"`
 }
 
 func (*AdminResponse_SetCfg) isAdminResponse_Resp()      {}
@@ -752,9 +561,9 @@ func (m *AdminResponse) GetProfile() *ProfileResponse {
 	return nil
 }
 
-// XXX_OneofFuncs is for the internal use of the proto package.
-func (*AdminResponse) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
-	return _AdminResponse_OneofMarshaler, _AdminResponse_OneofUnmarshaler, _AdminResponse_OneofSizer, []interface{}{
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*AdminResponse) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
 		(*AdminResponse_SetCfg)(nil),
 		(*AdminResponse_GetCfg)(nil),
 		(*AdminResponse_GetInfo)(nil),
@@ -765,198 +574,6 @@ func (*AdminResponse) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer)
 		(*AdminResponse_FlushDb)(nil),
 		(*AdminResponse_Profile)(nil),
 	}
-}
-
-func _AdminResponse_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
-	m := msg.(*AdminResponse)
-	// resp
-	switch x := m.Resp.(type) {
-	case *AdminResponse_SetCfg:
-		_ = b.EncodeVarint(10<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.SetCfg); err != nil {
-			return err
-		}
-	case *AdminResponse_GetCfg:
-		_ = b.EncodeVarint(11<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.GetCfg); err != nil {
-			return err
-		}
-	case *AdminResponse_GetInfo:
-		_ = b.EncodeVarint(12<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.GetInfo); err != nil {
-			return err
-		}
-	case *AdminResponse_ForceSplit:
-		_ = b.EncodeVarint(13<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.ForceSplit); err != nil {
-			return err
-		}
-	case *AdminResponse_Compaction:
-		_ = b.EncodeVarint(14<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Compaction); err != nil {
-			return err
-		}
-	case *AdminResponse_ClearQueue:
-		_ = b.EncodeVarint(15<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.ClearQueue); err != nil {
-			return err
-		}
-	case *AdminResponse_GetPendings:
-		_ = b.EncodeVarint(16<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.GetPendings); err != nil {
-			return err
-		}
-	case *AdminResponse_FlushDb:
-		_ = b.EncodeVarint(17<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.FlushDb); err != nil {
-			return err
-		}
-	case *AdminResponse_Profile:
-		_ = b.EncodeVarint(18<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Profile); err != nil {
-			return err
-		}
-	case nil:
-	default:
-		return fmt.Errorf("AdminResponse.Resp has unexpected type %T", x)
-	}
-	return nil
-}
-
-func _AdminResponse_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
-	m := msg.(*AdminResponse)
-	switch tag {
-	case 10: // resp.set_cfg
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(SetConfigResponse)
-		err := b.DecodeMessage(msg)
-		m.Resp = &AdminResponse_SetCfg{msg}
-		return true, err
-	case 11: // resp.get_cfg
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(GetConfigResponse)
-		err := b.DecodeMessage(msg)
-		m.Resp = &AdminResponse_GetCfg{msg}
-		return true, err
-	case 12: // resp.get_info
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(GetInfoResponse)
-		err := b.DecodeMessage(msg)
-		m.Resp = &AdminResponse_GetInfo{msg}
-		return true, err
-	case 13: // resp.force_split
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(ForceSplitResponse)
-		err := b.DecodeMessage(msg)
-		m.Resp = &AdminResponse_ForceSplit{msg}
-		return true, err
-	case 14: // resp.compaction
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(CompactionResponse)
-		err := b.DecodeMessage(msg)
-		m.Resp = &AdminResponse_Compaction{msg}
-		return true, err
-	case 15: // resp.clear_queue
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(ClearQueueResponse)
-		err := b.DecodeMessage(msg)
-		m.Resp = &AdminResponse_ClearQueue{msg}
-		return true, err
-	case 16: // resp.get_pendings
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(GetPendingsResponse)
-		err := b.DecodeMessage(msg)
-		m.Resp = &AdminResponse_GetPendings{msg}
-		return true, err
-	case 17: // resp.flush_db
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(FlushDBResponse)
-		err := b.DecodeMessage(msg)
-		m.Resp = &AdminResponse_FlushDb{msg}
-		return true, err
-	case 18: // resp.profile
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(ProfileResponse)
-		err := b.DecodeMessage(msg)
-		m.Resp = &AdminResponse_Profile{msg}
-		return true, err
-	default:
-		return false, nil
-	}
-}
-
-func _AdminResponse_OneofSizer(msg proto.Message) (n int) {
-	m := msg.(*AdminResponse)
-	// resp
-	switch x := m.Resp.(type) {
-	case *AdminResponse_SetCfg:
-		s := proto.Size(x.SetCfg)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *AdminResponse_GetCfg:
-		s := proto.Size(x.GetCfg)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *AdminResponse_GetInfo:
-		s := proto.Size(x.GetInfo)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *AdminResponse_ForceSplit:
-		s := proto.Size(x.ForceSplit)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *AdminResponse_Compaction:
-		s := proto.Size(x.Compaction)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *AdminResponse_ClearQueue:
-		s := proto.Size(x.ClearQueue)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *AdminResponse_GetPendings:
-		s := proto.Size(x.GetPendings)
-		n += 2 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *AdminResponse_FlushDb:
-		s := proto.Size(x.FlushDb)
-		n += 2 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *AdminResponse_Profile:
-		s := proto.Size(x.Profile)
-		n += 2 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case nil:
-	default:
-		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
-	}
-	return n
 }
 
 type ConfigKey struct {
@@ -981,7 +598,7 @@ func (m *ConfigKey) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return xxx_messageInfo_ConfigKey.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -1036,7 +653,7 @@ func (m *ConfigItem) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return xxx_messageInfo_ConfigItem.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -1090,7 +707,7 @@ func (m *SetConfigRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, er
 		return xxx_messageInfo_SetConfigRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -1136,7 +753,7 @@ func (m *SetConfigResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, e
 		return xxx_messageInfo_SetConfigResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -1176,7 +793,7 @@ func (m *GetConfigRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, er
 		return xxx_messageInfo_GetConfigRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -1223,7 +840,7 @@ func (m *GetConfigResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, e
 		return xxx_messageInfo_GetConfigResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -1275,7 +892,7 @@ func (m *GetInfoRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, erro
 		return xxx_messageInfo_GetInfoRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -1322,7 +939,7 @@ func (m *GetInfoResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, err
 		return xxx_messageInfo_GetInfoResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -1370,7 +987,7 @@ func (m *ForceSplitRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, e
 		return xxx_messageInfo_ForceSplitRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -1424,7 +1041,7 @@ func (m *ForceSplitResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, 
 		return xxx_messageInfo_ForceSplitResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -1472,7 +1089,7 @@ func (m *CompactionRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, e
 		return xxx_messageInfo_CompactionRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -1527,7 +1144,7 @@ func (m *CompactionResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, 
 		return xxx_messageInfo_CompactionResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -1581,7 +1198,7 @@ func (m *ClearQueueRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, e
 		return xxx_messageInfo_ClearQueueRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -1628,7 +1245,7 @@ func (m *ClearQueueResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, 
 		return xxx_messageInfo_ClearQueueResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -1676,7 +1293,7 @@ func (m *GetPendingsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, 
 		return xxx_messageInfo_GetPendingsRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -1730,7 +1347,7 @@ func (m *GetPendingsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte,
 		return xxx_messageInfo_GetPendingsResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -1777,7 +1394,7 @@ func (m *FlushDBRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, erro
 		return xxx_messageInfo_FlushDBRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -1823,7 +1440,7 @@ func (m *FlushDBResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, err
 		return xxx_messageInfo_FlushDBResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -1865,7 +1482,7 @@ func (m *ProfileRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, erro
 		return xxx_messageInfo_ProfileRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -1925,7 +1542,7 @@ func (m *ProfileResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, err
 		return xxx_messageInfo_ProfileResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -2052,7 +1669,7 @@ var fileDescriptor_f22b85a14dbb1119 = []byte{
 func (m *AdminAuth) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -2060,36 +1677,43 @@ func (m *AdminAuth) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *AdminAuth) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *AdminAuth) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.Method != 0 {
-		dAtA[i] = 0x8
-		i++
-		i = encodeVarintAdmin(dAtA, i, uint64(m.Method))
-	}
-	if m.Epoch != 0 {
-		dAtA[i] = 0x10
-		i++
-		i = encodeVarintAdmin(dAtA, i, uint64(m.Epoch))
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
 	if len(m.Sign) > 0 {
-		dAtA[i] = 0x1a
-		i++
+		i -= len(m.Sign)
+		copy(dAtA[i:], m.Sign)
 		i = encodeVarintAdmin(dAtA, i, uint64(len(m.Sign)))
-		i += copy(dAtA[i:], m.Sign)
+		i--
+		dAtA[i] = 0x1a
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+	if m.Epoch != 0 {
+		i = encodeVarintAdmin(dAtA, i, uint64(m.Epoch))
+		i--
+		dAtA[i] = 0x10
 	}
-	return i, nil
+	if m.Method != 0 {
+		i = encodeVarintAdmin(dAtA, i, uint64(m.Method))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
 }
 
 func (m *AdminRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -2097,169 +1721,242 @@ func (m *AdminRequest) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *AdminRequest) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *AdminRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.Auth != nil {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintAdmin(dAtA, i, uint64(m.Auth.Size()))
-		n1, err := m.Auth.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n1
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
 	if m.Req != nil {
-		nn2, err := m.Req.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size := m.Req.Size()
+			i -= size
+			if _, err := m.Req.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
 		}
-		i += nn2
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+	if m.Auth != nil {
+		{
+			size, err := m.Auth.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintAdmin(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0xa
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 
 func (m *AdminRequest_SetCfg) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *AdminRequest_SetCfg) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.SetCfg != nil {
-		dAtA[i] = 0x52
-		i++
-		i = encodeVarintAdmin(dAtA, i, uint64(m.SetCfg.Size()))
-		n3, err := m.SetCfg.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.SetCfg.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintAdmin(dAtA, i, uint64(size))
 		}
-		i += n3
+		i--
+		dAtA[i] = 0x52
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *AdminRequest_GetCfg) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *AdminRequest_GetCfg) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.GetCfg != nil {
-		dAtA[i] = 0x5a
-		i++
-		i = encodeVarintAdmin(dAtA, i, uint64(m.GetCfg.Size()))
-		n4, err := m.GetCfg.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.GetCfg.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintAdmin(dAtA, i, uint64(size))
 		}
-		i += n4
+		i--
+		dAtA[i] = 0x5a
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *AdminRequest_GetInfo) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *AdminRequest_GetInfo) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.GetInfo != nil {
-		dAtA[i] = 0x62
-		i++
-		i = encodeVarintAdmin(dAtA, i, uint64(m.GetInfo.Size()))
-		n5, err := m.GetInfo.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.GetInfo.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintAdmin(dAtA, i, uint64(size))
 		}
-		i += n5
+		i--
+		dAtA[i] = 0x62
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *AdminRequest_ForceSplit) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *AdminRequest_ForceSplit) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.ForceSplit != nil {
-		dAtA[i] = 0x6a
-		i++
-		i = encodeVarintAdmin(dAtA, i, uint64(m.ForceSplit.Size()))
-		n6, err := m.ForceSplit.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.ForceSplit.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintAdmin(dAtA, i, uint64(size))
 		}
-		i += n6
+		i--
+		dAtA[i] = 0x6a
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *AdminRequest_Compaction) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *AdminRequest_Compaction) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.Compaction != nil {
-		dAtA[i] = 0x72
-		i++
-		i = encodeVarintAdmin(dAtA, i, uint64(m.Compaction.Size()))
-		n7, err := m.Compaction.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.Compaction.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintAdmin(dAtA, i, uint64(size))
 		}
-		i += n7
+		i--
+		dAtA[i] = 0x72
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *AdminRequest_ClearQueue) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *AdminRequest_ClearQueue) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.ClearQueue != nil {
-		dAtA[i] = 0x7a
-		i++
-		i = encodeVarintAdmin(dAtA, i, uint64(m.ClearQueue.Size()))
-		n8, err := m.ClearQueue.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.ClearQueue.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintAdmin(dAtA, i, uint64(size))
 		}
-		i += n8
+		i--
+		dAtA[i] = 0x7a
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *AdminRequest_GetPendings) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *AdminRequest_GetPendings) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.GetPendings != nil {
-		dAtA[i] = 0x82
-		i++
-		dAtA[i] = 0x1
-		i++
-		i = encodeVarintAdmin(dAtA, i, uint64(m.GetPendings.Size()))
-		n9, err := m.GetPendings.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.GetPendings.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintAdmin(dAtA, i, uint64(size))
 		}
-		i += n9
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0x82
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *AdminRequest_FlushDb) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *AdminRequest_FlushDb) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.FlushDb != nil {
-		dAtA[i] = 0x8a
-		i++
-		dAtA[i] = 0x1
-		i++
-		i = encodeVarintAdmin(dAtA, i, uint64(m.FlushDb.Size()))
-		n10, err := m.FlushDb.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.FlushDb.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintAdmin(dAtA, i, uint64(size))
 		}
-		i += n10
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0x8a
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *AdminRequest_Profile) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *AdminRequest_Profile) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.Profile != nil {
-		dAtA[i] = 0x92
-		i++
-		dAtA[i] = 0x1
-		i++
-		i = encodeVarintAdmin(dAtA, i, uint64(m.Profile.Size()))
-		n11, err := m.Profile.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.Profile.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintAdmin(dAtA, i, uint64(size))
 		}
-		i += n11
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0x92
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *AdminResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -2267,170 +1964,242 @@ func (m *AdminResponse) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *AdminResponse) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *AdminResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.Code != 0 {
-		dAtA[i] = 0x8
-		i++
-		i = encodeVarintAdmin(dAtA, i, uint64(m.Code))
-	}
-	if len(m.ErrorMsg) > 0 {
-		dAtA[i] = 0x12
-		i++
-		i = encodeVarintAdmin(dAtA, i, uint64(len(m.ErrorMsg)))
-		i += copy(dAtA[i:], m.ErrorMsg)
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
 	if m.Resp != nil {
-		nn12, err := m.Resp.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size := m.Resp.Size()
+			i -= size
+			if _, err := m.Resp.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
 		}
-		i += nn12
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+	if len(m.ErrorMsg) > 0 {
+		i -= len(m.ErrorMsg)
+		copy(dAtA[i:], m.ErrorMsg)
+		i = encodeVarintAdmin(dAtA, i, uint64(len(m.ErrorMsg)))
+		i--
+		dAtA[i] = 0x12
 	}
-	return i, nil
+	if m.Code != 0 {
+		i = encodeVarintAdmin(dAtA, i, uint64(m.Code))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
 }
 
 func (m *AdminResponse_SetCfg) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *AdminResponse_SetCfg) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.SetCfg != nil {
-		dAtA[i] = 0x52
-		i++
-		i = encodeVarintAdmin(dAtA, i, uint64(m.SetCfg.Size()))
-		n13, err := m.SetCfg.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.SetCfg.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintAdmin(dAtA, i, uint64(size))
 		}
-		i += n13
+		i--
+		dAtA[i] = 0x52
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *AdminResponse_GetCfg) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *AdminResponse_GetCfg) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.GetCfg != nil {
-		dAtA[i] = 0x5a
-		i++
-		i = encodeVarintAdmin(dAtA, i, uint64(m.GetCfg.Size()))
-		n14, err := m.GetCfg.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.GetCfg.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintAdmin(dAtA, i, uint64(size))
 		}
-		i += n14
+		i--
+		dAtA[i] = 0x5a
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *AdminResponse_GetInfo) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *AdminResponse_GetInfo) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.GetInfo != nil {
-		dAtA[i] = 0x62
-		i++
-		i = encodeVarintAdmin(dAtA, i, uint64(m.GetInfo.Size()))
-		n15, err := m.GetInfo.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.GetInfo.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintAdmin(dAtA, i, uint64(size))
 		}
-		i += n15
+		i--
+		dAtA[i] = 0x62
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *AdminResponse_ForceSplit) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *AdminResponse_ForceSplit) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.ForceSplit != nil {
-		dAtA[i] = 0x6a
-		i++
-		i = encodeVarintAdmin(dAtA, i, uint64(m.ForceSplit.Size()))
-		n16, err := m.ForceSplit.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.ForceSplit.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintAdmin(dAtA, i, uint64(size))
 		}
-		i += n16
+		i--
+		dAtA[i] = 0x6a
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *AdminResponse_Compaction) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *AdminResponse_Compaction) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.Compaction != nil {
-		dAtA[i] = 0x72
-		i++
-		i = encodeVarintAdmin(dAtA, i, uint64(m.Compaction.Size()))
-		n17, err := m.Compaction.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.Compaction.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintAdmin(dAtA, i, uint64(size))
 		}
-		i += n17
+		i--
+		dAtA[i] = 0x72
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *AdminResponse_ClearQueue) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *AdminResponse_ClearQueue) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.ClearQueue != nil {
-		dAtA[i] = 0x7a
-		i++
-		i = encodeVarintAdmin(dAtA, i, uint64(m.ClearQueue.Size()))
-		n18, err := m.ClearQueue.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.ClearQueue.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintAdmin(dAtA, i, uint64(size))
 		}
-		i += n18
+		i--
+		dAtA[i] = 0x7a
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *AdminResponse_GetPendings) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *AdminResponse_GetPendings) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.GetPendings != nil {
-		dAtA[i] = 0x82
-		i++
-		dAtA[i] = 0x1
-		i++
-		i = encodeVarintAdmin(dAtA, i, uint64(m.GetPendings.Size()))
-		n19, err := m.GetPendings.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.GetPendings.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintAdmin(dAtA, i, uint64(size))
 		}
-		i += n19
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0x82
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *AdminResponse_FlushDb) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *AdminResponse_FlushDb) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.FlushDb != nil {
-		dAtA[i] = 0x8a
-		i++
-		dAtA[i] = 0x1
-		i++
-		i = encodeVarintAdmin(dAtA, i, uint64(m.FlushDb.Size()))
-		n20, err := m.FlushDb.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.FlushDb.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintAdmin(dAtA, i, uint64(size))
 		}
-		i += n20
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0x8a
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *AdminResponse_Profile) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *AdminResponse_Profile) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.Profile != nil {
-		dAtA[i] = 0x92
-		i++
-		dAtA[i] = 0x1
-		i++
-		i = encodeVarintAdmin(dAtA, i, uint64(m.Profile.Size()))
-		n21, err := m.Profile.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.Profile.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintAdmin(dAtA, i, uint64(size))
 		}
-		i += n21
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0x92
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *ConfigKey) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -2438,32 +2207,40 @@ func (m *ConfigKey) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *ConfigKey) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *ConfigKey) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.Section) > 0 {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintAdmin(dAtA, i, uint64(len(m.Section)))
-		i += copy(dAtA[i:], m.Section)
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
 	if len(m.Name) > 0 {
-		dAtA[i] = 0x12
-		i++
+		i -= len(m.Name)
+		copy(dAtA[i:], m.Name)
 		i = encodeVarintAdmin(dAtA, i, uint64(len(m.Name)))
-		i += copy(dAtA[i:], m.Name)
+		i--
+		dAtA[i] = 0x12
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+	if len(m.Section) > 0 {
+		i -= len(m.Section)
+		copy(dAtA[i:], m.Section)
+		i = encodeVarintAdmin(dAtA, i, uint64(len(m.Section)))
+		i--
+		dAtA[i] = 0xa
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 
 func (m *ConfigItem) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -2471,36 +2248,45 @@ func (m *ConfigItem) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *ConfigItem) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *ConfigItem) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.Key != nil {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintAdmin(dAtA, i, uint64(m.Key.Size()))
-		n22, err := m.Key.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n22
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
 	if len(m.Value) > 0 {
-		dAtA[i] = 0x12
-		i++
+		i -= len(m.Value)
+		copy(dAtA[i:], m.Value)
 		i = encodeVarintAdmin(dAtA, i, uint64(len(m.Value)))
-		i += copy(dAtA[i:], m.Value)
+		i--
+		dAtA[i] = 0x12
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+	if m.Key != nil {
+		{
+			size, err := m.Key.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintAdmin(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0xa
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 
 func (m *SetConfigRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -2508,32 +2294,40 @@ func (m *SetConfigRequest) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *SetConfigRequest) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *SetConfigRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
+	}
 	if len(m.Configs) > 0 {
-		for _, msg := range m.Configs {
-			dAtA[i] = 0xa
-			i++
-			i = encodeVarintAdmin(dAtA, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(dAtA[i:])
-			if err != nil {
-				return 0, err
+		for iNdEx := len(m.Configs) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Configs[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintAdmin(dAtA, i, uint64(size))
 			}
-			i += n
+			i--
+			dAtA[i] = 0xa
 		}
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 
 func (m *SetConfigResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -2541,20 +2335,26 @@ func (m *SetConfigResponse) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *SetConfigResponse) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *SetConfigResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
 	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 
 func (m *GetConfigRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -2562,32 +2362,40 @@ func (m *GetConfigRequest) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *GetConfigRequest) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *GetConfigRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
+	}
 	if len(m.Key) > 0 {
-		for _, msg := range m.Key {
-			dAtA[i] = 0xa
-			i++
-			i = encodeVarintAdmin(dAtA, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(dAtA[i:])
-			if err != nil {
-				return 0, err
+		for iNdEx := len(m.Key) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Key[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintAdmin(dAtA, i, uint64(size))
 			}
-			i += n
+			i--
+			dAtA[i] = 0xa
 		}
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 
 func (m *GetConfigResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -2595,32 +2403,40 @@ func (m *GetConfigResponse) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *GetConfigResponse) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *GetConfigResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
+	}
 	if len(m.Configs) > 0 {
-		for _, msg := range m.Configs {
-			dAtA[i] = 0xa
-			i++
-			i = encodeVarintAdmin(dAtA, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(dAtA[i:])
-			if err != nil {
-				return 0, err
+		for iNdEx := len(m.Configs) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Configs[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintAdmin(dAtA, i, uint64(size))
 			}
-			i += n
+			i--
+			dAtA[i] = 0xa
 		}
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 
 func (m *GetInfoRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -2628,26 +2444,33 @@ func (m *GetInfoRequest) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *GetInfoRequest) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *GetInfoRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.Path) > 0 {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintAdmin(dAtA, i, uint64(len(m.Path)))
-		i += copy(dAtA[i:], m.Path)
-	}
 	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	return i, nil
+	if len(m.Path) > 0 {
+		i -= len(m.Path)
+		copy(dAtA[i:], m.Path)
+		i = encodeVarintAdmin(dAtA, i, uint64(len(m.Path)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
 }
 
 func (m *GetInfoResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -2655,26 +2478,33 @@ func (m *GetInfoResponse) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *GetInfoResponse) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *GetInfoResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.Data) > 0 {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintAdmin(dAtA, i, uint64(len(m.Data)))
-		i += copy(dAtA[i:], m.Data)
-	}
 	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	return i, nil
+	if len(m.Data) > 0 {
+		i -= len(m.Data)
+		copy(dAtA[i:], m.Data)
+		i = encodeVarintAdmin(dAtA, i, uint64(len(m.Data)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
 }
 
 func (m *ForceSplitRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -2682,30 +2512,36 @@ func (m *ForceSplitRequest) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *ForceSplitRequest) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *ForceSplitRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.RangeId != 0 {
-		dAtA[i] = 0x8
-		i++
-		i = encodeVarintAdmin(dAtA, i, uint64(m.RangeId))
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
 	if m.Version != 0 {
-		dAtA[i] = 0x10
-		i++
 		i = encodeVarintAdmin(dAtA, i, uint64(m.Version))
+		i--
+		dAtA[i] = 0x10
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+	if m.RangeId != 0 {
+		i = encodeVarintAdmin(dAtA, i, uint64(m.RangeId))
+		i--
+		dAtA[i] = 0x8
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 
 func (m *ForceSplitResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -2713,26 +2549,33 @@ func (m *ForceSplitResponse) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *ForceSplitResponse) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *ForceSplitResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.SplitKey) > 0 {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintAdmin(dAtA, i, uint64(len(m.SplitKey)))
-		i += copy(dAtA[i:], m.SplitKey)
-	}
 	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	return i, nil
+	if len(m.SplitKey) > 0 {
+		i -= len(m.SplitKey)
+		copy(dAtA[i:], m.SplitKey)
+		i = encodeVarintAdmin(dAtA, i, uint64(len(m.SplitKey)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
 }
 
 func (m *CompactionRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -2740,30 +2583,36 @@ func (m *CompactionRequest) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *CompactionRequest) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *CompactionRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.RangeId != 0 {
-		dAtA[i] = 0x8
-		i++
-		i = encodeVarintAdmin(dAtA, i, uint64(m.RangeId))
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
 	if m.TransactionId != 0 {
-		dAtA[i] = 0x10
-		i++
 		i = encodeVarintAdmin(dAtA, i, uint64(m.TransactionId))
+		i--
+		dAtA[i] = 0x10
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+	if m.RangeId != 0 {
+		i = encodeVarintAdmin(dAtA, i, uint64(m.RangeId))
+		i--
+		dAtA[i] = 0x8
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 
 func (m *CompactionResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -2771,32 +2620,40 @@ func (m *CompactionResponse) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *CompactionResponse) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *CompactionResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.BeginKey) > 0 {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintAdmin(dAtA, i, uint64(len(m.BeginKey)))
-		i += copy(dAtA[i:], m.BeginKey)
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
 	if len(m.EndKey) > 0 {
-		dAtA[i] = 0x12
-		i++
+		i -= len(m.EndKey)
+		copy(dAtA[i:], m.EndKey)
 		i = encodeVarintAdmin(dAtA, i, uint64(len(m.EndKey)))
-		i += copy(dAtA[i:], m.EndKey)
+		i--
+		dAtA[i] = 0x12
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+	if len(m.BeginKey) > 0 {
+		i -= len(m.BeginKey)
+		copy(dAtA[i:], m.BeginKey)
+		i = encodeVarintAdmin(dAtA, i, uint64(len(m.BeginKey)))
+		i--
+		dAtA[i] = 0xa
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 
 func (m *ClearQueueRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -2804,25 +2661,31 @@ func (m *ClearQueueRequest) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *ClearQueueRequest) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *ClearQueueRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.QueueType != 0 {
-		dAtA[i] = 0x8
-		i++
-		i = encodeVarintAdmin(dAtA, i, uint64(m.QueueType))
-	}
 	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	return i, nil
+	if m.QueueType != 0 {
+		i = encodeVarintAdmin(dAtA, i, uint64(m.QueueType))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
 }
 
 func (m *ClearQueueResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -2830,25 +2693,31 @@ func (m *ClearQueueResponse) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *ClearQueueResponse) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *ClearQueueResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.Cleared != 0 {
-		dAtA[i] = 0x8
-		i++
-		i = encodeVarintAdmin(dAtA, i, uint64(m.Cleared))
-	}
 	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	return i, nil
+	if m.Cleared != 0 {
+		i = encodeVarintAdmin(dAtA, i, uint64(m.Cleared))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
 }
 
 func (m *GetPendingsRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -2856,30 +2725,36 @@ func (m *GetPendingsRequest) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *GetPendingsRequest) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *GetPendingsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.Ptype != 0 {
-		dAtA[i] = 0x8
-		i++
-		i = encodeVarintAdmin(dAtA, i, uint64(m.Ptype))
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
 	if m.Count != 0 {
-		dAtA[i] = 0x10
-		i++
 		i = encodeVarintAdmin(dAtA, i, uint64(m.Count))
+		i--
+		dAtA[i] = 0x10
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+	if m.Ptype != 0 {
+		i = encodeVarintAdmin(dAtA, i, uint64(m.Ptype))
+		i--
+		dAtA[i] = 0x8
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 
 func (m *GetPendingsResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -2887,26 +2762,33 @@ func (m *GetPendingsResponse) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *GetPendingsResponse) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *GetPendingsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.Desc) > 0 {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintAdmin(dAtA, i, uint64(len(m.Desc)))
-		i += copy(dAtA[i:], m.Desc)
-	}
 	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	return i, nil
+	if len(m.Desc) > 0 {
+		i -= len(m.Desc)
+		copy(dAtA[i:], m.Desc)
+		i = encodeVarintAdmin(dAtA, i, uint64(len(m.Desc)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
 }
 
 func (m *FlushDBRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -2914,30 +2796,36 @@ func (m *FlushDBRequest) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *FlushDBRequest) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *FlushDBRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
+	}
 	if m.Wait {
-		dAtA[i] = 0x8
-		i++
+		i--
 		if m.Wait {
 			dAtA[i] = 1
 		} else {
 			dAtA[i] = 0
 		}
-		i++
+		i--
+		dAtA[i] = 0x8
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 
 func (m *FlushDBResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -2945,20 +2833,26 @@ func (m *FlushDBResponse) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *FlushDBResponse) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *FlushDBResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
 	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 
 func (m *ProfileRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -2966,36 +2860,43 @@ func (m *ProfileRequest) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *ProfileRequest) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *ProfileRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.Ptype != 0 {
-		dAtA[i] = 0x8
-		i++
-		i = encodeVarintAdmin(dAtA, i, uint64(m.Ptype))
-	}
-	if len(m.OutputPath) > 0 {
-		dAtA[i] = 0x12
-		i++
-		i = encodeVarintAdmin(dAtA, i, uint64(len(m.OutputPath)))
-		i += copy(dAtA[i:], m.OutputPath)
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
 	if m.Seconds != 0 {
-		dAtA[i] = 0x18
-		i++
 		i = encodeVarintAdmin(dAtA, i, uint64(m.Seconds))
+		i--
+		dAtA[i] = 0x18
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+	if len(m.OutputPath) > 0 {
+		i -= len(m.OutputPath)
+		copy(dAtA[i:], m.OutputPath)
+		i = encodeVarintAdmin(dAtA, i, uint64(len(m.OutputPath)))
+		i--
+		dAtA[i] = 0x12
 	}
-	return i, nil
+	if m.Ptype != 0 {
+		i = encodeVarintAdmin(dAtA, i, uint64(m.Ptype))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
 }
 
 func (m *ProfileResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -3003,24 +2904,32 @@ func (m *ProfileResponse) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *ProfileResponse) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *ProfileResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
 	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 
 func encodeVarintAdmin(dAtA []byte, offset int, v uint64) int {
+	offset -= sovAdmin(v)
+	base := offset
 	for v >= 1<<7 {
 		dAtA[offset] = uint8(v&0x7f | 0x80)
 		v >>= 7
 		offset++
 	}
 	dAtA[offset] = uint8(v)
-	return offset + 1
+	return base
 }
 func (m *AdminAuth) Size() (n int) {
 	if m == nil {
@@ -3637,14 +3546,7 @@ func (m *ProfileResponse) Size() (n int) {
 }
 
 func sovAdmin(x uint64) (n int) {
-	for {
-		n++
-		x >>= 7
-		if x == 0 {
-			break
-		}
-	}
-	return n
+	return (math_bits.Len64(x|1) + 6) / 7
 }
 func sozAdmin(x uint64) (n int) {
 	return sovAdmin(uint64((x << 1) ^ uint64((int64(x) >> 63))))
@@ -6355,6 +6257,7 @@ func (m *ProfileResponse) Unmarshal(dAtA []byte) error {
 func skipAdmin(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0
+	depth := 0
 	for iNdEx < l {
 		var wire uint64
 		for shift := uint(0); ; shift += 7 {
@@ -6386,10 +6289,8 @@ func skipAdmin(dAtA []byte) (n int, err error) {
 					break
 				}
 			}
-			return iNdEx, nil
 		case 1:
 			iNdEx += 8
-			return iNdEx, nil
 		case 2:
 			var length int
 			for shift := uint(0); ; shift += 7 {
@@ -6410,55 +6311,30 @@ func skipAdmin(dAtA []byte) (n int, err error) {
 				return 0, ErrInvalidLengthAdmin
 			}
 			iNdEx += length
-			if iNdEx < 0 {
-				return 0, ErrInvalidLengthAdmin
-			}
-			return iNdEx, nil
 		case 3:
-			for {
-				var innerWire uint64
-				var start int = iNdEx
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return 0, ErrIntOverflowAdmin
-					}
-					if iNdEx >= l {
-						return 0, io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					innerWire |= (uint64(b) & 0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				innerWireType := int(innerWire & 0x7)
-				if innerWireType == 4 {
-					break
-				}
-				next, err := skipAdmin(dAtA[start:])
-				if err != nil {
-					return 0, err
-				}
-				iNdEx = start + next
-				if iNdEx < 0 {
-					return 0, ErrInvalidLengthAdmin
-				}
-			}
-			return iNdEx, nil
+			depth++
 		case 4:
-			return iNdEx, nil
+			if depth == 0 {
+				return 0, ErrUnexpectedEndOfGroupAdmin
+			}
+			depth--
 		case 5:
 			iNdEx += 4
-			return iNdEx, nil
 		default:
 			return 0, fmt.Errorf("proto: illegal wireType %d", wireType)
 		}
+		if iNdEx < 0 {
+			return 0, ErrInvalidLengthAdmin
+		}
+		if depth == 0 {
+			return iNdEx, nil
+		}
 	}
-	panic("unreachable")
+	return 0, io.ErrUnexpectedEOF
 }
 
 var (
-	ErrInvalidLengthAdmin = fmt.Errorf("proto: negative length found during unmarshaling")
-	ErrIntOverflowAdmin   = fmt.Errorf("proto: integer overflow")
+	ErrInvalidLengthAdmin        = fmt.Errorf("proto: negative length found during unmarshaling")
+	ErrIntOverflowAdmin          = fmt.Errorf("proto: integer overflow")
+	ErrUnexpectedEndOfGroupAdmin = fmt.Errorf("proto: unexpected end of group")
 )

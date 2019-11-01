@@ -38,14 +38,14 @@ func RegistLog(i uint8, l Log) error {
 	return nil
 }
 
-func GetLog(i int) Log {
-	return logs[i]
+func GetrDef(i int) Log {
+	if logs[i] != nil {
+		return logs[i]
+	}
+	return Get()
 }
 
-func GetOrDef(i int) Log {
-	if logs[i] == nil {
-		return Get()
-	}
+func GetLog(i int) Log {
 	return logs[i]
 }
 
@@ -57,7 +57,7 @@ func Get() Log {
 }
 
 func Regist(log Log) {
-	_ = RegistLog(0, log)
+	RegistLog(0, log)
 }
 
 func IsDebugEnabled() bool {

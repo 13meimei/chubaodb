@@ -34,14 +34,14 @@ func (ns *BaseService) GetNode(ctx context.Context, nodeID uint64) (*basepb.Node
 	return ns.QueryNode(ctx, nodeID)
 }
 
-func (ns *BaseService) RegisterNode(ctx context.Context, node *basepb.Node) (*basepb.Node, error) {
+func (ns *BaseService) RegisterNode(ctx context.Context, node *basepb.Node, rangeFingers []*mspb.RangeFingerprint) (*basepb.Node, []uint64, error) {
 	if node.Ip == "" {
-		return nil, errs.Error(mspb.ErrorType_ClientIPNotSet)
+		return nil, nil, errs.Error(mspb.ErrorType_ClientIPNotSet)
 	}
 
 	nodes, err := ns.QueryAllNodes(ctx)
 	if err != nil {
-		return nil, cblog.LogErrAndReturn(err)
+		return nil, nil, cblog.LogErrAndReturn(err)
 	}
 
 	var nodeID int64
@@ -55,11 +55,56 @@ func (ns *BaseService) RegisterNode(ctx context.Context, node *basepb.Node) (*ba
 
 	if nodeID == 0 {
 		if nodeID, err = ns.NewIDGenerate(ctx, entity.SequenceNodeID, 1, 5*time.Second); err != nil {
-			return nil, cblog.LogErrAndReturn(err)
+			return nil, nil, cblog.LogErrAndReturn(err)
 		}
 	}
 
 	node.Id = uint64(nodeID)
+
+	nodeByte, err := node.Marshal()
+	if err != nil {
+		return nil, nil, cblog.LogErrAndReturn(err)
+	}
+
+	if err := ns.Put(ctx, entity.NodeKey(node.Id), nodeByte); err != nil {
+		return nil, nil, cblog.LogErrAndReturn(err)
+	}
+
+	var invalidRanges []uint64
+
+	for _, rngF := range rangeFingers {
+
+		rng, err := ns.QueryRange(ctx, rngF.TableId, rngF.RangeId)
+		if err != nil {
+			return nil, nil, cblog.LogErrAndReturn(err)
+		}
+		for _, p := range rng.Peers {
+			if rngF.PeerId == p.Id {
+				goto next
+			}
+		}
+		invalidRanges = append(invalidRanges, rngF.RangeId)
+	next:
+	}
+
+	return node, invalidRanges, nil
+}
+
+func (bs *BaseService) NodeInfo(ctx context.Context, node *basepb.Node) (*dspb.NodeInfoResponse, error) {
+	return bs.dsClient.NodeInfo(ctx, NodeServerAddr(node))
+}
+
+func (ns *BaseService) Online(ctx context.Context, nodeID uint64) (bool, error) {
+	bytes, err := ns.Get(ctx, entity.NodeTTLKey(nodeID))
+	return bytes != nil, err
+}
+
+func (ns *BaseService) ChangeState(ctx context.Context, nodeID uint64, state basepb.NodeState) (*basepb.Node, error) {
+	node, err := ns.GetNode(ctx, nodeID)
+	if err != nil {
+		return nil, cblog.LogErrAndReturn(err)
+	}
+	node.State = state
 
 	nodeByte, err := node.Marshal()
 	if err != nil {
@@ -73,11 +118,29 @@ func (ns *BaseService) RegisterNode(ctx context.Context, node *basepb.Node) (*ba
 	return node, nil
 }
 
-func (bs *BaseService) NodeInfo(ctx context.Context, node *basepb.Node) (*dspb.NodeInfoResponse, error) {
-	return bs.dsClient.NodeInfo(ctx, nodeServerAddr(node))
-}
+func (ns *BaseService) CheckState(ctx context.Context, nodeID uint64) (nodeState basepb.NodeState, leaderNum, rangeNum uint64, err error) {
 
-func (ns *BaseService) Online(ctx context.Context, nodeID uint64) (bool, error) {
-	bytes, err := ns.Get(ctx, entity.NodeTTLKey(nodeID))
-	return bytes != nil, err
+	var node *basepb.Node
+
+	node, err = ns.GetNode(ctx, nodeID)
+	if err != nil {
+		return
+	}
+
+	nodeState = node.State
+
+	var ni *dspb.NodeInfoResponse
+	ni, err = ns.NodeInfo(ctx, node)
+	if err != nil {
+		return
+	}
+
+	for _, nr := range ni.RangeInfos {
+		rangeNum++
+		if nr.Range.Leader == nodeID {
+			leaderNum++
+		}
+	}
+
+	return
 }

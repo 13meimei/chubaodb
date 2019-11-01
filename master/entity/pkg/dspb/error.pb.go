@@ -10,6 +10,7 @@ import (
 	proto "github.com/golang/protobuf/proto"
 	io "io"
 	math "math"
+	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -21,7 +22,7 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 type Error struct {
 	// Types that are valid to be assigned to Err:
@@ -54,7 +55,7 @@ func (m *Error) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return xxx_messageInfo_Error.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -80,28 +81,28 @@ type isError_Err interface {
 }
 
 type Error_ClusterMismatch struct {
-	ClusterMismatch *Error_ClusterMismatched `protobuf:"bytes,1,opt,name=cluster_mismatch,json=clusterMismatch,proto3,oneof"`
+	ClusterMismatch *Error_ClusterMismatched `protobuf:"bytes,1,opt,name=cluster_mismatch,json=clusterMismatch,proto3,oneof" json:"cluster_mismatch,omitempty"`
 }
 type Error_NotLeader_ struct {
-	NotLeader *Error_NotLeader `protobuf:"bytes,2,opt,name=not_leader,json=notLeader,proto3,oneof"`
+	NotLeader *Error_NotLeader `protobuf:"bytes,2,opt,name=not_leader,json=notLeader,proto3,oneof" json:"not_leader,omitempty"`
 }
 type Error_RaftFail_ struct {
-	RaftFail *Error_RaftFail `protobuf:"bytes,3,opt,name=raft_fail,json=raftFail,proto3,oneof"`
+	RaftFail *Error_RaftFail `protobuf:"bytes,3,opt,name=raft_fail,json=raftFail,proto3,oneof" json:"raft_fail,omitempty"`
 }
 type Error_RangeNotFound_ struct {
-	RangeNotFound *Error_RangeNotFound `protobuf:"bytes,4,opt,name=range_not_found,json=rangeNotFound,proto3,oneof"`
+	RangeNotFound *Error_RangeNotFound `protobuf:"bytes,4,opt,name=range_not_found,json=rangeNotFound,proto3,oneof" json:"range_not_found,omitempty"`
 }
 type Error_OutOfBound_ struct {
-	OutOfBound *Error_OutOfBound `protobuf:"bytes,5,opt,name=out_of_bound,json=outOfBound,proto3,oneof"`
+	OutOfBound *Error_OutOfBound `protobuf:"bytes,5,opt,name=out_of_bound,json=outOfBound,proto3,oneof" json:"out_of_bound,omitempty"`
 }
 type Error_StaleEpoch_ struct {
-	StaleEpoch *Error_StaleEpoch `protobuf:"bytes,6,opt,name=stale_epoch,json=staleEpoch,proto3,oneof"`
+	StaleEpoch *Error_StaleEpoch `protobuf:"bytes,6,opt,name=stale_epoch,json=staleEpoch,proto3,oneof" json:"stale_epoch,omitempty"`
 }
 type Error_NoLeftSpace_ struct {
-	NoLeftSpace *Error_NoLeftSpace `protobuf:"bytes,7,opt,name=no_left_space,json=noLeftSpace,proto3,oneof"`
+	NoLeftSpace *Error_NoLeftSpace `protobuf:"bytes,7,opt,name=no_left_space,json=noLeftSpace,proto3,oneof" json:"no_left_space,omitempty"`
 }
 type Error_ServerError_ struct {
-	ServerError *Error_ServerError `protobuf:"bytes,8,opt,name=server_error,json=serverError,proto3,oneof"`
+	ServerError *Error_ServerError `protobuf:"bytes,8,opt,name=server_error,json=serverError,proto3,oneof" json:"server_error,omitempty"`
 }
 
 func (*Error_ClusterMismatch) isError_Err() {}
@@ -183,9 +184,9 @@ func (m *Error) GetDetail() string {
 	return ""
 }
 
-// XXX_OneofFuncs is for the internal use of the proto package.
-func (*Error) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
-	return _Error_OneofMarshaler, _Error_OneofUnmarshaler, _Error_OneofSizer, []interface{}{
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*Error) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
 		(*Error_ClusterMismatch)(nil),
 		(*Error_NotLeader_)(nil),
 		(*Error_RaftFail_)(nil),
@@ -195,180 +196,6 @@ func (*Error) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, 
 		(*Error_NoLeftSpace_)(nil),
 		(*Error_ServerError_)(nil),
 	}
-}
-
-func _Error_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
-	m := msg.(*Error)
-	// err
-	switch x := m.Err.(type) {
-	case *Error_ClusterMismatch:
-		_ = b.EncodeVarint(1<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.ClusterMismatch); err != nil {
-			return err
-		}
-	case *Error_NotLeader_:
-		_ = b.EncodeVarint(2<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.NotLeader); err != nil {
-			return err
-		}
-	case *Error_RaftFail_:
-		_ = b.EncodeVarint(3<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.RaftFail); err != nil {
-			return err
-		}
-	case *Error_RangeNotFound_:
-		_ = b.EncodeVarint(4<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.RangeNotFound); err != nil {
-			return err
-		}
-	case *Error_OutOfBound_:
-		_ = b.EncodeVarint(5<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.OutOfBound); err != nil {
-			return err
-		}
-	case *Error_StaleEpoch_:
-		_ = b.EncodeVarint(6<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.StaleEpoch); err != nil {
-			return err
-		}
-	case *Error_NoLeftSpace_:
-		_ = b.EncodeVarint(7<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.NoLeftSpace); err != nil {
-			return err
-		}
-	case *Error_ServerError_:
-		_ = b.EncodeVarint(8<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.ServerError); err != nil {
-			return err
-		}
-	case nil:
-	default:
-		return fmt.Errorf("Error.Err has unexpected type %T", x)
-	}
-	return nil
-}
-
-func _Error_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
-	m := msg.(*Error)
-	switch tag {
-	case 1: // err.cluster_mismatch
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(Error_ClusterMismatched)
-		err := b.DecodeMessage(msg)
-		m.Err = &Error_ClusterMismatch{msg}
-		return true, err
-	case 2: // err.not_leader
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(Error_NotLeader)
-		err := b.DecodeMessage(msg)
-		m.Err = &Error_NotLeader_{msg}
-		return true, err
-	case 3: // err.raft_fail
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(Error_RaftFail)
-		err := b.DecodeMessage(msg)
-		m.Err = &Error_RaftFail_{msg}
-		return true, err
-	case 4: // err.range_not_found
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(Error_RangeNotFound)
-		err := b.DecodeMessage(msg)
-		m.Err = &Error_RangeNotFound_{msg}
-		return true, err
-	case 5: // err.out_of_bound
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(Error_OutOfBound)
-		err := b.DecodeMessage(msg)
-		m.Err = &Error_OutOfBound_{msg}
-		return true, err
-	case 6: // err.stale_epoch
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(Error_StaleEpoch)
-		err := b.DecodeMessage(msg)
-		m.Err = &Error_StaleEpoch_{msg}
-		return true, err
-	case 7: // err.no_left_space
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(Error_NoLeftSpace)
-		err := b.DecodeMessage(msg)
-		m.Err = &Error_NoLeftSpace_{msg}
-		return true, err
-	case 8: // err.server_error
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(Error_ServerError)
-		err := b.DecodeMessage(msg)
-		m.Err = &Error_ServerError_{msg}
-		return true, err
-	default:
-		return false, nil
-	}
-}
-
-func _Error_OneofSizer(msg proto.Message) (n int) {
-	m := msg.(*Error)
-	// err
-	switch x := m.Err.(type) {
-	case *Error_ClusterMismatch:
-		s := proto.Size(x.ClusterMismatch)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *Error_NotLeader_:
-		s := proto.Size(x.NotLeader)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *Error_RaftFail_:
-		s := proto.Size(x.RaftFail)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *Error_RangeNotFound_:
-		s := proto.Size(x.RangeNotFound)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *Error_OutOfBound_:
-		s := proto.Size(x.OutOfBound)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *Error_StaleEpoch_:
-		s := proto.Size(x.StaleEpoch)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *Error_NoLeftSpace_:
-		s := proto.Size(x.NoLeftSpace)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *Error_ServerError_:
-		s := proto.Size(x.ServerError)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case nil:
-	default:
-		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
-	}
-	return n
 }
 
 // cluster_id(in request header) is mismatched
@@ -394,7 +221,7 @@ func (m *Error_ClusterMismatched) XXX_Marshal(b []byte, deterministic bool) ([]b
 		return xxx_messageInfo_Error_ClusterMismatched.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -451,7 +278,7 @@ func (m *Error_NotLeader) XXX_Marshal(b []byte, deterministic bool) ([]byte, err
 		return xxx_messageInfo_Error_NotLeader.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -519,7 +346,7 @@ func (m *Error_RaftFail) XXX_Marshal(b []byte, deterministic bool) ([]byte, erro
 		return xxx_messageInfo_Error_RaftFail.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -566,7 +393,7 @@ func (m *Error_RangeNotFound) XXX_Marshal(b []byte, deterministic bool) ([]byte,
 		return xxx_messageInfo_Error_RangeNotFound.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -616,7 +443,7 @@ func (m *Error_OutOfBound) XXX_Marshal(b []byte, deterministic bool) ([]byte, er
 		return xxx_messageInfo_Error_OutOfBound.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -685,7 +512,7 @@ func (m *Error_StaleEpoch) XXX_Marshal(b []byte, deterministic bool) ([]byte, er
 		return xxx_messageInfo_Error_StaleEpoch.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -738,7 +565,7 @@ func (m *Error_NoLeftSpace) XXX_Marshal(b []byte, deterministic bool) ([]byte, e
 		return xxx_messageInfo_Error_NoLeftSpace.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -779,7 +606,7 @@ func (m *Error_ServerError) XXX_Marshal(b []byte, deterministic bool) ([]byte, e
 		return xxx_messageInfo_Error_ServerError.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -867,7 +694,7 @@ var fileDescriptor_0b746b9fa59be012 = []byte{
 func (m *Error) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -875,147 +702,212 @@ func (m *Error) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *Error) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Error) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.Err != nil {
-		nn1, err := m.Err.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += nn1
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
 	if len(m.Detail) > 0 {
-		dAtA[i] = 0xa2
-		i++
-		dAtA[i] = 0x6
-		i++
+		i -= len(m.Detail)
+		copy(dAtA[i:], m.Detail)
 		i = encodeVarintError(dAtA, i, uint64(len(m.Detail)))
-		i += copy(dAtA[i:], m.Detail)
+		i--
+		dAtA[i] = 0x6
+		i--
+		dAtA[i] = 0xa2
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+	if m.Err != nil {
+		{
+			size := m.Err.Size()
+			i -= size
+			if _, err := m.Err.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
+		}
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 
 func (m *Error_ClusterMismatch) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Error_ClusterMismatch) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.ClusterMismatch != nil {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintError(dAtA, i, uint64(m.ClusterMismatch.Size()))
-		n2, err := m.ClusterMismatch.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.ClusterMismatch.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintError(dAtA, i, uint64(size))
 		}
-		i += n2
+		i--
+		dAtA[i] = 0xa
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *Error_NotLeader_) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Error_NotLeader_) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.NotLeader != nil {
-		dAtA[i] = 0x12
-		i++
-		i = encodeVarintError(dAtA, i, uint64(m.NotLeader.Size()))
-		n3, err := m.NotLeader.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.NotLeader.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintError(dAtA, i, uint64(size))
 		}
-		i += n3
+		i--
+		dAtA[i] = 0x12
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *Error_RaftFail_) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Error_RaftFail_) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.RaftFail != nil {
-		dAtA[i] = 0x1a
-		i++
-		i = encodeVarintError(dAtA, i, uint64(m.RaftFail.Size()))
-		n4, err := m.RaftFail.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.RaftFail.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintError(dAtA, i, uint64(size))
 		}
-		i += n4
+		i--
+		dAtA[i] = 0x1a
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *Error_RangeNotFound_) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Error_RangeNotFound_) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.RangeNotFound != nil {
-		dAtA[i] = 0x22
-		i++
-		i = encodeVarintError(dAtA, i, uint64(m.RangeNotFound.Size()))
-		n5, err := m.RangeNotFound.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.RangeNotFound.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintError(dAtA, i, uint64(size))
 		}
-		i += n5
+		i--
+		dAtA[i] = 0x22
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *Error_OutOfBound_) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Error_OutOfBound_) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.OutOfBound != nil {
-		dAtA[i] = 0x2a
-		i++
-		i = encodeVarintError(dAtA, i, uint64(m.OutOfBound.Size()))
-		n6, err := m.OutOfBound.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.OutOfBound.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintError(dAtA, i, uint64(size))
 		}
-		i += n6
+		i--
+		dAtA[i] = 0x2a
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *Error_StaleEpoch_) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Error_StaleEpoch_) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.StaleEpoch != nil {
-		dAtA[i] = 0x32
-		i++
-		i = encodeVarintError(dAtA, i, uint64(m.StaleEpoch.Size()))
-		n7, err := m.StaleEpoch.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.StaleEpoch.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintError(dAtA, i, uint64(size))
 		}
-		i += n7
+		i--
+		dAtA[i] = 0x32
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *Error_NoLeftSpace_) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Error_NoLeftSpace_) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.NoLeftSpace != nil {
-		dAtA[i] = 0x3a
-		i++
-		i = encodeVarintError(dAtA, i, uint64(m.NoLeftSpace.Size()))
-		n8, err := m.NoLeftSpace.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.NoLeftSpace.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintError(dAtA, i, uint64(size))
 		}
-		i += n8
+		i--
+		dAtA[i] = 0x3a
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *Error_ServerError_) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Error_ServerError_) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.ServerError != nil {
-		dAtA[i] = 0x42
-		i++
-		i = encodeVarintError(dAtA, i, uint64(m.ServerError.Size()))
-		n9, err := m.ServerError.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.ServerError.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintError(dAtA, i, uint64(size))
 		}
-		i += n9
+		i--
+		dAtA[i] = 0x42
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *Error_ClusterMismatched) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -1023,30 +915,36 @@ func (m *Error_ClusterMismatched) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *Error_ClusterMismatched) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Error_ClusterMismatched) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.RequestCluster != 0 {
-		dAtA[i] = 0x8
-		i++
-		i = encodeVarintError(dAtA, i, uint64(m.RequestCluster))
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
 	if m.ActualCluster != 0 {
-		dAtA[i] = 0x10
-		i++
 		i = encodeVarintError(dAtA, i, uint64(m.ActualCluster))
+		i--
+		dAtA[i] = 0x10
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+	if m.RequestCluster != 0 {
+		i = encodeVarintError(dAtA, i, uint64(m.RequestCluster))
+		i--
+		dAtA[i] = 0x8
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 
 func (m *Error_NotLeader) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -1054,50 +952,60 @@ func (m *Error_NotLeader) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *Error_NotLeader) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Error_NotLeader) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.RangeId != 0 {
-		dAtA[i] = 0x8
-		i++
-		i = encodeVarintError(dAtA, i, uint64(m.RangeId))
-	}
-	if m.Leader != nil {
-		dAtA[i] = 0x12
-		i++
-		i = encodeVarintError(dAtA, i, uint64(m.Leader.Size()))
-		n10, err := m.Leader.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n10
-	}
-	if m.Term != 0 {
-		dAtA[i] = 0x18
-		i++
-		i = encodeVarintError(dAtA, i, uint64(m.Term))
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
 	if m.Epoch != nil {
-		dAtA[i] = 0x22
-		i++
-		i = encodeVarintError(dAtA, i, uint64(m.Epoch.Size()))
-		n11, err := m.Epoch.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.Epoch.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintError(dAtA, i, uint64(size))
 		}
-		i += n11
+		i--
+		dAtA[i] = 0x22
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+	if m.Term != 0 {
+		i = encodeVarintError(dAtA, i, uint64(m.Term))
+		i--
+		dAtA[i] = 0x18
 	}
-	return i, nil
+	if m.Leader != nil {
+		{
+			size, err := m.Leader.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintError(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	if m.RangeId != 0 {
+		i = encodeVarintError(dAtA, i, uint64(m.RangeId))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
 }
 
 func (m *Error_RaftFail) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -1105,26 +1013,33 @@ func (m *Error_RaftFail) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *Error_RaftFail) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Error_RaftFail) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.Reason) > 0 {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintError(dAtA, i, uint64(len(m.Reason)))
-		i += copy(dAtA[i:], m.Reason)
-	}
 	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	return i, nil
+	if len(m.Reason) > 0 {
+		i -= len(m.Reason)
+		copy(dAtA[i:], m.Reason)
+		i = encodeVarintError(dAtA, i, uint64(len(m.Reason)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
 }
 
 func (m *Error_RangeNotFound) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -1132,25 +1047,31 @@ func (m *Error_RangeNotFound) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *Error_RangeNotFound) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Error_RangeNotFound) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.RangeId != 0 {
-		dAtA[i] = 0x8
-		i++
-		i = encodeVarintError(dAtA, i, uint64(m.RangeId))
-	}
 	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	return i, nil
+	if m.RangeId != 0 {
+		i = encodeVarintError(dAtA, i, uint64(m.RangeId))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
 }
 
 func (m *Error_OutOfBound) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -1158,43 +1079,52 @@ func (m *Error_OutOfBound) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *Error_OutOfBound) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Error_OutOfBound) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.Key) > 0 {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintError(dAtA, i, uint64(len(m.Key)))
-		i += copy(dAtA[i:], m.Key)
-	}
-	if m.RangeId != 0 {
-		dAtA[i] = 0x10
-		i++
-		i = encodeVarintError(dAtA, i, uint64(m.RangeId))
-	}
-	if len(m.RangeStart) > 0 {
-		dAtA[i] = 0x1a
-		i++
-		i = encodeVarintError(dAtA, i, uint64(len(m.RangeStart)))
-		i += copy(dAtA[i:], m.RangeStart)
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
 	if len(m.RangeLimit) > 0 {
-		dAtA[i] = 0x22
-		i++
+		i -= len(m.RangeLimit)
+		copy(dAtA[i:], m.RangeLimit)
 		i = encodeVarintError(dAtA, i, uint64(len(m.RangeLimit)))
-		i += copy(dAtA[i:], m.RangeLimit)
+		i--
+		dAtA[i] = 0x22
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+	if len(m.RangeStart) > 0 {
+		i -= len(m.RangeStart)
+		copy(dAtA[i:], m.RangeStart)
+		i = encodeVarintError(dAtA, i, uint64(len(m.RangeStart)))
+		i--
+		dAtA[i] = 0x1a
 	}
-	return i, nil
+	if m.RangeId != 0 {
+		i = encodeVarintError(dAtA, i, uint64(m.RangeId))
+		i--
+		dAtA[i] = 0x10
+	}
+	if len(m.Key) > 0 {
+		i -= len(m.Key)
+		copy(dAtA[i:], m.Key)
+		i = encodeVarintError(dAtA, i, uint64(len(m.Key)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
 }
 
 func (m *Error_StaleEpoch) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -1202,40 +1132,50 @@ func (m *Error_StaleEpoch) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *Error_StaleEpoch) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Error_StaleEpoch) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.OldRange != nil {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintError(dAtA, i, uint64(m.OldRange.Size()))
-		n12, err := m.OldRange.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n12
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
 	if m.NewRange != nil {
-		dAtA[i] = 0x12
-		i++
-		i = encodeVarintError(dAtA, i, uint64(m.NewRange.Size()))
-		n13, err := m.NewRange.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.NewRange.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintError(dAtA, i, uint64(size))
 		}
-		i += n13
+		i--
+		dAtA[i] = 0x12
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+	if m.OldRange != nil {
+		{
+			size, err := m.OldRange.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintError(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0xa
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 
 func (m *Error_NoLeftSpace) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -1243,20 +1183,26 @@ func (m *Error_NoLeftSpace) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *Error_NoLeftSpace) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Error_NoLeftSpace) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
 	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 
 func (m *Error_ServerError) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -1264,30 +1210,39 @@ func (m *Error_ServerError) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *Error_ServerError) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Error_ServerError) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.Msg) > 0 {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintError(dAtA, i, uint64(len(m.Msg)))
-		i += copy(dAtA[i:], m.Msg)
-	}
 	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	return i, nil
+	if len(m.Msg) > 0 {
+		i -= len(m.Msg)
+		copy(dAtA[i:], m.Msg)
+		i = encodeVarintError(dAtA, i, uint64(len(m.Msg)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
 }
 
 func encodeVarintError(dAtA []byte, offset int, v uint64) int {
+	offset -= sovError(v)
+	base := offset
 	for v >= 1<<7 {
 		dAtA[offset] = uint8(v&0x7f | 0x80)
 		v >>= 7
 		offset++
 	}
 	dAtA[offset] = uint8(v)
-	return offset + 1
+	return base
 }
 func (m *Error) Size() (n int) {
 	if m == nil {
@@ -1555,14 +1510,7 @@ func (m *Error_ServerError) Size() (n int) {
 }
 
 func sovError(x uint64) (n int) {
-	for {
-		n++
-		x >>= 7
-		if x == 0 {
-			break
-		}
-	}
-	return n
+	return (math_bits.Len64(x|1) + 6) / 7
 }
 func sozError(x uint64) (n int) {
 	return sovError(uint64((x << 1) ^ uint64((int64(x) >> 63))))
@@ -2792,6 +2740,7 @@ func (m *Error_ServerError) Unmarshal(dAtA []byte) error {
 func skipError(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0
+	depth := 0
 	for iNdEx < l {
 		var wire uint64
 		for shift := uint(0); ; shift += 7 {
@@ -2823,10 +2772,8 @@ func skipError(dAtA []byte) (n int, err error) {
 					break
 				}
 			}
-			return iNdEx, nil
 		case 1:
 			iNdEx += 8
-			return iNdEx, nil
 		case 2:
 			var length int
 			for shift := uint(0); ; shift += 7 {
@@ -2847,55 +2794,30 @@ func skipError(dAtA []byte) (n int, err error) {
 				return 0, ErrInvalidLengthError
 			}
 			iNdEx += length
-			if iNdEx < 0 {
-				return 0, ErrInvalidLengthError
-			}
-			return iNdEx, nil
 		case 3:
-			for {
-				var innerWire uint64
-				var start int = iNdEx
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return 0, ErrIntOverflowError
-					}
-					if iNdEx >= l {
-						return 0, io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					innerWire |= (uint64(b) & 0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				innerWireType := int(innerWire & 0x7)
-				if innerWireType == 4 {
-					break
-				}
-				next, err := skipError(dAtA[start:])
-				if err != nil {
-					return 0, err
-				}
-				iNdEx = start + next
-				if iNdEx < 0 {
-					return 0, ErrInvalidLengthError
-				}
-			}
-			return iNdEx, nil
+			depth++
 		case 4:
-			return iNdEx, nil
+			if depth == 0 {
+				return 0, ErrUnexpectedEndOfGroupError
+			}
+			depth--
 		case 5:
 			iNdEx += 4
-			return iNdEx, nil
 		default:
 			return 0, fmt.Errorf("proto: illegal wireType %d", wireType)
 		}
+		if iNdEx < 0 {
+			return 0, ErrInvalidLengthError
+		}
+		if depth == 0 {
+			return iNdEx, nil
+		}
 	}
-	panic("unreachable")
+	return 0, io.ErrUnexpectedEOF
 }
 
 var (
-	ErrInvalidLengthError = fmt.Errorf("proto: negative length found during unmarshaling")
-	ErrIntOverflowError   = fmt.Errorf("proto: integer overflow")
+	ErrInvalidLengthError        = fmt.Errorf("proto: negative length found during unmarshaling")
+	ErrIntOverflowError          = fmt.Errorf("proto: integer overflow")
+	ErrUnexpectedEndOfGroupError = fmt.Errorf("proto: unexpected end of group")
 )

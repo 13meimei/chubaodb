@@ -12,3 +12,4 @@ foreach(f IN LISTS net_SOURCES)
 endforeach() 
 
 add_library(chubaodb-net STATIC ${net_SOURCES})
+add_dependencies(chubaodb-net build-3rd)

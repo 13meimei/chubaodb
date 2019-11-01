@@ -42,6 +42,25 @@ private:
     std::vector<std::string> keys_;
 };
 
+class SelectFlowResultParser {
+public:
+    SelectFlowResultParser(const dspb::SelectFlowRequest& req,
+                       const dspb::SelectFlowResponse& resp);
+
+    const std::vector<std::vector<std::string>>& GetRows() const {
+        return rows_;
+    }
+
+    const std::vector<std::string>& GetKeys() const {
+        return keys_;
+    }
+
+    Status Match(const std::vector<std::vector<std::string>>& expected_rows) const;
+
+private:
+    std::vector<std::vector<std::string>> rows_;
+    std::vector<std::string> keys_;
+};
 
 } /* namespace helper */
 } /* namespace test */

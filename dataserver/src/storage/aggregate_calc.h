@@ -23,42 +23,49 @@ namespace storage {
 
 class AggreCalculator {
 public:
-    AggreCalculator(const basepb::Column* col) : col_(col) {}
+    AggreCalculator(const u_int64_t id) : col_id_(id) {}
     virtual ~AggreCalculator() {}
 
     virtual void Add(const FieldValue* f) = 0;
 
-    virtual int64_t Count() const = 0;
+    int64_t Count() const {return count_;}
 
     virtual std::unique_ptr<FieldValue> Result() = 0;
 
     static std::unique_ptr<AggreCalculator> New(const std::string& name,
-                                                const basepb::Column* col);
+                                                const u_int64_t id);
+    static std::unique_ptr<AggreCalculator> New(dspb::ExprType type,
+                                                const u_int64_t id);
+
+    static std::unique_ptr<AggreCalculator> New(const dspb::Expr &f);
+    
+    u_int64_t GetColumnId() { return col_id_;}
+
+    bool isAvg() {return bAvg_;}
 
 protected:
-    const basepb::Column* const col_;
+    const u_int64_t col_id_;
+    int64_t count_ = 0;
+    bool bAvg_ = false;
+
+    static const u_int64_t default_const_col_id = 0;
 };
 
 class CountCalculator : public AggreCalculator {
 public:
-    CountCalculator(const basepb::Column* col);
+    CountCalculator(const u_int64_t id);
     ~CountCalculator();
 
     void Add(const FieldValue* f) override;
-    int64_t Count() const override;
     std::unique_ptr<FieldValue> Result() override;
-
-private:
-    int64_t count_ = 0;
 };
 
 class MinCalculator : public AggreCalculator {
 public:
-    MinCalculator(const basepb::Column* col);
+    MinCalculator(const u_int64_t id);
     ~MinCalculator();
 
     void Add(const FieldValue* f) override;
-    int64_t Count() const override;
     std::unique_ptr<FieldValue> Result() override;
 
 private:
@@ -67,11 +74,10 @@ private:
 
 class MaxCalculator : public AggreCalculator {
 public:
-    MaxCalculator(const basepb::Column* col);
+    MaxCalculator(const u_int64_t id);
     ~MaxCalculator();
 
     void Add(const FieldValue* f) override;
-    int64_t Count() const override;
     std::unique_ptr<FieldValue> Result() override;
 
 private:
@@ -80,21 +86,26 @@ private:
 
 class SumCalculator : public AggreCalculator {
 public:
-    SumCalculator(const basepb::Column* col);
+    SumCalculator(const u_int64_t id);
     ~SumCalculator();
 
     void Add(const FieldValue* f) override;
-    int64_t Count() const override;
     std::unique_ptr<FieldValue> Result() override;
 
-private:
-    int64_t count_ = 0;
+protected:
     union {
         int64_t ival;
         uint64_t uval;
         double fval;
     } sum_;
     FieldType type_ = FieldType::kBytes;
+};
+
+class AvgCalculator : public SumCalculator {
+public:
+    AvgCalculator(const u_int64_t id) : SumCalculator(id){ bAvg_ = true;}
+
+    virtual std::unique_ptr<FieldValue> Result();
 };
 
 } /* namespace storage */

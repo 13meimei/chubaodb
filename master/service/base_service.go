@@ -15,6 +15,7 @@
 package service
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"github.com/chubaodb/chubaodb/master/client/ds_client"
@@ -23,6 +24,7 @@ import (
 	"github.com/chubaodb/chubaodb/master/entity/errs"
 	"github.com/chubaodb/chubaodb/master/entity/pkg/basepb"
 	"github.com/chubaodb/chubaodb/master/entity/pkg/mspb"
+	utilBytes "github.com/chubaodb/chubaodb/master/utils/bytes"
 	"github.com/chubaodb/chubaodb/master/utils/cblog"
 	"github.com/chubaodb/chubaodb/master/utils/log"
 	"github.com/spf13/cast"
@@ -255,7 +257,7 @@ func (bs *BaseService) QueryRanges(ctx context.Context, tableID uint64) ([]*base
 }
 
 // create a id
-func (bs *BaseService) AutoIncIds(ctx context.Context, key string, size int) ([]uint64, error) {
+func (bs *BaseService) AutoIncIds(ctx context.Context, dbID, tableID uint64, size uint64) ([]uint64, error) {
 
 	ids := make([]uint64, 0, size)
 
@@ -263,37 +265,35 @@ func (bs *BaseService) AutoIncIds(ctx context.Context, key string, size int) ([]
 		return ids, nil
 	}
 
+
 	err := bs.STM(ctx, func(stm concurrency.STM) error {
-		v := stm.Get(key)
 
-		var (
-			intv int64
-			err  error
-		)
+		v := stm.Get(string(entity.SequenceDocument(dbID, tableID)))
 		if len(v) == 0 {
-			for i := 1; i < size+1; i++ {
-				ids = append(ids, uint64(i))
-			}
-			stm.Put(key, cast.ToString(size))
-			return nil
-		} else {
-			intv, err = cast.ToInt64E(string(v))
-			if err != nil {
-				return fmt.Errorf("increment id error in storage :%v", v)
-			}
+			return cblog.LogErrAndReturn(fmt.Errorf("can not found dbID:[%d] tableID:[%d]", dbID, tableID))
 		}
 
-		for i := intv + 1; i < intv+int64(size)+1; i++ {
-			ids = append(ids, uint64(i))
+		avg := size / uint64(len(v)/8)
+
+		if avg == 0 {
+			return fmt.Errorf("size:[%d] must more than doc_range_num:[%d]", size, uint64(len(v)/8))
 		}
 
-		stm.Put(key, cast.ToString(ids[size-1]))
+		rowKeys := bytes.Buffer{}
+
+		for i := 0; i < len(v)/8; i++ {
+			id := utilBytes.ByteArray2UInt64([]byte(v[i*8:i*8+8]))
+			ids = append(ids, id+1, id+avg)
+			rowKeys.Write(utilBytes.Uint64ToByte(id + avg))
+		}
+
+		stm.Put(entity.SequenceDocument(dbID, tableID), rowKeys.String())
 
 		return nil
 	})
 
 	if err != nil {
-		return nil, cblog.LogErrAndReturn(err)
+		return nil, err
 	}
 
 	return ids, nil

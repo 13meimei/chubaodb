@@ -19,21 +19,22 @@
 #include <sstream>
 
 #include "common/logger.h"
+#include "common/string_util.h"
 
 namespace chubaodb {
 
 ServerConfig ds_config;
 
-bool ServerConfig::LoadFromFile(const std::string& conf_file) {
+bool ServerConfig::LoadFromFile(const std::string& conf_file, bool btest) {
     INIReader reader(conf_file);
     if (reader.ParseError() < 0) {
         std::cerr << "parse " << conf_file <<  " failed:" << reader.ParseError() << std::endl;
         return false;
     }
-    return load(reader);
+    return load(reader, btest);
 }
 
-bool ServerConfig::load(const INIReader& reader) {
+bool ServerConfig::load(const INIReader& reader, bool btest) {
     // common config options
     pid_file = reader.Get("", "pid_file", "");
     if (pid_file.empty()) {
@@ -60,6 +61,10 @@ bool ServerConfig::load(const INIReader& reader) {
     if (!loadRangeConfig(reader)) return false;
     if (!loadRaftConfig(reader)) return false;
     if (!loadManagerConfig(reader)) return false;
+    if (btest) {
+        if (!loadTestConfig(reader)) return false;
+        ds_config.b_test = true;
+    }
     return true;
 }
 
@@ -104,7 +109,7 @@ bool ServerConfig::loadRPCConfig(const INIReader& reader) {
     const char *section = "rpc";
     bool ret = false;
 
-    std::tie(rpc_config.port, ret) = loadPortNum(reader, section, "port");
+    std::tie(rpc_config.port, ret) = loadUInt16(reader, section, "port");
     if (!ret) return false;
 
     std::tie(rpc_config.io_threads_num, ret) = loadThreadNum(reader, section, "io_threads_num", 4);
@@ -218,8 +223,17 @@ bool ServerConfig::loadRaftConfig(const INIReader& reader) {
     raft_config.ip_addr = reader.Get(section, "ip_addr", "0.0.0.0");
 
     bool ret = false;
-    std::tie(raft_config.port, ret) = loadPortNum(reader, section, "port");
+    std::tie(raft_config.port, ret) = loadUInt16(reader, section, "port");
     if (!ret) return false;
+
+    s_read_option = reader.Get(section, "read_option", "read_unsafe");
+    if (!s_read_option.compare("lease_only")) {
+        raft_config.read_option = chubaodb::raft::LEASE_ONLY;
+    } else if(!s_read_option.compare("read_safe")){
+        raft_config.read_option = chubaodb::raft::READ_SAFE;
+    } else {
+        raft_config.read_option = chubaodb::raft::READ_UNSAFE;
+    }
 
     raft_config.in_memory_log = reader.GetBoolean(section, "in_memory_log", false);
     if (raft_config.in_memory_log) {
@@ -296,8 +310,82 @@ bool ServerConfig::loadRaftConfig(const INIReader& reader) {
 bool ServerConfig::loadManagerConfig(const INIReader& reader) {
     const char *section = "manager";
     bool ret = false;
-    std::tie(manager_config.port, ret) = loadPortNum(reader, section, "port");
+    std::tie(manager_config.port, ret) = loadUInt16(reader, section, "port");
     return ret;
+}
+
+bool ServerConfig::loadTestConfig(const INIReader& reader) {
+    long node_id;
+    long range_id;
+    long conf_id;
+    long version;
+    std::string peers_str;
+    std::vector<std::string> peers;
+    const char* section = "test";
+
+    node_id = reader.GetInteger(section, "node_id", 1);
+    if (node_id <= 0) {
+        FLOG_WARN("node id is not invalid, please check");
+        return false;
+    }
+    test_config.node_id = static_cast<uint64_t>(node_id);
+
+    range_id = reader.GetInteger(section, "range_id", 1);
+    if (range_id <= 0) {
+        FLOG_WARN("range_id is not invalid, please check");
+        return false;
+    }
+    test_config.range_id = static_cast<uint64_t>(range_id);
+
+    conf_id = reader.GetInteger(section, "range_conf_id", 0);
+    if (conf_id < 0) {
+        FLOG_WARN("conf_id is not invalid, please check!");
+        return false;
+    }
+    test_config.conf_id = static_cast<uint64_t>(conf_id);
+
+    version = reader.GetInteger(section, "range_version", 0);
+    if (version < 0) {
+        FLOG_WARN("version is not invalid, please check!");
+        return false;
+    }
+    test_config.version = static_cast<uint64_t>(version);
+
+    test_config.start_key = reader.Get(section, "start_key", "");
+    if (test_config.start_key.empty()) {
+        FLOG_WARN("start key is not invalid, please check");
+        return false;
+    }
+
+    test_config.end_key = reader.Get(section, "end_key", "");
+    if (test_config.end_key.empty()) {
+        FLOG_WARN("end key is not invalid, please check");
+        return false;
+    }
+
+    peers_str = reader.Get(section, "peers", "");
+    if (peers_str.empty()) {
+        FLOG_WARN("peers is not invalid, please check!");
+        return false;
+    }
+    SplitString(peers_str, ',', peers);
+    FLOG_DEBUG("node size is {}", peers.size());
+    bool first_node = true;
+    for (auto it = peers.begin(); it < peers.end(); it++) {
+        std::vector<std::string> v_node;
+        SplitString(*it, '@', v_node);
+        if(v_node.size() != 2) {
+            FLOG_WARN("peers is not invalid, please check");
+            return false;
+        }
+        node_id = strtol(v_node[0].c_str(), NULL, 10);
+        test_config.nodes[node_id] = v_node[1];
+        if (first_node && test_config.node_id == static_cast<uint64_t>(node_id)) {
+            test_config.is_leader = true;
+        }
+        first_node = false;
+    }
+    return true;
 }
 
 void ServerConfig::Print() const {

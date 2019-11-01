@@ -47,7 +47,7 @@ void Range::txnPrepare(RPCRequestPtr rpc, RangeRequest& req) {
         }
 
         // submit to raft
-        submitCmd(std::move(rpc), *req.mutable_header(),
+        submitCmd(std::move(rpc), *req.mutable_header(), chubaodb::raft::WRITE_FLAG,
                 [&req](dspb::Command &cmd) {
                 cmd.set_cmd_type(dspb::CmdType::TxnPrepare);
                 cmd.set_allocated_txn_prepare_req(req.release_prepare());
@@ -117,7 +117,7 @@ void Range::txnDecide(RPCRequestPtr rpc, RangeRequest& req) {
         }
 
         // submit to raft
-        submitCmd(std::move(rpc), *req.mutable_header(),
+        submitCmd(std::move(rpc), *req.mutable_header(), chubaodb::raft::WRITE_FLAG,
                 [&req](dspb::Command &cmd) {
                 cmd.set_cmd_type(dspb::CmdType::TxnDecide);
                 cmd.set_allocated_txn_decide_req(req.release_decide());
@@ -187,7 +187,7 @@ void Range::txnClearup(RPCRequestPtr rpc, RangeRequest& req) {
             break;
         }
 
-        submitCmd(std::move(rpc), *req.mutable_header(),
+        submitCmd(std::move(rpc), *req.mutable_header(), chubaodb::raft::WRITE_FLAG,
                 [&req](dspb::Command &cmd) {
                 cmd.set_cmd_type(dspb::CmdType::TxnClearup);
                 cmd.set_allocated_txn_clearup_req(req.release_clear_up());
@@ -267,22 +267,32 @@ void Range::txnSelect(RPCRequestPtr rpc, RangeRequest& req) {
     do {
         auto key = req.select().key();
         if (!key.empty() && !verifyKeyInBound(key, &err)) {
+            RLOG_ERROR("key: {} is not in range: {}", key, err->ShortDebugString());
             break;
         }
 
-        auto select_resp = resp.mutable_select();
-        auto ret = store_->TxnSelect(req.select(), select_resp);
-        context_->Statistics()->PushTime(HistogramType::kStore, NowMicros() - btime);
+        if (ds_config.raft_config.read_option == chubaodb::raft::READ_UNSAFE) {
+            auto select_resp = resp.mutable_select();
+            auto ret = store_->TxnSelect(req.select(), select_resp);
+            context_->Statistics()->PushTime(HistogramType::kStore, NowMicros() - btime);
 
-        if (!ret.ok()) {
-            RLOG_ERROR("TxnSelect from store error: {}", ret.ToString());
-            select_resp->set_code(static_cast<int>(ret.code()));
-            break;
-        }
+            if (!ret.ok()) {
+                RLOG_ERROR("TxnSelect from store error: {}", ret.ToString());
+                select_resp->set_code(static_cast<int>(ret.code()));
+                break;
+            }
 
-        if (key.empty() && !verifyEpoch(req.header().range_epoch(), &err)) {
-            resp.clear_select();
-            RLOG_WARN("epoch change Select error: {}", err->ShortDebugString());
+            if (key.empty() && !verifyEpoch(req.header().range_epoch(), &err)) {
+                resp.clear_select();
+                RLOG_WARN("epoch change Select error: {}", err->ShortDebugString());
+            }
+        } else {
+            submitCmd(std::move(rpc), *req.mutable_header(), chubaodb::raft::READ_FLAG,
+                  [&req](dspb::Command &cmd) {
+                          cmd.set_cmd_type(dspb::CmdType::TxnSelect);
+                          cmd.set_allocated_txn_select_req(req.release_select());
+                  });
+            return;
         }
     } while (false);
 
@@ -305,19 +315,28 @@ void Range::txnScan(RPCRequestPtr rpc, RangeRequest& req) {
     ErrorPtr err;
     RangeResponse resp;
     do {
-        auto scan_resp = resp.mutable_scan();
-        auto ret = store_->TxnScan(req.scan(), scan_resp);
-        context_->Statistics()->PushTime(HistogramType::kStore, NowMicros() - btime);
+        if (ds_config.raft_config.read_option == chubaodb::raft::READ_UNSAFE) {
+            auto scan_resp = resp.mutable_scan();
+            auto ret = store_->TxnScan(req.scan(), scan_resp);
+            context_->Statistics()->PushTime(HistogramType::kStore, NowMicros() - btime);
 
-        if (!ret.ok()) {
-            RLOG_ERROR("TxnScan from store error: {}", ret.ToString());
-            scan_resp->set_code(static_cast<int>(ret.code()));
-            break;
-        }
+            if (!ret.ok()) {
+                RLOG_ERROR("TxnScan from store error: {}", ret.ToString());
+                scan_resp->set_code(static_cast<int>(ret.code()));
+                break;
+            }
 
-        if (!verifyEpoch(req.header().range_epoch(), &err)) {
-            resp.clear_scan();
-            RLOG_WARN("epoch change Select error: {}", err->ShortDebugString());
+            if (!verifyEpoch(req.header().range_epoch(), &err)) {
+                resp.clear_scan();
+                RLOG_WARN("epoch change Select error: {}", err->ShortDebugString());
+            }
+        } else {
+            submitCmd(std::move(rpc), *req.mutable_header(), chubaodb::raft::READ_FLAG,
+                  [&req](dspb::Command &cmd) {
+                          cmd.set_cmd_type(dspb::CmdType::TxnScan);
+                          cmd.set_allocated_txn_scan_req(req.release_scan());
+                  });
+            return;
         }
     } while (false);
 
@@ -327,6 +346,53 @@ void Range::txnScan(RPCRequestPtr rpc, RangeRequest& req) {
         RLOG_DEBUG("TxnScan {} result: code={}, size={}", msg_id,
                 (resp.has_scan() ? resp.scan().code() : 0),
                 (resp.has_scan() ? resp.scan().kvs_size() : 0));
+    }
+
+    sendResponse(rpc, req.header(), resp, std::move(err));
+}
+
+void Range::txnSelectFlow(RPCRequestPtr rpc, RangeRequest & req) {
+    RLOG_DEBUG("SelectFlow begin, req: {}", req.DebugString());
+
+    auto btime = NowMicros();
+    auto msg_id = rpc->MsgID();
+    ErrorPtr err;
+    RangeResponse resp;
+    do {
+
+        if (ds_config.raft_config.read_option == chubaodb::raft::READ_UNSAFE) {
+            auto select_flow_resp = resp.mutable_select_flow();
+            auto ret = store_->TxnSelectFlow(req.select_flow(), select_flow_resp);
+            context_->Statistics()->PushTime(HistogramType::kStore, NowMicros() - btime);
+
+            if (!ret.ok()) {
+                RLOG_ERROR("TxnSelectFlow from store error: {}", ret.ToString());
+                select_flow_resp->set_code(static_cast<int>(ret.code()));
+                break;
+            }
+
+            if (!verifyEpoch(req.header().range_epoch(), &err)) {
+                resp.clear_select_flow();
+                RLOG_WARN("epoch change Select error: {}", err->ShortDebugString());
+            }
+        } else {
+            submitCmd(std::move(rpc), *req.mutable_header(), chubaodb::raft::READ_FLAG,
+                      [&req](dspb::Command &cmd) {
+                          cmd.set_cmd_type(dspb::CmdType::TxnSelectFlow);
+                          cmd.set_allocated_txn_select_flow_req(req.release_select_flow());
+                      });
+            return;
+        }
+
+
+    } while (false);
+
+    if (err != nullptr) {
+        RLOG_WARN("TxnSelectFlow {} error: {}", msg_id, err->ShortDebugString());
+    } else {
+        RLOG_DEBUG("TxnSelectFlow {} result: code={}, rows={}", msg_id,
+                (resp.has_select_flow() ? resp.select_flow().code() : 0),
+                (resp.has_select_flow() ? resp.select_flow().rows_size() : 0));
     }
 
     sendResponse(rpc, req.header(), resp, std::move(err));

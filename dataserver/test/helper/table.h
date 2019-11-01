@@ -22,9 +22,20 @@ namespace chubaodb {
 namespace test {
 namespace helper {
 
+const static uint32_t default_db_id = 1;
+
+const static uint32_t default_table_id = 0;
+const static uint32_t default_account_table_id = 1;
+const static uint32_t default_user_table_id = 2;
+const static uint32_t default_hashuser_table_id = 3;
+const static uint32_t default_person_table_id = 2;
+
+const static uint32_t default_account_index_id1 = 1;
+const static uint32_t default_account_index_id2 = 2;
+
 class Table {
 public:
-    Table(const std::string& table_name, uint32_t table_id);
+    Table(const std::string& table_name, uint32_t table_id = default_table_id);
     explicit Table(const basepb::Table& meta);
     ~Table() = default;
 
@@ -51,6 +62,7 @@ private:
 
 std::unique_ptr<Table> CreateAccountTable();
 std::unique_ptr<Table> CreateUserTable();
+std::unique_ptr<Table> CreatePersonTable();
 std::unique_ptr<Table> CreateHashUserTable();
 
 std::unique_ptr<Table> CreateAccountTable(uint32_t tid);

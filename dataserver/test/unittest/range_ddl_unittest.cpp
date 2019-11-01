@@ -199,7 +199,7 @@ TEST_F(DdlTest, Ddl) {
         // begin test delete range (not exist)
         dspb::SchResponse resp;
         TestDelete(1, resp);
-        ASSERT_FALSE(resp.header().has_error());
+        ASSERT_TRUE(!resp.header().has_error() || resp.header().error().has_range_not_found());
         // end test delete range
     }
 }

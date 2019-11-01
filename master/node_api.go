@@ -16,7 +16,9 @@ package master
 
 import (
 	"context"
+	"fmt"
 	"github.com/chubaodb/chubaodb/master/entity"
+	"github.com/chubaodb/chubaodb/master/entity/errs"
 	"github.com/chubaodb/chubaodb/master/entity/pkg/basepb"
 	"github.com/chubaodb/chubaodb/master/entity/pkg/mspb"
 	"github.com/chubaodb/chubaodb/master/service"
@@ -34,27 +36,29 @@ type nodeApi struct {
 	monitor     monitoring.Monitor
 }
 
-func ExportToNodeHandler(router *gin.Engine, nodeService *service.BaseService, monitor monitoring.Monitor) {
-
-	c := &nodeApi{router: router, nodeService: nodeService, monitor: monitor}
-
-	router.Handle(http.MethodPost, "/node/heartbeat", base30.PaincHandler, base30.TimeOutHandler, c.nodeHeartbeat, base30.TimeOutEndHandler)
-	router.Handle(http.MethodPost, "/node/register", base30.PaincHandler, base30.TimeOutHandler, c.registerNode, base30.TimeOutEndHandler)
-	router.Handle(http.MethodPost, "/node/get", base30.PaincHandler, base30.TimeOutHandler, c.getNode, base30.TimeOutEndHandler)
-	router.Handle(http.MethodPost, "/node/list", base30.PaincHandler, base30.TimeOutHandler, c.listNode, base30.TimeOutEndHandler)
+func ExportToNodeHandler(router *gin.Engine, nodeService *service.BaseService) {
+	m := entity.Monitor()
+	c := &nodeApi{router: router, nodeService: nodeService, monitor: m}
+	base30 := newBaseHandler(30, m)
+	router.Handle(http.MethodPost, "/node/heartbeat", base30.TimeOutHandler, base30.PaincHandler(c.nodeHeartbeat), base30.TimeOutEndHandler)
+	router.Handle(http.MethodPost, "/node/register", base30.PaincHandler(base30.TimeOutHandler), c.registerNode, base30.TimeOutEndHandler)
+	router.Handle(http.MethodPost, "/node/get", base30.TimeOutHandler, base30.PaincHandler(c.getNode), base30.TimeOutEndHandler)
+	router.Handle(http.MethodPost, "/node/list", base30.TimeOutHandler, base30.PaincHandler(c.listNode), base30.TimeOutEndHandler)
+	router.Handle(http.MethodPost, "/node/change_state", base30.TimeOutHandler, base30.PaincHandler(c.changeState), base30.TimeOutEndHandler)
+	router.Handle(http.MethodPost, "/node/check_state", base30.TimeOutHandler, base30.PaincHandler(c.checkState), base30.TimeOutEndHandler)
 
 }
 
 func (na *nodeApi) nodeHeartbeat(c *gin.Context) {
 	ctx, _ := c.Get(Ctx)
-
+	var err error
 	req := &mspb.NodeHeartbeatRequest{}
-	if err := bind(c, req); err != nil {
+	if err = bind(c, req); err != nil {
 		ginutil.NewAutoMehtodName(c, na.monitor).Send(&mspb.NodeHeartbeatResponse{Header: entity.Err(err)})
 		return
 	}
 
-	err := na.nodeService.NodeHeartbeat(ctx.(context.Context), req.NodeId)
+	err = na.nodeService.NodeHeartbeat(ctx.(context.Context), req.NodeId)
 	if err != nil {
 		ginutil.NewAutoMehtodName(c, na.monitor).Send(&mspb.NodeHeartbeatResponse{Header: entity.Err(err)})
 		return
@@ -75,22 +79,36 @@ func (na *nodeApi) registerNode(c *gin.Context) {
 
 	ip := c.Request.RemoteAddr[0:strings.LastIndex(c.Request.RemoteAddr, ":")]
 
+	var typed basepb.StoreType
+
+	switch req.StEngine {
+	case mspb.StorageEngine_STE_MassTree:
+		typed = basepb.StoreType_Store_Hot
+	case mspb.StorageEngine_STE_RocksDB:
+		typed = basepb.StoreType_Store_Warm
+	default:
+		ginutil.NewAutoMehtodName(c, na.monitor).Send(&mspb.RegisterNodeResponse{Header: entity.Err(fmt.Errorf("engine type:[%d] not maped", req.StEngine))})
+		return
+
+	}
+
 	node := &basepb.Node{
 		Ip:         ip,
 		ServerPort: req.ServerPort,
 		RaftPort:   req.RaftPort,
 		AdminPort:  req.AdminPort,
-		State:      basepb.NodeState_N_Initial,
+		State:      basepb.NodeState_N_Online,
+		Type:       typed,
 		Version:    1,
 	}
 
-	node, err := na.nodeService.RegisterNode(ctx.(context.Context), node)
+	node, invalidRanges, err := na.nodeService.RegisterNode(ctx.(context.Context), node, req.Ranges)
 	if err != nil {
 		ginutil.NewAutoMehtodName(c, na.monitor).Send(&mspb.RegisterNodeResponse{Header: entity.Err(err)})
 		return
 	}
 
-	ginutil.NewAutoMehtodName(c, na.monitor).Send(&mspb.RegisterNodeResponse{Header: entity.OK(), NodeId: node.Id})
+	ginutil.NewAutoMehtodName(c, na.monitor).Send(&mspb.RegisterNodeResponse{Header: entity.OK(), NodeId: node.Id, InvalidRanges: invalidRanges})
 }
 
 // to find a node by nodeID
@@ -140,4 +158,47 @@ func (na *nodeApi) listNode(c *gin.Context) {
 	}
 
 	ginutil.NewAutoMehtodName(c, na.monitor).Send(&mspb.GetNodesResponse{Header: entity.OK(), Nodes: nodes})
+}
+
+// to find all node
+func (na *nodeApi) changeState(c *gin.Context) {
+	ctx, _ := c.Get(Ctx)
+
+	req := &mspb.ChangeNodeStateRequest{}
+	if err := bind(c, req); err != nil {
+		ginutil.NewAutoMehtodName(c, na.monitor).Send(&mspb.ChangeNodeStateResponse{Header: entity.Err(err)})
+		return
+	}
+
+	if req.State == 0 {
+		ginutil.NewAutoMehtodName(c, na.monitor).Send(&mspb.ChangeNodeStateResponse{Header: entity.Err(errs.Error(mspb.ErrorType_NodeStateConfused))})
+		return
+	}
+
+	node, err := na.nodeService.ChangeState(ctx.(context.Context), req.Id, req.State)
+	if err != nil {
+		ginutil.NewAutoMehtodName(c, na.monitor).Send(&mspb.ChangeNodeStateResponse{Header: entity.Err(err)})
+		return
+	}
+
+	ginutil.NewAutoMehtodName(c, na.monitor).Send(&mspb.ChangeNodeStateResponse{Header: entity.OK(), Node: node})
+}
+
+// to check range it will return leader num and range num
+func (na *nodeApi) checkState(c *gin.Context) {
+	ctx, _ := c.Get(Ctx)
+
+	req := &mspb.CheckNodeStateRequest{}
+	if err := bind(c, req); err != nil {
+		ginutil.NewAutoMehtodName(c, na.monitor).Send(&mspb.CheckNodeStateResponse{Header: entity.Err(err)})
+		return
+	}
+
+	nodeState, leaderNum, rangeNum, err := na.nodeService.CheckState(ctx.(context.Context), req.Id)
+	if err != nil {
+		ginutil.NewAutoMehtodName(c, na.monitor).Send(&mspb.CheckNodeStateResponse{Header: entity.Err(err)})
+		return
+	}
+
+	ginutil.NewAutoMehtodName(c, na.monitor).Send(&mspb.CheckNodeStateResponse{Header: entity.OK(), State: nodeState, LeaderNum: leaderNum, RangeNum: rangeNum})
 }

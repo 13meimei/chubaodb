@@ -22,19 +22,22 @@ import (
 	"github.com/chubaodb/chubaodb/master/entity/errs"
 	"github.com/chubaodb/chubaodb/master/entity/pkg/basepb"
 	"github.com/chubaodb/chubaodb/master/entity/pkg/mspb"
+	"github.com/chubaodb/chubaodb/master/utils/encoding"
 	"github.com/chubaodb/chubaodb/master/utils/log"
-	"sort"
+	"math"
 	"strings"
 	"unicode"
 )
 
 var (
 	MaxColumnNameLength = 128
+	DefaultRowIDName    = "__row_id"
 )
 
 func ParseTableProperties(properties string) (*entity.TableProperty, error) {
 	tp := new(entity.TableProperty)
-	if err := json.Unmarshal([]byte(properties), tp); err != nil {
+	err := json.Unmarshal([]byte(properties), tp)
+	if err != nil {
 		log.Error("deserialize table property failed, err:[%v]", err)
 		return nil, err
 	}
@@ -43,10 +46,15 @@ func ParseTableProperties(properties string) (*entity.TableProperty, error) {
 		return nil, errs.Error(mspb.ErrorType_InvalidColumn)
 	}
 
-	err := parseColumn(tp.Columns)
+	var index *basepb.Index
+	tp.Columns, index, err = parseColumn(tp.Columns)
 	if err != nil {
 		log.Error("parse table column failed, err:[%v]", err)
 		return nil, err
+	}
+
+	if index != nil {
+		tp.Indexes = append(tp.Indexes, index)
 	}
 
 	if len(tp.Indexes) > 0 {
@@ -54,15 +62,6 @@ func ParseTableProperties(properties string) (*entity.TableProperty, error) {
 		if err = checkIndex(tp); err != nil {
 			return nil, err
 		}
-	}
-
-	//set replicaNum
-	if tp.ReplicaNum == 0 {
-		tp.ReplicaNum = entity.Conf().Global.ReplicaNum
-	}
-
-	if tp.ReplicaNum == 0 {
-		tp.ReplicaNum = 3
 	}
 
 	for _, col := range tp.Columns {
@@ -75,29 +74,83 @@ func ParseTableProperties(properties string) (*entity.TableProperty, error) {
 	return tp, nil
 }
 
-func parseColumn(cols []*basepb.Column) error {
+func parseColumn(cols []*basepb.Column) ([]*basepb.Column, *basepb.Index, error) {
 	var hasPk bool
-	for _, c := range cols {
+	var autoCol *basepb.Column
+	var pkIndex int
+
+	colNames := make([]string, 0)
+
+	var index *basepb.Index
+
+	for i, c := range cols {
 		c.Name = strings.ToLower(c.Name)
 		if len(c.GetName()) > MaxColumnNameLength {
-			return errs.Error(mspb.ErrorType_ColumnNameTooLong)
+			return nil, nil, errs.Error(mspb.ErrorType_ColumnNameTooLong)
 		}
 		if c.PrimaryKey == 1 {
+			colNames = append(colNames, c.Name)
+			if c.AutoIncrement {
+				if autoCol != nil {
+					return nil, nil, errs.Error(mspb.ErrorType_MissingPk)
+				}
+				autoCol = c
+				pkIndex = i
+			} else {
+				c.PrimaryKey = 0
+			}
 			if c.Nullable {
-				return errs.Error(mspb.ErrorType_PkMustNotNull)
+				return nil, nil, errs.Error(mspb.ErrorType_PkMustNotNull)
 			}
 			if len(c.DefaultValue) > 0 {
-				return errs.Error(mspb.ErrorType_PkMustNotSetDefaultValue)
+				return nil, nil, errs.Error(mspb.ErrorType_PkMustNotSetDefaultValue)
 			}
 			hasPk = true
 		}
 		if c.DataType == basepb.DataType_Invalid {
-			return errs.Error(mspb.ErrorType_InvalidColumn)
+			return nil, nil, errs.Error(mspb.ErrorType_InvalidColumn)
 		}
 	}
+
 	if !hasPk {
-		return errs.Error(mspb.ErrorType_MissingPk)
+		return nil, nil, errs.Error(mspb.ErrorType_MissingPk)
 	}
+
+	if autoCol == nil {
+		cols = append([]*basepb.Column{
+			{
+				Name:          DefaultRowIDName,
+				DataType:      basepb.DataType_BigInt,
+				Nullable:      false,
+				PrimaryKey:    1,
+				Index:         true,
+				AutoIncrement: true,
+				Unique:        true,
+				ColType:       basepb.ColumnType_COL_System,
+				Unsigned:      true,
+			},
+		}, cols...)
+
+		index = &basepb.Index{
+			Name:     strings.Join(colNames, "_"),
+			ColNames: colNames,
+			Unique:   true,
+		}
+
+	} else {
+		newCols := append([]*basepb.Column{autoCol}, cols[:pkIndex]...)
+		newCols = append(newCols, cols[pkIndex+1:]...)
+		cols = newCols
+
+		if len(colNames) > 1 {
+			index = &basepb.Index{
+				Name:     strings.Join(colNames, "_"),
+				ColNames: colNames,
+				Unique:   true,
+			}
+		}
+	}
+
 	columnName := make(map[string]interface{})
 	//sort.Sort(ByPrimaryKey(cols))
 	var id uint64 = 1
@@ -105,7 +158,7 @@ func parseColumn(cols []*basepb.Column) error {
 
 		// check column name
 		if _, ok := columnName[c.Name]; ok {
-			return errs.Error(mspb.ErrorType_DupColumnName)
+			return nil, nil, errs.Error(mspb.ErrorType_DupColumnName)
 		} else {
 			columnName[c.Name] = nil
 		}
@@ -115,7 +168,7 @@ func parseColumn(cols []*basepb.Column) error {
 		id++
 
 	}
-	return nil
+	return cols, index, nil
 }
 
 func ToTableProperty(cols []*basepb.Column) (string, error) {
@@ -220,6 +273,57 @@ func ModifyColumn(table *basepb.Table, source []*basepb.Column) error {
 
 	return nil
 }
+
+func ValidateName(name string) error {
+	rs := []rune(name)
+
+	if sqlReservedWord[strings.ToLower(name)] {
+		return errs.Error(mspb.ErrorType_SqlReservedWord)
+	}
+
+	if len(rs) == 0 {
+		return fmt.Errorf("name can not set empty string")
+	}
+
+	if unicode.IsNumber(rs[0]) {
+		return fmt.Errorf("name : %s can not start with num", name)
+	}
+
+	for _, r := range rs {
+		switch r {
+		case '\t', '\n', '\v', '\f', '\r', ' ', 0x85, 0xA0, '\\', '+', '-', '!', '*', '/', '(', ')', ':', '^', '[', ']', '"', '{', '}', '~', '%', '&', '\'', '<', '>', '?':
+			return fmt.Errorf("name : %s can not has char in name ", `'\t', '\n', '\v', '\f', '\r', ' ', 0x85, 0xA0 , '\\','+', '-', '!', '*', '/', '(', ')', ':' , '^','[',']','"','{','}','~','%','&','\'','<','>','?'`)
+		}
+	}
+	return nil
+}
+
+func MakeRowKeys(tableID, dataRangeNum uint64) (int64, [][]byte) {
+	startPre, endPre := EncodeStorePrefix(Store_Prefix_KV, tableID)
+
+	step := math.MaxInt64 / int64(dataRangeNum)
+
+	keys := make([][]byte, 0, dataRangeNum+1)
+
+	keys = append(keys, startPre)
+
+	var i int64 = 1
+
+	for ; i < int64(dataRangeNum); i++ {
+		keys = append(keys, encoding.EncodeVarintAscending(startPre, step*i))
+	}
+
+	keys = append(keys, endPre)
+
+	return step, keys
+
+}
+
+type ByLetter [][]byte
+
+func (s ByLetter) Len() int           { return len(s) }
+func (s ByLetter) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+func (s ByLetter) Less(i, j int) bool { return bytes.Compare(s[i], s[j]) == -1 }
 
 // to validate name for db , table and columns
 var sqlReservedWord = map[string]bool{
@@ -648,74 +752,4 @@ var sqlReservedWord = map[string]bool{
 	"xmlvalidate":                      true,
 	"year":                             true,
 	"zone":                             true,
-}
-
-func ValidateName(name string) error {
-	rs := []rune(name)
-
-	if sqlReservedWord[strings.ToLower(name)] {
-		return errs.Error(mspb.ErrorType_SqlReservedWord)
-	}
-
-	if len(rs) == 0 {
-		return fmt.Errorf("name can not set empty string")
-	}
-
-	if unicode.IsNumber(rs[0]) {
-		return fmt.Errorf("name : %s can not start with num", name)
-	}
-
-	for _, r := range rs {
-		switch r {
-		case '\t', '\n', '\v', '\f', '\r', ' ', 0x85, 0xA0, '\\', '+', '-', '!', '*', '/', '(', ')', ':', '^', '[', ']', '"', '{', '}', '~', '%', '&', '\'', '<', '>', '?':
-			return fmt.Errorf("name : %s can not has char in name ", `'\t', '\n', '\v', '\f', '\r', ' ', 0x85, 0xA0 , '\\','+', '-', '!', '*', '/', '(', ')', ':' , '^','[',']','"','{','}','~','%','&','\'','<','>','?'`)
-		}
-	}
-	return nil
-}
-
-func MakeSharingKeys(id uint64, rangeKeys []string, columns []*basepb.Column) ([][]byte, error) {
-	var sharingKeys [][]byte
-	start, end := EncodeStorePrefix(Store_Prefix_KV, id)
-	if len(rangeKeys) > 0 {
-		_keys, err := EncodeSplitKeys(rangeKeys, columns)
-		if err != nil {
-			log.Error("encode table preSplit keys failed(%v), keys:[%v]", err, rangeKeys)
-			return nil, err
-		}
-		sort.Sort(ByLetter(_keys))
-		var _sliceKeys [][]byte
-		for _, key := range _keys {
-			_sliceKeys = append(_sliceKeys, append(start, key...))
-		}
-		sharingKeys = append(sharingKeys, start)
-		sharingKeys = append(sharingKeys, _sliceKeys...)
-		sharingKeys = append(sharingKeys, end)
-	} else {
-		sharingKeys = append(sharingKeys, start)
-		sharingKeys = append(sharingKeys, end)
-	}
-	return sharingKeys, nil
-}
-
-type ByLetter [][]byte
-
-func (s ByLetter) Len() int           { return len(s) }
-func (s ByLetter) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
-func (s ByLetter) Less(i, j int) bool { return bytes.Compare(s[i], s[j]) == -1 }
-
-func rangeKeysSplit(keys, sep string) ([][]byte, error) {
-	ks := strings.Split(keys, sep)
-	var ks_ [][]byte
-
-	kmap := make(map[string]interface{})
-	for _, k := range ks {
-		if _, found := kmap[k]; !found {
-			kmap[k] = nil
-		} else {
-			return nil, fmt.Errorf("dup key in split keys: %v", k)
-		}
-		ks_ = append(ks_, []byte(k))
-	}
-	return ks_, nil
 }

@@ -33,8 +33,8 @@ TEST(FieldVal, Types) {
         FieldValue val(i);
         ASSERT_EQ(val.Type(), FieldType::kInt);
         ASSERT_EQ(val.Int(), i);
-        ASSERT_EQ(val.UInt(), 0);
-        ASSERT_EQ(val.Float(), 0);
+        ASSERT_EQ(val.UInt(), 0U);
+        ASSERT_EQ(val.Double(), 0);
         ASSERT_EQ(val.Bytes(), "");
     }
 
@@ -49,8 +49,8 @@ TEST(FieldVal, Types) {
     {
         double i = 123;
         FieldValue val(i);
-        ASSERT_EQ(val.Type(), FieldType::kFloat);
-        ASSERT_EQ(val.Float(), i);
+        ASSERT_EQ(val.Type(), FieldType::kDouble);
+        ASSERT_EQ(val.Double(), i);
     }
 
     {

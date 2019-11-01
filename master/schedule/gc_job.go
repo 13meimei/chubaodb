@@ -15,14 +15,13 @@
 package schedule
 
 import (
-	"context"
 	"github.com/chubaodb/chubaodb/master/entity"
-	"github.com/chubaodb/chubaodb/master/entity/errs"
 	"github.com/chubaodb/chubaodb/master/entity/pkg/basepb"
-	"github.com/chubaodb/chubaodb/master/entity/pkg/dspb"
-	"github.com/chubaodb/chubaodb/master/entity/pkg/mspb"
 	"github.com/chubaodb/chubaodb/master/service"
+	"github.com/chubaodb/chubaodb/master/utils/hack"
 	"github.com/chubaodb/chubaodb/master/utils/log"
+	"sync/atomic"
+	"time"
 )
 
 var _ ProcessJob = &GCJob{}
@@ -31,100 +30,141 @@ type GCJob struct {
 	service *service.BaseService
 }
 
-func (gc *GCJob) process(ctx context.Context, stop *bool, nodeMap map[uint64]*basepb.Node, nodeInfoMap map[uint64]*dspb.NodeInfoResponse, nodeRangeNum map[uint64]int, ranges []*basepb.Range, rangeGroup map[[2]uint64][]*basepb.Range, tableMap map[uint64]*basepb.Table, dbMap map[uint64]*basepb.DataBase) {
-	if *stop {
+func (gc *GCJob) process(ctx *processContext) {
+	if ctx.stop {
 		log.Info("got stop so skip GCjob")
 		return
 	}
 	log.Info("start GCjob begin")
 
-	for _, dbNodeInfo := range nodeInfoMap {
-		gc.processDbNodeInfo(ctx, stop, dbNodeInfo, rangeGroup, nodeMap, tableMap)
-	}
+	gc.processNodeRange(ctx)
 
-	for dbTableID, ranges := range rangeGroup {
-		gc.processRanges(ctx, stop, dbMap[dbTableID[0]], tableMap[dbTableID[1]], ranges)
-	}
+	gc.processRange(ctx)
 
-	for _, table := range tableMap {
-		gc.processTable(ctx, dbMap[table.DbId], table)
-	}
+	gc.processTable(ctx)
 }
 
-func (gc *GCJob) processRanges(ctx context.Context, stop *bool, db *basepb.DataBase, table *basepb.Table, ranges []*basepb.Range) {
-	if table == nil {
-		for _, rgn := range ranges {
-			log.Info("Could not find Table:[%d] contains range,rangeID:[%d] so remove it from etcd!", rgn.TableId, rgn.Id)
-			if err := gc.service.Delete(ctx, entity.RangeKey(rgn.TableId, rgn.Id)); err != nil {
+func (gc *GCJob) processRange(ctx *processContext) {
+	m := entity.Monitor()
+	for _, rng := range ctx.rangeMap {
+		if ctx.tableMap[rng.TableId] == nil {
+			log.Info("Could not find Table:[%d] contains range,rangeID:[%d] so remove it from etcd!", rng.TableId, rng.Id)
+			if err := gc.service.Delete(ctx, entity.RangeKey(rng.TableId, rng.Id)); err != nil {
 				log.Error("delete range err :[%s]", err.Error())
-			} else {
-				*stop = true
-			}
-		}
-	}
-}
-
-func (gc *GCJob) processTable(ctx context.Context, db *basepb.DataBase, table *basepb.Table) {
-	if db == nil {
-		log.Info("Could not find db:[%d] contains table:[%d], so remove it from etcd!", table.DbId, table.Id)
-		if err := gc.service.Delete(ctx, entity.TableKey(table.DbId, table.Id)); err != nil {
-			log.Error("delete table err :[%s]", err.Error())
-		}
-	}
-}
-
-func (gc *GCJob) processDbNodeInfo(ctx context.Context, stop *bool, response *dspb.NodeInfoResponse, rangeGroup map[[2]uint64][]*basepb.Range, nodeMap map[uint64]*basepb.Node, tableMap map[uint64]*basepb.Table) {
-
-	for _, ri := range response.RangeInfos {
-		if _, found := tableMap[ri.Range.TableId]; !found {
-
-			//double check table has
-
-			log.Info("double check table[%d] is exists", ri.Range.TableId)
-			table, err := gc.service.GetTable(ctx, ri.Range.DbId, "", ri.Range.TableId, "")
-			if table != nil || mspb.ErrorType_NotExistTable != errs.Code(err) {
-				log.Warn("table[%d] is exists so skip del err:[%v]", ri.Range.TableId, err)
-				continue
-			}
-
-			for _, p := range ri.Range.Peers {
-				node := nodeMap[response.NodeId]
-				if node != nil {
-					if err := gc.service.DsClient().DeleteRange(ctx, nodeAddr(node), ri.Range.Id, p.Id); err != nil {
-						log.Error("delete range err:[%s]", err.Error())
-					} else {
-						*stop = true
-						log.Info("job delete range ok :rangeID:[%d], peerID:[%d]", ri.Range.Id, p.Id)
-					}
+				if m != nil {
+					m.GetGauge(m.GetCluster(), "schedule", "event", "delete_range", "fail").Add(1)
 				}
-
+			} else {
+				ctx.stop = true
+				if m != nil {
+					m.GetGauge(m.GetCluster(), "schedule", "event", "delete_range", "success").Add(1)
+				}
 			}
-		} else { //if this range has db and table , check range is out of
-			dbRngs := rangeGroup[[2]uint64{ri.Range.DbId, ri.Range.TableId}]
+		}
+	}
 
-			for _, dbRng := range dbRngs {
-				if dbRng.Id == ri.Range.Id {
-					if ri.Range.RangeEpoch.Version <= dbRng.RangeEpoch.Version && ri.Range.RangeEpoch.ConfVer < dbRng.RangeEpoch.ConfVer {
-						dbPeers := make(map[uint64]*basepb.Peer)
-						for _, p := range dbRng.Peers {
-							dbPeers[p.Id] = p
-						}
+}
 
-						for _, p := range ri.Range.Peers {
-							if _, found := dbPeers[p.Id]; !found && p.NodeId == response.NodeId {
-								log.Info("find outside range not in range peers node:[%d] peerID:[%d] version:[%v] dbVersion:[%v]", response.NodeId, p.Id, ri.Range.RangeEpoch, dbRng.RangeEpoch)
-								if err := gc.service.SyncDeleteRangeToNode(ctx, ri.Range, p.Id, p.NodeId); err != nil {
-									log.Error("delete range by node:[%d] peer:[%d] has err:[%s]", p.NodeId, p.Id, err.Error())
-								} else {
-									*stop = true
-									log.Info("delete range by node:[%d] peer:[%d]", p.NodeId, p.Id)
-								}
+func (gc *GCJob) processTable(ctx *processContext) {
+	for _, table := range ctx.tableMap {
+		if ctx.dbMap[table.DbId] == nil {
+			log.Info("Could not find db:[%d] contains table:[%d], so remove it from etcd!", table.DbId, table.Id)
+			m := entity.Monitor()
+			if err := gc.service.Delete(ctx, entity.TableKey(table.DbId, table.Id)); err != nil {
+				log.Error("delete table err :[%s]", err.Error())
+				if m != nil {
+					m.GetGauge(m.GetCluster(), "schedule", "event", "clear_table", "fail").Add(1)
+				}
+			} else {
+				if m != nil {
+					m.GetGauge(m.GetCluster(), "schedule", "event", "clear_table", "success").Add(1)
+				}
+			}
+		}
+	}
+}
+
+func (gc *GCJob) processNodeRange(ctx *processContext) {
+
+	delMap := make(map[uint64][]*service.RangeHandler)
+
+	counter := hack.PInt32(0)
+	m := entity.Monitor()
+	for _, nh := range ctx.nodeHandlerMap {
+		for _, rh := range nh.RangeHanders {
+			if table, found := ctx.tableMap[rh.TableId]; !found {
+				if ctx.nodeMap[nh.Node.Id] == nil {
+					continue
+				}
+				atomic.AddInt32(counter, 1)
+				delMap[nh.Node.Id] = append(delMap[nh.Node.Id], rh)
+			} else if table.Status == basepb.TableStatus_TableRunning { //if this range has db and table , check range is out of
+				dbRng := ctx.rangeMap[rh.Id]
+				if dbRng == nil {
+					log.Warn("range:[%d] not register in db", rh.Id)
+					continue
+				}
+				if rh.RangeEpoch.Version <= dbRng.RangeEpoch.Version && rh.Range.RangeEpoch.ConfVer < dbRng.RangeEpoch.ConfVer {
+					dbPeers := make(map[uint64]*basepb.Peer)
+					for _, p := range dbRng.Peers {
+						dbPeers[p.Id] = p
+					}
+
+					if _, found := dbPeers[rh.Peer.Id]; !found {
+						log.Info("find outside range not in range peers node:[%d] peerID:[%d] version:[%v] dbVersion:[%v]", rh.Peer.NodeId, rh.Peer.Id, rh.RangeEpoch, dbRng.RangeEpoch)
+						if err := gc.service.SyncDeleteRangeToNode(ctx, rh.Range, rh.Peer.Id, rh.Peer.NodeId); err != nil {
+							log.Error("delete range by node:[%d] peer:[%d] has err:[%s]", rh.Peer.NodeId, rh.Peer.Id, err.Error())
+							if m != nil {
+								m.GetGauge(m.GetCluster(), "schedule", "event", "delete_range", "fail").Add(1)
+							}
+						} else {
+							ctx.stop = true
+							log.Info("delete range by node:[%d] peer:[%d]", rh.Peer.NodeId, rh.Peer.Id)
+							if m != nil {
+								m.GetGauge(m.GetCluster(), "schedule", "event", "delete_range", "success").Add(1)
 							}
 						}
 					}
 				}
 			}
+		}
+	}
 
+	for nodeID, rangeHandlers := range delMap {
+		go func(node *basepb.Node, rhs []*service.RangeHandler) {
+			defer func() {
+				if i := recover() ;i != nil {
+					log.Error("panic err %v", i)
+				}
+			}()
+			for _, rh := range rhs {
+				if rh.Peer == nil {
+					log.Error("range:[%d] has nil peer so del it", rh.Id)
+					continue
+				}
+				if err := gc.service.DsClient().DeleteRange(ctx, nodeAddr(node), rh.Id, rh.Peer.Id); err != nil {
+					log.Error("delete range err:[%s]", err.Error())
+					if m != nil {
+						m.GetGauge(m.GetCluster(), "schedule", "event", "delete_range", "fail").Add(1)
+					}
+				} else {
+					ctx.stop = true
+					log.Info("job delete range ok :rangeID:[%d], peerID:[%d]", rh.Id, rh.Peer.Id)
+					if m != nil {
+						m.GetGauge(m.GetCluster(), "schedule", "event", "delete_range", "success").Add(1)
+					}
+				}
+				atomic.AddInt32(counter, -1)
+			}
+		}(ctx.nodeMap[nodeID], rangeHandlers)
+	}
+
+	for *counter > 0 {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			time.Sleep(1 * time.Second)
 		}
 	}
 

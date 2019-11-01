@@ -225,6 +225,7 @@ class RangeRequest : public ::google::protobuf::Message /* @@protoc_insertion_po
     kGetLockInfo = 5,
     kSelect = 6,
     kScan = 7,
+    kSelectFlow = 8,
     kKvGet = 20,
     kKvPut = 21,
     kKvDelete = 22,
@@ -348,6 +349,15 @@ class RangeRequest : public ::google::protobuf::Message /* @@protoc_insertion_po
   ::dspb::ScanRequest* release_scan();
   void set_allocated_scan(::dspb::ScanRequest* scan);
 
+  // .dspb.SelectFlowRequest select_flow = 8;
+  bool has_select_flow() const;
+  void clear_select_flow();
+  static const int kSelectFlowFieldNumber = 8;
+  const ::dspb::SelectFlowRequest& select_flow() const;
+  ::dspb::SelectFlowRequest* mutable_select_flow();
+  ::dspb::SelectFlowRequest* release_select_flow();
+  void set_allocated_select_flow(::dspb::SelectFlowRequest* select_flow);
+
   // .dspb.KvGetRequest kv_get = 20;
   bool has_kv_get() const;
   void clear_kv_get();
@@ -384,6 +394,7 @@ class RangeRequest : public ::google::protobuf::Message /* @@protoc_insertion_po
   void set_has_get_lock_info();
   void set_has_select();
   void set_has_scan();
+  void set_has_select_flow();
   void set_has_kv_get();
   void set_has_kv_put();
   void set_has_kv_delete();
@@ -402,6 +413,7 @@ class RangeRequest : public ::google::protobuf::Message /* @@protoc_insertion_po
     ::dspb::GetLockInfoRequest* get_lock_info_;
     ::dspb::SelectRequest* select_;
     ::dspb::ScanRequest* scan_;
+    ::dspb::SelectFlowRequest* select_flow_;
     ::dspb::KvGetRequest* kv_get_;
     ::dspb::KvPutRequest* kv_put_;
     ::dspb::KvDeleteRequest* kv_delete_;
@@ -563,6 +575,7 @@ class RangeResponse : public ::google::protobuf::Message /* @@protoc_insertion_p
     kGetLockInfo = 5,
     kSelect = 6,
     kScan = 7,
+    kSelectFlow = 8,
     kKvGet = 20,
     kKvPut = 21,
     kKvDelete = 22,
@@ -686,6 +699,15 @@ class RangeResponse : public ::google::protobuf::Message /* @@protoc_insertion_p
   ::dspb::ScanResponse* release_scan();
   void set_allocated_scan(::dspb::ScanResponse* scan);
 
+  // .dspb.SelectFlowResponse select_flow = 8;
+  bool has_select_flow() const;
+  void clear_select_flow();
+  static const int kSelectFlowFieldNumber = 8;
+  const ::dspb::SelectFlowResponse& select_flow() const;
+  ::dspb::SelectFlowResponse* mutable_select_flow();
+  ::dspb::SelectFlowResponse* release_select_flow();
+  void set_allocated_select_flow(::dspb::SelectFlowResponse* select_flow);
+
   // .dspb.KvGetResponse kv_get = 20;
   bool has_kv_get() const;
   void clear_kv_get();
@@ -722,6 +744,7 @@ class RangeResponse : public ::google::protobuf::Message /* @@protoc_insertion_p
   void set_has_get_lock_info();
   void set_has_select();
   void set_has_scan();
+  void set_has_select_flow();
   void set_has_kv_get();
   void set_has_kv_put();
   void set_has_kv_delete();
@@ -740,6 +763,7 @@ class RangeResponse : public ::google::protobuf::Message /* @@protoc_insertion_p
     ::dspb::GetLockInfoResponse* get_lock_info_;
     ::dspb::SelectResponse* select_;
     ::dspb::ScanResponse* scan_;
+    ::dspb::SelectFlowResponse* select_flow_;
     ::dspb::KvGetResponse* kv_get_;
     ::dspb::KvPutResponse* kv_put_;
     ::dspb::KvDeleteResponse* kv_delete_;
@@ -1173,6 +1197,54 @@ inline void RangeRequest::set_allocated_scan(::dspb::ScanRequest* scan) {
     req_.scan_ = scan;
   }
   // @@protoc_insertion_point(field_set_allocated:dspb.RangeRequest.scan)
+}
+
+// .dspb.SelectFlowRequest select_flow = 8;
+inline bool RangeRequest::has_select_flow() const {
+  return req_case() == kSelectFlow;
+}
+inline void RangeRequest::set_has_select_flow() {
+  _oneof_case_[0] = kSelectFlow;
+}
+inline void RangeRequest::clear_select_flow() {
+  if (has_select_flow()) {
+    delete req_.select_flow_;
+    clear_has_req();
+  }
+}
+inline  const ::dspb::SelectFlowRequest& RangeRequest::select_flow() const {
+  // @@protoc_insertion_point(field_get:dspb.RangeRequest.select_flow)
+  return has_select_flow()
+      ? *req_.select_flow_
+      : ::dspb::SelectFlowRequest::default_instance();
+}
+inline ::dspb::SelectFlowRequest* RangeRequest::mutable_select_flow() {
+  if (!has_select_flow()) {
+    clear_req();
+    set_has_select_flow();
+    req_.select_flow_ = new ::dspb::SelectFlowRequest;
+  }
+  // @@protoc_insertion_point(field_mutable:dspb.RangeRequest.select_flow)
+  return req_.select_flow_;
+}
+inline ::dspb::SelectFlowRequest* RangeRequest::release_select_flow() {
+  // @@protoc_insertion_point(field_release:dspb.RangeRequest.select_flow)
+  if (has_select_flow()) {
+    clear_has_req();
+    ::dspb::SelectFlowRequest* temp = req_.select_flow_;
+    req_.select_flow_ = NULL;
+    return temp;
+  } else {
+    return NULL;
+  }
+}
+inline void RangeRequest::set_allocated_select_flow(::dspb::SelectFlowRequest* select_flow) {
+  clear_req();
+  if (select_flow) {
+    set_has_select_flow();
+    req_.select_flow_ = select_flow;
+  }
+  // @@protoc_insertion_point(field_set_allocated:dspb.RangeRequest.select_flow)
 }
 
 // .dspb.KvGetRequest kv_get = 20;
@@ -1730,6 +1802,54 @@ inline void RangeResponse::set_allocated_scan(::dspb::ScanResponse* scan) {
     resp_.scan_ = scan;
   }
   // @@protoc_insertion_point(field_set_allocated:dspb.RangeResponse.scan)
+}
+
+// .dspb.SelectFlowResponse select_flow = 8;
+inline bool RangeResponse::has_select_flow() const {
+  return resp_case() == kSelectFlow;
+}
+inline void RangeResponse::set_has_select_flow() {
+  _oneof_case_[0] = kSelectFlow;
+}
+inline void RangeResponse::clear_select_flow() {
+  if (has_select_flow()) {
+    delete resp_.select_flow_;
+    clear_has_resp();
+  }
+}
+inline  const ::dspb::SelectFlowResponse& RangeResponse::select_flow() const {
+  // @@protoc_insertion_point(field_get:dspb.RangeResponse.select_flow)
+  return has_select_flow()
+      ? *resp_.select_flow_
+      : ::dspb::SelectFlowResponse::default_instance();
+}
+inline ::dspb::SelectFlowResponse* RangeResponse::mutable_select_flow() {
+  if (!has_select_flow()) {
+    clear_resp();
+    set_has_select_flow();
+    resp_.select_flow_ = new ::dspb::SelectFlowResponse;
+  }
+  // @@protoc_insertion_point(field_mutable:dspb.RangeResponse.select_flow)
+  return resp_.select_flow_;
+}
+inline ::dspb::SelectFlowResponse* RangeResponse::release_select_flow() {
+  // @@protoc_insertion_point(field_release:dspb.RangeResponse.select_flow)
+  if (has_select_flow()) {
+    clear_has_resp();
+    ::dspb::SelectFlowResponse* temp = resp_.select_flow_;
+    resp_.select_flow_ = NULL;
+    return temp;
+  } else {
+    return NULL;
+  }
+}
+inline void RangeResponse::set_allocated_select_flow(::dspb::SelectFlowResponse* select_flow) {
+  clear_resp();
+  if (select_flow) {
+    set_has_select_flow();
+    resp_.select_flow_ = select_flow;
+  }
+  // @@protoc_insertion_point(field_set_allocated:dspb.RangeResponse.select_flow)
 }
 
 // .dspb.KvGetResponse kv_get = 20;

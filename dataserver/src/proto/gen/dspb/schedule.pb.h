@@ -1928,6 +1928,12 @@ class RangeStats : public ::google::protobuf::Message /* @@protoc_insertion_poin
   ::google::protobuf::uint64 approximate_size() const;
   void set_approximate_size(::google::protobuf::uint64 value);
 
+  // uint64 kv_count = 6;
+  void clear_kv_count();
+  static const int kKvCountFieldNumber = 6;
+  ::google::protobuf::uint64 kv_count() const;
+  void set_kv_count(::google::protobuf::uint64 value);
+
   // @@protoc_insertion_point(class_scope:dspb.RangeStats)
  private:
 
@@ -1937,6 +1943,7 @@ class RangeStats : public ::google::protobuf::Message /* @@protoc_insertion_poin
   ::google::protobuf::uint64 read_bytess_per_sec_;
   ::google::protobuf::uint64 read_keys_per_sec_;
   ::google::protobuf::uint64 approximate_size_;
+  ::google::protobuf::uint64 kv_count_;
   mutable int _cached_size_;
   friend struct protobuf_dspb_2fschedule_2eproto::TableStruct;
 };
@@ -3797,6 +3804,20 @@ inline void RangeStats::set_approximate_size(::google::protobuf::uint64 value) {
   
   approximate_size_ = value;
   // @@protoc_insertion_point(field_set:dspb.RangeStats.approximate_size)
+}
+
+// uint64 kv_count = 6;
+inline void RangeStats::clear_kv_count() {
+  kv_count_ = GOOGLE_ULONGLONG(0);
+}
+inline ::google::protobuf::uint64 RangeStats::kv_count() const {
+  // @@protoc_insertion_point(field_get:dspb.RangeStats.kv_count)
+  return kv_count_;
+}
+inline void RangeStats::set_kv_count(::google::protobuf::uint64 value) {
+  
+  kv_count_ = value;
+  // @@protoc_insertion_point(field_set:dspb.RangeStats.kv_count)
 }
 
 // -------------------------------------------------------------------

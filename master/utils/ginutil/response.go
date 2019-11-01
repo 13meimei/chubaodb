@@ -23,7 +23,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strings"
-	"time"
 )
 
 const (
@@ -35,36 +34,53 @@ const (
 
 type Response struct {
 	ginContext *gin.Context
-	monitor    monitoring.Monitor
+	method     string
+	err        error
+	m          monitoring.Monitor
 }
 
-func New(ginContext *gin.Context, monitor monitoring.Monitor) *Response {
+func New(ginContext *gin.Context, m monitoring.Monitor) *Response {
 	return &Response{
 		ginContext: ginContext,
-		monitor:    monitor,
+		m:          m,
 	}
 }
 
-func NewAutoMehtodName(ginContext *gin.Context, monitor monitoring.Monitor) *Response {
+func NewAutoMehtodName(ginContext *gin.Context, m monitoring.Monitor) *Response {
 	response := &Response{
 		ginContext: ginContext,
+		m: m,
 	}
 
-	if monitor != nil {
-		response.monitor = monitor.New(reflect.RuntimeMethodName(2))
+	if m != nil {
+		response.method = reflect.RuntimeMethodName(2)
 	}
 
 	return response
 }
 
 func (resp *Response) Send(data entity.ProtoResp) {
-	//if log.IsDebugEnabled() { TODO: REMOVE ME
-	//	reply, _ := json.Marshal(data)
-	//	log.Debug(string(reply))
-	//}
-
+	if log.IsDebugEnabled() {
+		if data.GetHeader().Error != nil {
+			log.Error("response has err:[%s]",data.GetHeader().Error.Message)
+		}
+	}
+    var reply []byte
+    var err error
+    defer func() {
+	    //write monitor info
+	    if resp.m != nil {
+		    var gauge monitoring.Gauge
+		    if err == nil {
+			    gauge = resp.m.GetGauge(resp.m.GetCluster(), "rpc", "cluster",  "master", resp.method, "success")
+		    } else {
+			    gauge = resp.m.GetGauge(resp.m.GetCluster(), "rpc", "cluster", "master", resp.method, "fail")
+		    }
+		    gauge.Add(float64(1))
+        }
+    }()
 	if resp.isProtoType() {
-		reply, err := data.Marshal()
+		reply, err = data.Marshal()
 		if err != nil {
 			log.Error("proto marshal response err:[%s] obj:[%v]", err.Error(), data)
 			resp.Fail(err)
@@ -72,20 +88,13 @@ func (resp *Response) Send(data entity.ProtoResp) {
 		}
 		resp.ginContext.Data(http.StatusOK, "application/proto", reply)
 	} else {
-		reply, err := json.Marshal(data)
+		reply, err = json.Marshal(data)
 		if err != nil {
 			log.Error("json marshal response err:[%s] obj:[%v]", err.Error(), data)
 			resp.Fail(err)
 			return
 		}
 		resp.ginContext.Data(http.StatusOK, "application/json", reply)
-	}
-
-	//write monitor info
-	if resp.monitor != nil {
-		if value, exists := resp.ginContext.Get(Start); exists {
-			resp.monitor.FunctionTP(value.(time.Time), false)
-		}
 	}
 }
 
@@ -108,5 +117,10 @@ func (resp *Response) isProtoType() bool {
 }
 
 func (resp *Response) Fail(err error) {
+	resp.err = err
 	resp.ginContext.Data(http.StatusInternalServerError, "application/text", []byte(err.Error()))
+}
+
+func (resp *Response) Error() error {
+	return resp.err
 }

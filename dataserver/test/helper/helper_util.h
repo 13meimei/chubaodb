@@ -32,6 +32,9 @@ basepb::Range MakeRangeMeta(Table *t, size_t peers_num, uint32_t rid);
 // append '\x01' + table_id to buf
 void EncodeKeyPrefix(std::string* buf, uint64_t table_id);
 
+// append '\x02' + table_id to buf
+void EncodeIndexKeyPrefix(std::string *buf, uint64_t table_id);
+
 // append encoded pk value to buf
 void EncodePrimaryKey(std::string *buf, const basepb::Column& col, const std::string& val);
 

@@ -15,6 +15,7 @@
 _Pragma("once");
 
 #include "inih/INIReader.h"
+
 #include "common/logger.h"
 
 namespace chubaodb {
@@ -30,7 +31,7 @@ std::pair<uint64_t, bool> loadNeBytesValue(const INIReader& reader, const char *
 std::pair<size_t, bool> loadThreadNum(const INIReader& reader, const char *section,
         const char *item, int default_value);
 
-std::pair<uint16_t, bool> loadPortNum(const INIReader& reader, const char *section, const char *item);
+std::pair<uint16_t, bool> loadUInt16(const INIReader& reader, const char *section, const char *item);
 
 template <class T>
 static std::pair<T, bool> loadIntegerAtLeast(const INIReader& reader, const char *section,

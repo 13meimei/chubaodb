@@ -42,6 +42,19 @@ private:
     dspb::SelectRequest req_;
 };
 
+class SelectFlowRequestBuilder {
+public:
+    explicit SelectFlowRequestBuilder(Table *t) : table_(t) {}
+
+    void SetSQL(const std::string& query);
+
+    dspb::SelectFlowRequest Build() { return std::move(req_); }
+
+private:
+    Table *table_ = nullptr;
+    dspb::SelectFlowRequest req_;
+};
+
 class LocalPrepareBuilder {
 public:
     explicit LocalPrepareBuilder(Table *t);

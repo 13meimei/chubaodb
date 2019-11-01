@@ -20,6 +20,12 @@
     # memory ration for data server
     memory_ratio = 0.8
 
+    monitor_enable = false
+    monitor = "prometheus"
+    push_gateway = "http://my-pushgateway:9091/"
+    # default 5s
+    push_interval = 5
+
 # if you are master you'd better set all config for router and ps and router and ps use default config it so cool
 [[masters]]
     #name machine name for cluster

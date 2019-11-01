@@ -25,7 +25,6 @@ namespace admin {
 using namespace dspb;
 
 Status profileHeap(const ProfileRequest& req) {
- #ifdef CHUBAO_USE_JEMALLOC
     auto path = req.output_path();
     if (path.empty()) {
         char tmp[PATH_MAX] = {'\0'};
@@ -40,9 +39,6 @@ Status profileHeap(const ProfileRequest& req) {
         return Status(Status::kUnknown, "mallctl", strErrno(ret));
     }
     return Status::OK();
- #else
-    return Status(Status::kNotSupported);
- #endif
 }
 
 Status AdminServer::profile(const ProfileRequest& req, ProfileResponse *resp) {

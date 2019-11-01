@@ -16,6 +16,7 @@ _Pragma("once");
 
 #include "store.h"
 #include "db/db.h"
+#include <vector>
 
 namespace chubaodb {
 namespace ds {
@@ -64,6 +65,26 @@ public:
 
     static std::unique_ptr<KvFetcher> Create(Store& store, const dspb::SelectRequest& req);
     static std::unique_ptr<KvFetcher> Create(Store& store, const dspb::ScanRequest& req);
+    static std::unique_ptr<KvFetcher> Create(
+            Store& store,
+            const dspb::TableRead& req,
+            const std::string & start_key,
+            const std::string & end_key
+    );
+    static std::unique_ptr<KvFetcher> Create(
+            Store& store,
+            const dspb::IndexRead& req,
+            const std::string & start_key,
+            const std::string & end_key
+    );
+    static std::unique_ptr<KvFetcher> Create(
+            Store& store,
+            const dspb::DataSample & req,
+            const std::string & start_key,
+            const std::string & end_key
+    );
+
+    static std::unique_ptr<KvFetcher> Create(Store& sotre, const std::string & start_key, const std::string & end_key);
 };
 
 
@@ -80,6 +101,17 @@ private:
     bool fetched_ = false;
 };
 
+class PointersKvFetcher: public KvFetcher {
+public:
+    PointersKvFetcher(Store& s, const std::vector<std::string> & keys, bool fetch_intent);
+    Status Next(KvRecord& rec) override;
+
+private:
+    Store& store_;
+    const std::vector<std::string> keys_;
+    std::vector<std::string>::const_iterator iter_;
+    bool fetch_intent_;
+};
 
 class RangeKvFetcher : public KvFetcher {
 public:
@@ -107,6 +139,24 @@ private:
     db::IteratorPtr txn_iter_;
     bool over_ = false;
     Status status_;
+};
+
+class RangeKvSampleFetcher : public KvFetcher {
+public:
+    RangeKvSampleFetcher(Store& s, const std::string& start, const std::string& limit, const uint64_t num);
+
+    Status Next(KvRecord& rec) override;
+private:
+    Status Sample();
+private:
+    db::IteratorPtr iter_ = nullptr;
+    Status status_;
+    uint64_t max_sample_num_;
+    uint64_t count_;
+    std::vector<KvRecord> pool_sample_;
+    std::vector<KvRecord>::iterator pool_iter_;
+    bool is_sample_over_;
+
 };
 
 } // namespace storage

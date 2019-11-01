@@ -34,6 +34,7 @@ using IterPtr = db::IteratorPtr;
 
 using TxnErrorPtr = std::unique_ptr<dspb::TxnError>;
 
+
 static const size_t kRowPrefixLength = 9;
 static const unsigned char kStoreKVPrefixByte = '\x01';
 static const size_t kDefaultMaxSelectLimit = 1000;
@@ -57,7 +58,7 @@ public:
     void ResetMetric() { metric_.Reset(); }
     void CollectMetric(MetricStat* stat) { metric_.Collect(stat); }
 
-    Status StatSize(uint64_t split_size, uint64_t *real_size, std::string *split_key);
+    Status StatSize(uint64_t split_size, uint64_t *real_size, std::string *split_key, uint64_t *kv_count_1, uint64_t *kv_count_2);
 
     uint64_t PersistApplied() { return db_->PersistApplied(); }
 
@@ -81,8 +82,16 @@ public:
     void TxnGetLockInfo(const dspb::GetLockInfoRequest& req, dspb::GetLockInfoResponse* resp);
     Status TxnSelect(const dspb::SelectRequest& req, dspb::SelectResponse* resp);
     Status TxnScan(const dspb::ScanRequest& req, dspb::ScanResponse* resp);
+    Status TxnSelectFlow(const dspb::SelectFlowRequest& req, dspb::SelectFlowResponse* resp);
 
 public:
+
+    uint64_t KvCount() { return kv_count_; }
+    void SetKvCount(uint64_t kv_count) {
+        kv_count_ = kv_count;
+    }
+
+    bool keyInScop(const std::string & key) const;
     IterPtr NewIterator(const std::string& start = "", const std::string& limit = "");
 
     Status NewIterators(IterPtr &data_iter, IterPtr &txn_iter,
@@ -125,6 +134,7 @@ private:
     const uint64_t table_id_ = 0;
     const uint64_t range_id_ = 0;
     const std::string start_key_;
+    uint64_t kv_count_;
 
     std::string end_key_;
     mutable std::mutex key_lock_;

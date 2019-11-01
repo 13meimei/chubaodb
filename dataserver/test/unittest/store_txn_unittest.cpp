@@ -52,11 +52,11 @@ void insertIntent(TxnIntent* intent,
     intent->set_value(value);
 }
 
-void insertIntent(TxnIntent* intent,
-                  const std::string& key) {
-    intent->set_typ(DELETE);
-    intent->set_key(key);
-}
+// void insertIntent(TxnIntent* intent,
+//                   const std::string& key) {
+//     intent->set_typ(DELETE);
+//     intent->set_key(key);
+// }
 
 static void randomIntent(TxnIntent& intent) {
     intent.set_typ(randomInt() % 2 == 0 ? INSERT : DELETE);
@@ -255,7 +255,7 @@ TEST_F(StoreTxnTest, Iterator) {
         }
     }
 
-    int index = 0;
+    size_t index = 0;
     TxnRangeKvFetcher iter(*store_, "", "");
     while (true) {
         KvRecord rec;
@@ -267,7 +267,7 @@ TEST_F(StoreTxnTest, Iterator) {
         ASSERT_EQ(rec.intent, expected[index].txn_value);
         ++index;
     }
-    ASSERT_EQ(index, static_cast<int>(expected.size()));
+    ASSERT_EQ(index, expected.size());
 }
 
 
@@ -325,7 +325,7 @@ TEST_F(StoreTxnTest, Scan) {
         dspb::ScanResponse resp;
         auto s = store_->TxnScan(req, &resp);
         ASSERT_TRUE(s.ok()) << s.ToString();
-        ASSERT_EQ(resp.kvs_size(), static_cast<int>(expected.size()));
+        ASSERT_EQ(static_cast<size_t>(resp.kvs_size()), expected.size());
         for (int i = 0; i < resp.kvs_size(); ++i) {
             ASSERT_EQ(resp.kvs(i).key(), expected[i].key);
             ASSERT_EQ(resp.kvs(i).value(), expected[i].db_value);

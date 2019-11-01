@@ -131,17 +131,141 @@ void AddDescriptorsImpl() {
       "\001(\0162\020.basepb.DataType\022\020\n\010unsigned\030\003 \001(\010\""
       "u\n\004Expr\022!\n\texpr_type\030\001 \001(\0162\016.dspb.ExprTy"
       "pe\022 \n\006column\030\002 \001(\0132\020.dspb.ColumnInfo\022\r\n\005"
-      "value\030\003 \001(\014\022\031\n\005child\030\004 \003(\0132\n.dspb.Expr*\216"
-      "\002\n\010ExprType\022\020\n\014Invalid_Expr\020\000\022\n\n\006Column\020"
+      "value\030\003 \001(\014\022\031\n\005child\030\004 \003(\0132\n.dspb.Expr*\320"
+      "(\n\010ExprType\022\020\n\014Invalid_Expr\020\000\022\n\n\006Column\020"
       "\001\022\r\n\tConst_Int\020\002\022\016\n\nConst_UInt\020\003\022\020\n\014Cons"
-      "t_Double\020\004\022\017\n\013Const_Bytes\020\005\022\014\n\010LogicAnd\020"
-      "\n\022\013\n\007LogicOr\020\013\022\014\n\010LogicNot\020\014\022\t\n\005Equal\020\024\022"
-      "\014\n\010NotEqual\020\025\022\010\n\004Less\020\026\022\017\n\013LessOrEqual\020\027"
-      "\022\n\n\006Larger\020\030\022\021\n\rLargerOrEqual\020\031\022\010\n\004Plus\020"
-      "\037\022\t\n\005Minus\020 \022\010\n\004Mult\020!\022\007\n\003Div\020\"b\006proto3"
+      "t_Double\020\004\022\017\n\013Const_Bytes\020\005\022\t\n\005Equal\020\024\022\014"
+      "\n\010NotEqual\020\025\022\010\n\004Less\020\026\022\017\n\013LessOrEqual\020\027\022"
+      "\n\n\006Larger\020\030\022\021\n\rLargerOrEqual\020\031\022\010\n\003Avg\020\227\001"
+      "\022\n\n\005Count\020\230\001\022\010\n\003Max\020\231\001\022\010\n\003Min\020\232\001\022\010\n\003Sum\020"
+      "\233\001\022\010\n\003Std\020\234\001\022\r\n\010Distinct\020\235\001\022\r\n\010LogicAnd\020"
+      "\311\001\022\014\n\007LogicOr\020\312\001\022\r\n\010LogicNot\020\313\001\022\r\n\010Logic"
+      "Xor\020\314\001\022\r\n\010UnaryNot\020\315\001\022\017\n\nUnaryMinus\020\316\001\022\013"
+      "\n\006IsNull\020\317\001\022\022\n\rDecimalIsNull\020\320\001\022\017\n\nDateI"
+      "sNull\020\321\001\022\017\n\nRealIsNull\020\322\001\022\021\n\014StringIsNul"
+      "l\020\323\001\022\017\n\nTimeIsNull\020\324\001\022\016\n\tIntIsNull\020\325\001\022\017\n"
+      "\nJsonIsNull\020\326\001\022\016\n\tIsNotNull\020\327\001\022\013\n\006IsTrue"
+      "\020\330\001\022\014\n\007IsFalse\020\331\001\022\016\n\tLeftShift\020\332\001\022\017\n\nRig"
+      "htShift\020\333\001\022\021\n\014CastIntToInt\020\255\002\022\022\n\rCastInt"
+      "ToReal\020\256\002\022\024\n\017CastIntToString\020\257\002\022\025\n\020CastI"
+      "ntToDecimal\020\260\002\022\022\n\rCastIntToTime\020\261\002\022\022\n\rCa"
+      "stIntToDate\020\262\002\022\022\n\rCastIntToJson\020\263\002\022\022\n\rCa"
+      "stRealToInt\020\264\002\022\023\n\016CastRealToReal\020\265\002\022\025\n\020C"
+      "astRealToString\020\266\002\022\026\n\021CastRealToDecimal\020"
+      "\267\002\022\023\n\016CastRealToTime\020\270\002\022\023\n\016CastRealToDat"
+      "e\020\271\002\022\023\n\016CastRealToJson\020\272\002\022\025\n\020CastDecimal"
+      "ToInt\020\273\002\022\026\n\021CastDecimalToReal\020\274\002\022\030\n\023Cast"
+      "DecimalToString\020\275\002\022\031\n\024CastDecimalToDecim"
+      "al\020\276\002\022\026\n\021CastDecimalToTime\020\277\002\022\026\n\021CastDec"
+      "imalToDate\020\300\002\022\026\n\021CastDecimalToJson\020\301\002\022\024\n"
+      "\017CastStringToInt\020\302\002\022\025\n\020CastStringToReal\020"
+      "\303\002\022\027\n\022CastStringToString\020\304\002\022\030\n\023CastStrin"
+      "gToDecimal\020\305\002\022\025\n\020CastStringToTime\020\306\002\022\025\n\020"
+      "CastStringToDate\020\307\002\022\025\n\020CastStringToJson\020"
+      "\310\002\022\022\n\rCastTimeToInt\020\311\002\022\023\n\016CastTimeToReal"
+      "\020\312\002\022\025\n\020CastTimeToString\020\313\002\022\026\n\021CastTimeTo"
+      "Decimal\020\314\002\022\023\n\016CastTimeToTime\020\315\002\022\023\n\016CastT"
+      "imeToDate\020\316\002\022\023\n\016CastTimeToJson\020\317\002\022\022\n\rCas"
+      "tDateToInt\020\320\002\022\023\n\016CastDateToReal\020\321\002\022\025\n\020Ca"
+      "stDateToString\020\322\002\022\026\n\021CastDateToDecimal\020\323"
+      "\002\022\023\n\016CastDateToTime\020\324\002\022\023\n\016CastDateToDate"
+      "\020\325\002\022\023\n\016CastDateToJson\020\326\002\022\022\n\rCastJsonToIn"
+      "t\020\327\002\022\023\n\016CastJsonToReal\020\330\002\022\025\n\020CastJsonToS"
+      "tring\020\331\002\022\026\n\021CastJsonToDecimal\020\332\002\022\023\n\016Cast"
+      "JsonToTime\020\333\002\022\023\n\016CastJsonToDate\020\334\002\022\023\n\016Ca"
+      "stJsonToJson\020\335\002\022\r\n\010Coalesce\020\221\003\022\r\n\010EqualI"
+      "nt\020\222\003\022\016\n\tEqualReal\020\223\003\022\020\n\013EqualString\020\224\003\022"
+      "\021\n\014EqualDecimal\020\225\003\022\016\n\tEqualTime\020\226\003\022\016\n\tEq"
+      "ualDate\020\227\003\022\016\n\tEqualJson\020\230\003\022\020\n\013NotEqualIn"
+      "t\020\231\003\022\021\n\014NotEqualReal\020\232\003\022\024\n\017NotEqualDecim"
+      "al\020\233\003\022\023\n\016NotEqualString\020\234\003\022\021\n\014NotEqualTi"
+      "me\020\235\003\022\021\n\014NotEqualDate\020\236\003\022\021\n\014NotEqualJson"
+      "\020\237\003\022\014\n\007LessInt\020\240\003\022\r\n\010LessReal\020\241\003\022\020\n\013Less"
+      "Decimal\020\242\003\022\017\n\nLessString\020\243\003\022\r\n\010LessTime\020"
+      "\244\003\022\r\n\010LessDate\020\245\003\022\r\n\010LessJson\020\246\003\022\023\n\016Less"
+      "OrEqualInt\020\247\003\022\024\n\017LessOrEqualReal\020\250\003\022\027\n\022L"
+      "essOrEqualDecimal\020\251\003\022\026\n\021LessOrEqualStrin"
+      "g\020\252\003\022\024\n\017LessOrEqualTime\020\253\003\022\024\n\017LessOrEqua"
+      "lDate\020\254\003\022\024\n\017LessOrEqualJson\020\255\003\022\017\n\nGreate"
+      "rInt\020\256\003\022\020\n\013GreaterReal\020\257\003\022\023\n\016GreaterDeci"
+      "mal\020\260\003\022\022\n\rGreaterString\020\261\003\022\020\n\013GreaterTim"
+      "e\020\262\003\022\020\n\013GreaterDate\020\263\003\022\020\n\013GreaterJson\020\264\003"
+      "\022\026\n\021GreaterOrEqualInt\020\265\003\022\027\n\022GreaterOrEqu"
+      "alReal\020\266\003\022\032\n\025GreaterOrEqualDecimal\020\267\003\022\031\n"
+      "\024GreaterOrEqualString\020\270\003\022\027\n\022GreaterOrEqu"
+      "alTime\020\271\003\022\027\n\022GreaterOrEqualDate\020\272\003\022\027\n\022Gr"
+      "eaterOrEqualJson\020\273\003\022\t\n\004Like\020\274\003\022\014\n\007NotLik"
+      "e\020\275\003\022\017\n\nRegexpLike\020\276\003\022\013\n\006Regexp\020\277\003\022\016\n\tNo"
+      "tRegexp\020\300\003\022\007\n\002IN\020\301\003\022\t\n\004Plus\020\247\004\022\r\n\010PlusRe"
+      "al\020\250\004\022\020\n\013PlusDecimal\020\251\004\022\014\n\007PlusInt\020\252\004\022\n\n"
+      "\005Minus\020\261\004\022\016\n\tMinusReal\020\262\004\022\021\n\014MinusDecima"
+      "l\020\263\004\022\r\n\010MinusInt\020\264\004\022\t\n\004Mult\020\273\004\022\r\n\010MultRe"
+      "al\020\274\004\022\020\n\013MultDecimal\020\275\004\022\014\n\007MultInt\020\276\004\022\024\n"
+      "\017MultIntUnsigned\020\277\004\022\010\n\003Div\020\305\004\022\014\n\007DivReal"
+      "\020\306\004\022\017\n\nDivDecimal\020\307\004\022\016\n\tIntDivInt\020\310\004\022\022\n\r"
+      "IntDivDecimal\020\311\004\022\010\n\003Mod\020\317\004\022\014\n\007ModReal\020\320\004"
+      "\022\017\n\nModDecimal\020\321\004\022\013\n\006ModInt\020\322\004\022\010\n\003Abs\020\275\005"
+      "\022\t\n\004Ceil\020\276\005\022\n\n\005Floor\020\277\005\022\n\n\005Round\020\300\005\022\t\n\004R"
+      "and\020\301\005\022\t\n\004Conv\020\302\005\022\n\n\005CRC32\020\303\005\022\014\n\007Degrees"
+      "\020\304\005\022\010\n\003Exp\020\305\005\022\t\n\004Acos\020\306\005\022\t\n\004Asin\020\307\005\022\t\n\004A"
+      "tan\020\310\005\022\n\n\005Atan2\020\311\005\022\010\n\003Cos\020\312\005\022\010\n\003Cot\020\313\005\022\007"
+      "\n\002Ln\020\314\005\022\010\n\003Log\020\315\005\022\n\n\005Log10\020\316\005\022\t\n\004Log2\020\317\005"
+      "\022\007\n\002PI\020\320\005\022\010\n\003Pow\020\321\005\022\014\n\007Radians\020\322\005\022\t\n\004Sig"
+      "n\020\323\005\022\010\n\003Sin\020\324\005\022\t\n\004Sqrt\020\325\005\022\010\n\003Tan\020\326\005\022\r\n\010T"
+      "runcate\020\327\005\022\r\n\010CaseWhen\020\357\005\022\007\n\002If\020\360\005\022\n\n\005If"
+      "Int\020\361\005\022\013\n\006IfReal\020\362\005\022\016\n\tIfDecimal\020\363\005\022\r\n\010I"
+      "fString\020\364\005\022\013\n\006IfTime\020\365\005\022\013\n\006IfDate\020\366\005\022\017\n\n"
+      "IfNullJson\020\367\005\022\013\n\006IfJson\020\370\005\022\013\n\006IfNull\020\371\005\022"
+      "\020\n\013Aes_decrypt\020\205\007\022\020\n\013Aes_encrypt\020\206\007\022\r\n\010C"
+      "ompress\020\207\007\022\017\n\nUncompress\020\210\007\022\010\n\003Md5\020\211\007\022\r\n"
+      "\010Password\020\212\007\022\t\n\004SHA1\020\213\007\022\t\n\004SHA2\020\214\007\022\n\n\005As"
+      "cii\020\261\t\022\010\n\003Bin\020\262\t\022\017\n\nBit_length\020\263\t\022\t\n\004Cha"
+      "r\020\264\t\022\020\n\013Char_length\020\265\t\022\025\n\020Character_leng"
+      "th\020\266\t\022\013\n\006Concat\020\267\t\022\016\n\tConcat_ws\020\270\t\022\010\n\003El"
+      "t\020\271\t\022\017\n\nExport_set\020\272\t\022\n\n\005Field\020\273\t\022\020\n\013Fin"
+      "d_in_set\020\274\t\022\013\n\006Format\020\275\t\022\020\n\013From_base64\020"
+      "\276\t\022\010\n\003Hex\020\277\t\022\013\n\006Insert\020\300\t\022\n\n\005Instr\020\301\t\022\n\n"
+      "\005Lcase\020\302\t\022\t\n\004Left\020\303\t\022\013\n\006Length\020\304\t\022\r\n\010Str"
+      "_Like\020\305\t\022\016\n\tLoad_file\020\306\t\022\013\n\006Locate\020\307\t\022\n\n"
+      "\005Lower\020\310\t\022\t\n\004Lpad\020\311\t\022\n\n\005Ltrim\020\312\t\022\r\n\010Make"
+      "_set\020\313\t\022\n\n\005Match\020\314\t\022\010\n\003Mid\020\315\t\022\021\n\014Str_Not"
+      "_like\020\316\t\022\023\n\016Str_Not_regexp\020\317\t\022\010\n\003Oct\020\320\t\022"
+      "\021\n\014Octet_length\020\321\t\022\010\n\003Ord\020\322\t\022\r\n\010Position"
+      "\020\323\t\022\n\n\005Quote\020\324\t\022\016\n\tStrRegexp\020\325\t\022\013\n\006Repea"
+      "t\020\326\t\022\014\n\007Replace\020\327\t\022\014\n\007Reverse\020\330\t\022\n\n\005Righ"
+      "t\020\331\t\022\n\n\005Rlike\020\332\t\022\t\n\004Rpad\020\333\t\022\n\n\005Rtrim\020\334\t\022"
+      "\014\n\007Soundex\020\335\t\022\017\n\nSoundsLike\020\336\t\022\n\n\005Space\020"
+      "\337\t\022\013\n\006Strcmp\020\340\t\022\013\n\006Substr\020\341\t\022\016\n\tSubstrin"
+      "g\020\342\t\022\023\n\016SubstringIndex\020\343\t\022\r\n\010ToBase64\020\344\t"
+      "\022\t\n\004Trim\020\345\t\022\n\n\005Ucase\020\346\t\022\n\n\005Unhex\020\347\t\022\n\n\005U"
+      "pper\020\350\t\022\021\n\014WeightString\020\351\t\022\014\n\007Adddate\020\321\017"
+      "\022\014\n\007Addtime\020\322\017\022\017\n\nConvert_tz\020\323\017\022\014\n\007Curda"
+      "te\020\324\017\022\020\n\013CurrentDate\020\325\017\022\020\n\013CurrentTime\020\326"
+      "\017\022\025\n\020CurrentTimestamp\020\327\017\022\014\n\007Curtime\020\330\017\022\t"
+      "\n\004Date\020\331\017\022\r\n\010Date_add\020\332\017\022\020\n\013Date_format\020"
+      "\333\017\022\r\n\010Date_sub\020\334\017\022\r\n\010Datediff\020\335\017\022\010\n\003Day\020"
+      "\336\017\022\014\n\007Dayname\020\337\017\022\017\n\nDayofmonth\020\340\017\022\016\n\tDay"
+      "ofweek\020\341\017\022\016\n\tDayofyear\020\342\017\022\014\n\007Extract\020\343\017\022"
+      "\016\n\tFrom_days\020\344\017\022\022\n\rFrom_unixtime\020\345\017\022\017\n\nG"
+      "et_format\020\346\017\022\t\n\004Hour\020\347\017\022\r\n\010Last_day\020\350\017\022\016"
+      "\n\tLocaltime\020\351\017\022\023\n\016Localtimestamp\020\352\017\022\r\n\010M"
+      "akedate\020\353\017\022\r\n\010Maketime\020\354\017\022\020\n\013Microsecond"
+      "\020\355\017\022\013\n\006Minute\020\356\017\022\n\n\005Month\020\357\017\022\016\n\tMonthnam"
+      "e\020\360\017\022\010\n\003Now\020\361\017\022\017\n\nPeriod_add\020\362\017\022\020\n\013Perio"
+      "d_diff\020\363\017\022\014\n\007Quarter\020\364\017\022\020\n\013Sec_to_time\020\365"
+      "\017\022\013\n\006Second\020\366\017\022\020\n\013Str_to_date\020\367\017\022\014\n\007Subd"
+      "ate\020\370\017\022\014\n\007Subtime\020\371\017\022\014\n\007Sysdate\020\372\017\022\t\n\004Ti"
+      "me\020\373\017\022\020\n\013Time_format\020\374\017\022\020\n\013Time_to_sec\020\375"
+      "\017\022\r\n\010Timediff\020\376\017\022\016\n\tTimestamp\020\377\017\022\021\n\014Time"
+      "stampadd\020\200\020\022\022\n\rTimestampdiff\020\201\020\022\014\n\007To_da"
+      "ys\020\202\020\022\017\n\nTo_seconds\020\203\020\022\023\n\016Unix_timestamp"
+      "\020\204\020\022\r\n\010Utc_date\020\205\020\022\r\n\010Utc_time\020\206\020\022\022\n\rUtc"
+      "_timestamp\020\207\020\022\t\n\004Week\020\210\020\022\014\n\007Weekday\020\211\020\022\017"
+      "\n\nWeekofyear\020\212\020\022\t\n\004Year\020\213\020\022\r\n\010Yearweek\020\214"
+      "\020b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 519);
+      descriptor, 5449);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "dspb/expr.proto", &protobuf_RegisterTypes);
   ::basepb::protobuf_basepb_2fbasepb_2eproto::AddDescriptors();
@@ -173,19 +297,321 @@ bool ExprType_IsValid(int value) {
     case 3:
     case 4:
     case 5:
-    case 10:
-    case 11:
-    case 12:
     case 20:
     case 21:
     case 22:
     case 23:
     case 24:
     case 25:
-    case 31:
-    case 32:
-    case 33:
-    case 34:
+    case 151:
+    case 152:
+    case 153:
+    case 154:
+    case 155:
+    case 156:
+    case 157:
+    case 201:
+    case 202:
+    case 203:
+    case 204:
+    case 205:
+    case 206:
+    case 207:
+    case 208:
+    case 209:
+    case 210:
+    case 211:
+    case 212:
+    case 213:
+    case 214:
+    case 215:
+    case 216:
+    case 217:
+    case 218:
+    case 219:
+    case 301:
+    case 302:
+    case 303:
+    case 304:
+    case 305:
+    case 306:
+    case 307:
+    case 308:
+    case 309:
+    case 310:
+    case 311:
+    case 312:
+    case 313:
+    case 314:
+    case 315:
+    case 316:
+    case 317:
+    case 318:
+    case 319:
+    case 320:
+    case 321:
+    case 322:
+    case 323:
+    case 324:
+    case 325:
+    case 326:
+    case 327:
+    case 328:
+    case 329:
+    case 330:
+    case 331:
+    case 332:
+    case 333:
+    case 334:
+    case 335:
+    case 336:
+    case 337:
+    case 338:
+    case 339:
+    case 340:
+    case 341:
+    case 342:
+    case 343:
+    case 344:
+    case 345:
+    case 346:
+    case 347:
+    case 348:
+    case 349:
+    case 401:
+    case 402:
+    case 403:
+    case 404:
+    case 405:
+    case 406:
+    case 407:
+    case 408:
+    case 409:
+    case 410:
+    case 411:
+    case 412:
+    case 413:
+    case 414:
+    case 415:
+    case 416:
+    case 417:
+    case 418:
+    case 419:
+    case 420:
+    case 421:
+    case 422:
+    case 423:
+    case 424:
+    case 425:
+    case 426:
+    case 427:
+    case 428:
+    case 429:
+    case 430:
+    case 431:
+    case 432:
+    case 433:
+    case 434:
+    case 435:
+    case 436:
+    case 437:
+    case 438:
+    case 439:
+    case 440:
+    case 441:
+    case 442:
+    case 443:
+    case 444:
+    case 445:
+    case 446:
+    case 447:
+    case 448:
+    case 449:
+    case 551:
+    case 552:
+    case 553:
+    case 554:
+    case 561:
+    case 562:
+    case 563:
+    case 564:
+    case 571:
+    case 572:
+    case 573:
+    case 574:
+    case 575:
+    case 581:
+    case 582:
+    case 583:
+    case 584:
+    case 585:
+    case 591:
+    case 592:
+    case 593:
+    case 594:
+    case 701:
+    case 702:
+    case 703:
+    case 704:
+    case 705:
+    case 706:
+    case 707:
+    case 708:
+    case 709:
+    case 710:
+    case 711:
+    case 712:
+    case 713:
+    case 714:
+    case 715:
+    case 716:
+    case 717:
+    case 718:
+    case 719:
+    case 720:
+    case 721:
+    case 722:
+    case 723:
+    case 724:
+    case 725:
+    case 726:
+    case 727:
+    case 751:
+    case 752:
+    case 753:
+    case 754:
+    case 755:
+    case 756:
+    case 757:
+    case 758:
+    case 759:
+    case 760:
+    case 761:
+    case 901:
+    case 902:
+    case 903:
+    case 904:
+    case 905:
+    case 906:
+    case 907:
+    case 908:
+    case 1201:
+    case 1202:
+    case 1203:
+    case 1204:
+    case 1205:
+    case 1206:
+    case 1207:
+    case 1208:
+    case 1209:
+    case 1210:
+    case 1211:
+    case 1212:
+    case 1213:
+    case 1214:
+    case 1215:
+    case 1216:
+    case 1217:
+    case 1218:
+    case 1219:
+    case 1220:
+    case 1221:
+    case 1222:
+    case 1223:
+    case 1224:
+    case 1225:
+    case 1226:
+    case 1227:
+    case 1228:
+    case 1229:
+    case 1230:
+    case 1231:
+    case 1232:
+    case 1233:
+    case 1234:
+    case 1235:
+    case 1236:
+    case 1237:
+    case 1238:
+    case 1239:
+    case 1240:
+    case 1241:
+    case 1242:
+    case 1243:
+    case 1244:
+    case 1245:
+    case 1246:
+    case 1247:
+    case 1248:
+    case 1249:
+    case 1250:
+    case 1251:
+    case 1252:
+    case 1253:
+    case 1254:
+    case 1255:
+    case 1256:
+    case 1257:
+    case 2001:
+    case 2002:
+    case 2003:
+    case 2004:
+    case 2005:
+    case 2006:
+    case 2007:
+    case 2008:
+    case 2009:
+    case 2010:
+    case 2011:
+    case 2012:
+    case 2013:
+    case 2014:
+    case 2015:
+    case 2016:
+    case 2017:
+    case 2018:
+    case 2019:
+    case 2020:
+    case 2021:
+    case 2022:
+    case 2023:
+    case 2024:
+    case 2025:
+    case 2026:
+    case 2027:
+    case 2028:
+    case 2029:
+    case 2030:
+    case 2031:
+    case 2032:
+    case 2033:
+    case 2034:
+    case 2035:
+    case 2036:
+    case 2037:
+    case 2038:
+    case 2039:
+    case 2040:
+    case 2041:
+    case 2042:
+    case 2043:
+    case 2044:
+    case 2045:
+    case 2046:
+    case 2047:
+    case 2048:
+    case 2049:
+    case 2050:
+    case 2051:
+    case 2052:
+    case 2053:
+    case 2054:
+    case 2055:
+    case 2056:
+    case 2057:
+    case 2058:
+    case 2059:
+    case 2060:
       return true;
     default:
       return false;

@@ -54,8 +54,8 @@ public:
     WorkThread(const WorkThread&) = delete;
     WorkThread& operator=(const WorkThread&) = delete;
 
-    bool submit(uint64_t owner, std::atomic<bool>* stopped,
-                const std::function<void(MessagePtr&)>& f1, std::string& cmd);
+    bool submit(uint64_t owner, std::atomic<bool>* stopped, uint64_t unique_sequence,
+                uint16_t rw_flag, const std::function<void(MessagePtr&)>& handle, std::string& cmd);
 
     bool tryPost(const Work& w);
     void post(const Work& w);
@@ -74,7 +74,8 @@ private:
     std::unique_ptr<std::thread> thr_;
     bool running_ = false;
     std::queue<Work> queue_;
-    std::unordered_map<uint64_t, MessagePtr> batch_pos_;
+    std::unordered_map<uint64_t, MessagePtr> write_batch_pos_;
+    std::unordered_map<uint64_t, MessagePtr> read_batch_pos_;
     mutable std::mutex mu_;
     std::condition_variable cv_;
 };

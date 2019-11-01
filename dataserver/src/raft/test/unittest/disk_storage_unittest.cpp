@@ -100,7 +100,7 @@ TEST_F(StorageTest, LogEntry) {
     s = storage_->LastIndex(&index);
     ASSERT_EQ(index, 99);
 
-    // Get one by on
+    // read one by one
     for (uint64_t index = lo; index < hi; ++index) {
         std::vector<EntryPtr> ents;
         bool compacted = false;
@@ -113,7 +113,7 @@ TEST_F(StorageTest, LogEntry) {
         ASSERT_TRUE(s.ok()) << s.ToString();
     }
 
-    // read all
+    // read all entries
     std::vector<EntryPtr> ents;
     bool compacted = false;
     s = storage_->Entries(lo, hi, std::numeric_limits<uint64_t>::max(), &ents,
@@ -123,7 +123,7 @@ TEST_F(StorageTest, LogEntry) {
     s = Equal(ents, to_writes);
     ASSERT_TRUE(s.ok()) << s.ToString();
 
-    // Term
+    // test Term()
     for (uint64_t i = lo; i < hi; ++i) {
         uint64_t term = 0;
         bool compacted = false;
@@ -133,7 +133,7 @@ TEST_F(StorageTest, LogEntry) {
         ASSERT_EQ(term, to_writes[i - 1]->term());
     }
 
-    // with maxsize
+    // with max_size arg
     ents.clear();
     s = storage_->Entries(lo, hi,
                           to_writes[0]->ByteSizeLong() + to_writes[1]->ByteSizeLong(),
@@ -144,7 +144,7 @@ TEST_F(StorageTest, LogEntry) {
     s = Equal(ents, ents2);
     ASSERT_TRUE(s.ok()) << s.ToString();
 
-    // at lease one
+    // at least one entry
     ents.clear();
     s = storage_->Entries(lo, hi, 1, &ents, &compacted);
     ASSERT_TRUE(s.ok()) << s.ToString();
@@ -152,21 +152,23 @@ TEST_F(StorageTest, LogEntry) {
     s = Equal(ents, std::vector<EntryPtr>{to_writes[0]});
     ASSERT_TRUE(s.ok()) << s.ToString();
 
-    // load compacted
+    // read compacted entries
     ents.clear();
     s = storage_->Entries(0, hi, std::numeric_limits<uint64_t>::max(), &ents, &compacted);
     ASSERT_TRUE(s.ok()) << s.ToString();
     ASSERT_TRUE(compacted);
     ASSERT_TRUE(ents.empty());
 
+    // reopen
     ReOpen();
 
+    // test FristIndex
     s = storage_->FirstIndex(&index);
     ASSERT_EQ(index, 1);
     s = storage_->LastIndex(&index);
     ASSERT_EQ(index, 99);
 
-    // read all
+    // read all entries
     ents.clear();
     compacted = false;
     s = storage_->Entries(lo, hi, std::numeric_limits<uint64_t>::max(), &ents,
@@ -176,7 +178,7 @@ TEST_F(StorageTest, LogEntry) {
     s = Equal(ents, to_writes);
     ASSERT_TRUE(s.ok()) << s.ToString();
 
-    // test Term
+    // test Term()
     for (uint64_t i = lo; i < hi; ++i) {
         uint64_t term = 0;
         bool compacted = false;
@@ -186,7 +188,7 @@ TEST_F(StorageTest, LogEntry) {
         ASSERT_EQ(term, to_writes[i - 1]->term());
     }
 
-    // with maxsize
+    // with max_size arg
     ents.clear();
     s = storage_->Entries(lo, hi,
                           to_writes[0]->ByteSizeLong() + to_writes[1]->ByteSizeLong(),
@@ -215,7 +217,7 @@ TEST_F(StorageTest, Conflict) {
     s = storage_->LastIndex(&index);
     ASSERT_EQ(index, 50);
 
-    // read all
+    // read all entries
     std::vector<EntryPtr> ents;
     bool compacted = false;
     s = storage_->Entries(lo, 51, std::numeric_limits<uint64_t>::max(), &ents,
@@ -380,8 +382,10 @@ TEST_F(StorageTest, Corrupt1) {
     auto s = storage_->StoreEntries(to_writes);
     ASSERT_TRUE(s.ok()) << s.ToString();
 
+    // append corrupt block on last file
     storage_->TEST_Add_Corruption1();
 
+    // read all
     std::vector<EntryPtr> ents;
     bool compacted = false;
     s = storage_->Entries(lo, hi, std::numeric_limits<uint64_t>::max(), &ents,
@@ -391,6 +395,7 @@ TEST_F(StorageTest, Corrupt1) {
     s = Equal(ents, to_writes);
     ASSERT_TRUE(s.ok()) << s.ToString();
 
+    // reopen
     ReOpen();
 
     uint64_t index = 0;
@@ -407,6 +412,7 @@ TEST_F(StorageTest, Corrupt1) {
     s = Equal(ents, to_writes);
     ASSERT_TRUE(s.ok()) << s.ToString();
 
+    // write and read
     RandomEntries(hi, hi + 10, 256, &to_writes);
     s = storage_->StoreEntries(
         std::vector<EntryPtr>(to_writes.begin() + hi - 1, to_writes.end()));
@@ -428,8 +434,10 @@ TEST_F(StorageTest, Corrupt2) {
     auto s = storage_->StoreEntries(to_writes);
     ASSERT_TRUE(s.ok()) << s.ToString();
 
+    // append corrupt
     storage_->TEST_Add_Corruption2();
 
+    // reopen
     ReOpen();
 
     uint64_t index = 0;
@@ -452,6 +460,7 @@ TEST_F(StorageTest, Corrupt2) {
     s = Equal(ents, to_writes);
     ASSERT_TRUE(s.ok()) << s.ToString();
 
+    // write and read
     RandomEntries(hi, hi + 10, 256, &to_writes);
     s = storage_->StoreEntries(
         std::vector<EntryPtr>(to_writes.begin() + hi - 1, to_writes.end()));
@@ -493,6 +502,7 @@ TEST_F(StorageHoleTest, StartIndex) {
     s = storage_->LastIndex(&index);
     ASSERT_EQ(index, hi - 1);
 
+    // read all
     ents.clear();
     compacted = false;
     s = storage_->Entries(lo, hi, std::numeric_limits<uint64_t>::max(), &ents,
@@ -502,6 +512,7 @@ TEST_F(StorageHoleTest, StartIndex) {
     s = Equal(ents, to_writes);
     ASSERT_TRUE(s.ok()) << s.ToString();
 
+    // test Term()
     for (uint64_t i = lo; i < hi; ++i) {
         uint64_t term = 0;
         bool compacted = false;
@@ -511,6 +522,7 @@ TEST_F(StorageHoleTest, StartIndex) {
         ASSERT_EQ(term, to_writes[i - lo]->term());
     }
 
+    // with maxsize arg
     ents.clear();
     s = storage_->Entries(lo, hi,
                           to_writes[0]->ByteSizeLong() + to_writes[1]->ByteSizeLong(),
@@ -521,6 +533,7 @@ TEST_F(StorageHoleTest, StartIndex) {
     s = Equal(ents, ents2);
     ASSERT_TRUE(s.ok()) << s.ToString();
 
+    // at least one
     ents.clear();
     s = storage_->Entries(lo, hi, 1, &ents, &compacted);
     ASSERT_TRUE(s.ok()) << s.ToString();
@@ -528,19 +541,23 @@ TEST_F(StorageHoleTest, StartIndex) {
     s = Equal(ents, std::vector<EntryPtr>{to_writes[0]});
     ASSERT_TRUE(s.ok()) << s.ToString();
 
+    // read compacted entry
     ents.clear();
     s = storage_->Entries(0, hi, std::numeric_limits<uint64_t>::max(), &ents, &compacted);
     ASSERT_TRUE(s.ok()) << s.ToString();
     ASSERT_TRUE(compacted);
     ASSERT_TRUE(ents.empty());
 
+    // reopen
     ReOpen();
 
+    // test FristIndex
     s = storage_->FirstIndex(&index);
     ASSERT_EQ(index, lo);
     s = storage_->LastIndex(&index);
     ASSERT_EQ(index, hi - 1);
 
+    // read all
     ents.clear();
     compacted = false;
     s = storage_->Entries(lo, hi, std::numeric_limits<uint64_t>::max(), &ents,
@@ -550,6 +567,7 @@ TEST_F(StorageHoleTest, StartIndex) {
     s = Equal(ents, to_writes);
     ASSERT_TRUE(s.ok()) << s.ToString();
 
+    // test Term()
     for (uint64_t i = lo; i < hi; ++i) {
         uint64_t term = 0;
         bool compacted = false;
@@ -559,6 +577,7 @@ TEST_F(StorageHoleTest, StartIndex) {
         ASSERT_EQ(term, to_writes[i - lo]->term());
     }
 
+    // with maxsize
     ents.clear();
     s = storage_->Entries(lo, hi,
                           to_writes[0]->ByteSizeLong() + to_writes[1]->ByteSizeLong(),

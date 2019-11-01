@@ -6,10 +6,10 @@ package dspb
 import (
 	fmt "fmt"
 	basepb "github.com/chubaodb/chubaodb/master/entity/pkg/basepb"
-	_ "github.com/gogo/protobuf/gogoproto"
 	proto "github.com/golang/protobuf/proto"
 	io "io"
 	math "math"
+	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -21,7 +21,7 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 // RangeRequest data request to a range
 type RangeRequest struct {
@@ -33,6 +33,7 @@ type RangeRequest struct {
 	//	*RangeRequest_GetLockInfo
 	//	*RangeRequest_Select
 	//	*RangeRequest_Scan
+	//	*RangeRequest_SelectFlow
 	//	*RangeRequest_KvGet
 	//	*RangeRequest_KvPut
 	//	*RangeRequest_KvDelete
@@ -56,7 +57,7 @@ func (m *RangeRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error)
 		return xxx_messageInfo_RangeRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -82,31 +83,34 @@ type isRangeRequest_Req interface {
 }
 
 type RangeRequest_Prepare struct {
-	Prepare *PrepareRequest `protobuf:"bytes,2,opt,name=prepare,proto3,oneof"`
+	Prepare *PrepareRequest `protobuf:"bytes,2,opt,name=prepare,proto3,oneof" json:"prepare,omitempty"`
 }
 type RangeRequest_Decide struct {
-	Decide *DecideRequest `protobuf:"bytes,3,opt,name=decide,proto3,oneof"`
+	Decide *DecideRequest `protobuf:"bytes,3,opt,name=decide,proto3,oneof" json:"decide,omitempty"`
 }
 type RangeRequest_ClearUp struct {
-	ClearUp *ClearupRequest `protobuf:"bytes,4,opt,name=clear_up,json=clearUp,proto3,oneof"`
+	ClearUp *ClearupRequest `protobuf:"bytes,4,opt,name=clear_up,json=clearUp,proto3,oneof" json:"clear_up,omitempty"`
 }
 type RangeRequest_GetLockInfo struct {
-	GetLockInfo *GetLockInfoRequest `protobuf:"bytes,5,opt,name=get_lock_info,json=getLockInfo,proto3,oneof"`
+	GetLockInfo *GetLockInfoRequest `protobuf:"bytes,5,opt,name=get_lock_info,json=getLockInfo,proto3,oneof" json:"get_lock_info,omitempty"`
 }
 type RangeRequest_Select struct {
-	Select *SelectRequest `protobuf:"bytes,6,opt,name=select,proto3,oneof"`
+	Select *SelectRequest `protobuf:"bytes,6,opt,name=select,proto3,oneof" json:"select,omitempty"`
 }
 type RangeRequest_Scan struct {
-	Scan *ScanRequest `protobuf:"bytes,7,opt,name=scan,proto3,oneof"`
+	Scan *ScanRequest `protobuf:"bytes,7,opt,name=scan,proto3,oneof" json:"scan,omitempty"`
+}
+type RangeRequest_SelectFlow struct {
+	SelectFlow *SelectFlowRequest `protobuf:"bytes,8,opt,name=select_flow,json=selectFlow,proto3,oneof" json:"select_flow,omitempty"`
 }
 type RangeRequest_KvGet struct {
-	KvGet *KvGetRequest `protobuf:"bytes,20,opt,name=kv_get,json=kvGet,proto3,oneof"`
+	KvGet *KvGetRequest `protobuf:"bytes,20,opt,name=kv_get,json=kvGet,proto3,oneof" json:"kv_get,omitempty"`
 }
 type RangeRequest_KvPut struct {
-	KvPut *KvPutRequest `protobuf:"bytes,21,opt,name=kv_put,json=kvPut,proto3,oneof"`
+	KvPut *KvPutRequest `protobuf:"bytes,21,opt,name=kv_put,json=kvPut,proto3,oneof" json:"kv_put,omitempty"`
 }
 type RangeRequest_KvDelete struct {
-	KvDelete *KvDeleteRequest `protobuf:"bytes,22,opt,name=kv_delete,json=kvDelete,proto3,oneof"`
+	KvDelete *KvDeleteRequest `protobuf:"bytes,22,opt,name=kv_delete,json=kvDelete,proto3,oneof" json:"kv_delete,omitempty"`
 }
 
 func (*RangeRequest_Prepare) isRangeRequest_Req()     {}
@@ -115,6 +119,7 @@ func (*RangeRequest_ClearUp) isRangeRequest_Req()     {}
 func (*RangeRequest_GetLockInfo) isRangeRequest_Req() {}
 func (*RangeRequest_Select) isRangeRequest_Req()      {}
 func (*RangeRequest_Scan) isRangeRequest_Req()        {}
+func (*RangeRequest_SelectFlow) isRangeRequest_Req()  {}
 func (*RangeRequest_KvGet) isRangeRequest_Req()       {}
 func (*RangeRequest_KvPut) isRangeRequest_Req()       {}
 func (*RangeRequest_KvDelete) isRangeRequest_Req()    {}
@@ -175,6 +180,13 @@ func (m *RangeRequest) GetScan() *ScanRequest {
 	return nil
 }
 
+func (m *RangeRequest) GetSelectFlow() *SelectFlowRequest {
+	if x, ok := m.GetReq().(*RangeRequest_SelectFlow); ok {
+		return x.SelectFlow
+	}
+	return nil
+}
+
 func (m *RangeRequest) GetKvGet() *KvGetRequest {
 	if x, ok := m.GetReq().(*RangeRequest_KvGet); ok {
 		return x.KvGet
@@ -196,211 +208,20 @@ func (m *RangeRequest) GetKvDelete() *KvDeleteRequest {
 	return nil
 }
 
-// XXX_OneofFuncs is for the internal use of the proto package.
-func (*RangeRequest) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
-	return _RangeRequest_OneofMarshaler, _RangeRequest_OneofUnmarshaler, _RangeRequest_OneofSizer, []interface{}{
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*RangeRequest) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
 		(*RangeRequest_Prepare)(nil),
 		(*RangeRequest_Decide)(nil),
 		(*RangeRequest_ClearUp)(nil),
 		(*RangeRequest_GetLockInfo)(nil),
 		(*RangeRequest_Select)(nil),
 		(*RangeRequest_Scan)(nil),
+		(*RangeRequest_SelectFlow)(nil),
 		(*RangeRequest_KvGet)(nil),
 		(*RangeRequest_KvPut)(nil),
 		(*RangeRequest_KvDelete)(nil),
 	}
-}
-
-func _RangeRequest_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
-	m := msg.(*RangeRequest)
-	// req
-	switch x := m.Req.(type) {
-	case *RangeRequest_Prepare:
-		_ = b.EncodeVarint(2<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Prepare); err != nil {
-			return err
-		}
-	case *RangeRequest_Decide:
-		_ = b.EncodeVarint(3<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Decide); err != nil {
-			return err
-		}
-	case *RangeRequest_ClearUp:
-		_ = b.EncodeVarint(4<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.ClearUp); err != nil {
-			return err
-		}
-	case *RangeRequest_GetLockInfo:
-		_ = b.EncodeVarint(5<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.GetLockInfo); err != nil {
-			return err
-		}
-	case *RangeRequest_Select:
-		_ = b.EncodeVarint(6<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Select); err != nil {
-			return err
-		}
-	case *RangeRequest_Scan:
-		_ = b.EncodeVarint(7<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Scan); err != nil {
-			return err
-		}
-	case *RangeRequest_KvGet:
-		_ = b.EncodeVarint(20<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.KvGet); err != nil {
-			return err
-		}
-	case *RangeRequest_KvPut:
-		_ = b.EncodeVarint(21<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.KvPut); err != nil {
-			return err
-		}
-	case *RangeRequest_KvDelete:
-		_ = b.EncodeVarint(22<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.KvDelete); err != nil {
-			return err
-		}
-	case nil:
-	default:
-		return fmt.Errorf("RangeRequest.Req has unexpected type %T", x)
-	}
-	return nil
-}
-
-func _RangeRequest_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
-	m := msg.(*RangeRequest)
-	switch tag {
-	case 2: // req.prepare
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(PrepareRequest)
-		err := b.DecodeMessage(msg)
-		m.Req = &RangeRequest_Prepare{msg}
-		return true, err
-	case 3: // req.decide
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(DecideRequest)
-		err := b.DecodeMessage(msg)
-		m.Req = &RangeRequest_Decide{msg}
-		return true, err
-	case 4: // req.clear_up
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(ClearupRequest)
-		err := b.DecodeMessage(msg)
-		m.Req = &RangeRequest_ClearUp{msg}
-		return true, err
-	case 5: // req.get_lock_info
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(GetLockInfoRequest)
-		err := b.DecodeMessage(msg)
-		m.Req = &RangeRequest_GetLockInfo{msg}
-		return true, err
-	case 6: // req.select
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(SelectRequest)
-		err := b.DecodeMessage(msg)
-		m.Req = &RangeRequest_Select{msg}
-		return true, err
-	case 7: // req.scan
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(ScanRequest)
-		err := b.DecodeMessage(msg)
-		m.Req = &RangeRequest_Scan{msg}
-		return true, err
-	case 20: // req.kv_get
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(KvGetRequest)
-		err := b.DecodeMessage(msg)
-		m.Req = &RangeRequest_KvGet{msg}
-		return true, err
-	case 21: // req.kv_put
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(KvPutRequest)
-		err := b.DecodeMessage(msg)
-		m.Req = &RangeRequest_KvPut{msg}
-		return true, err
-	case 22: // req.kv_delete
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(KvDeleteRequest)
-		err := b.DecodeMessage(msg)
-		m.Req = &RangeRequest_KvDelete{msg}
-		return true, err
-	default:
-		return false, nil
-	}
-}
-
-func _RangeRequest_OneofSizer(msg proto.Message) (n int) {
-	m := msg.(*RangeRequest)
-	// req
-	switch x := m.Req.(type) {
-	case *RangeRequest_Prepare:
-		s := proto.Size(x.Prepare)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *RangeRequest_Decide:
-		s := proto.Size(x.Decide)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *RangeRequest_ClearUp:
-		s := proto.Size(x.ClearUp)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *RangeRequest_GetLockInfo:
-		s := proto.Size(x.GetLockInfo)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *RangeRequest_Select:
-		s := proto.Size(x.Select)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *RangeRequest_Scan:
-		s := proto.Size(x.Scan)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *RangeRequest_KvGet:
-		s := proto.Size(x.KvGet)
-		n += 2 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *RangeRequest_KvPut:
-		s := proto.Size(x.KvPut)
-		n += 2 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *RangeRequest_KvDelete:
-		s := proto.Size(x.KvDelete)
-		n += 2 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case nil:
-	default:
-		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
-	}
-	return n
 }
 
 type RangeRequest_Header struct {
@@ -427,7 +248,7 @@ func (m *RangeRequest_Header) XXX_Marshal(b []byte, deterministic bool) ([]byte,
 		return xxx_messageInfo_RangeRequest_Header.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -483,6 +304,7 @@ type RangeResponse struct {
 	//	*RangeResponse_GetLockInfo
 	//	*RangeResponse_Select
 	//	*RangeResponse_Scan
+	//	*RangeResponse_SelectFlow
 	//	*RangeResponse_KvGet
 	//	*RangeResponse_KvPut
 	//	*RangeResponse_KvDelete
@@ -506,7 +328,7 @@ func (m *RangeResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error
 		return xxx_messageInfo_RangeResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -532,31 +354,34 @@ type isRangeResponse_Resp interface {
 }
 
 type RangeResponse_Prepare struct {
-	Prepare *PrepareResponse `protobuf:"bytes,2,opt,name=prepare,proto3,oneof"`
+	Prepare *PrepareResponse `protobuf:"bytes,2,opt,name=prepare,proto3,oneof" json:"prepare,omitempty"`
 }
 type RangeResponse_Decide struct {
-	Decide *DecideResponse `protobuf:"bytes,3,opt,name=decide,proto3,oneof"`
+	Decide *DecideResponse `protobuf:"bytes,3,opt,name=decide,proto3,oneof" json:"decide,omitempty"`
 }
 type RangeResponse_ClearUp struct {
-	ClearUp *ClearupResponse `protobuf:"bytes,4,opt,name=clear_up,json=clearUp,proto3,oneof"`
+	ClearUp *ClearupResponse `protobuf:"bytes,4,opt,name=clear_up,json=clearUp,proto3,oneof" json:"clear_up,omitempty"`
 }
 type RangeResponse_GetLockInfo struct {
-	GetLockInfo *GetLockInfoResponse `protobuf:"bytes,5,opt,name=get_lock_info,json=getLockInfo,proto3,oneof"`
+	GetLockInfo *GetLockInfoResponse `protobuf:"bytes,5,opt,name=get_lock_info,json=getLockInfo,proto3,oneof" json:"get_lock_info,omitempty"`
 }
 type RangeResponse_Select struct {
-	Select *SelectResponse `protobuf:"bytes,6,opt,name=select,proto3,oneof"`
+	Select *SelectResponse `protobuf:"bytes,6,opt,name=select,proto3,oneof" json:"select,omitempty"`
 }
 type RangeResponse_Scan struct {
-	Scan *ScanResponse `protobuf:"bytes,7,opt,name=scan,proto3,oneof"`
+	Scan *ScanResponse `protobuf:"bytes,7,opt,name=scan,proto3,oneof" json:"scan,omitempty"`
+}
+type RangeResponse_SelectFlow struct {
+	SelectFlow *SelectFlowResponse `protobuf:"bytes,8,opt,name=select_flow,json=selectFlow,proto3,oneof" json:"select_flow,omitempty"`
 }
 type RangeResponse_KvGet struct {
-	KvGet *KvGetResponse `protobuf:"bytes,20,opt,name=kv_get,json=kvGet,proto3,oneof"`
+	KvGet *KvGetResponse `protobuf:"bytes,20,opt,name=kv_get,json=kvGet,proto3,oneof" json:"kv_get,omitempty"`
 }
 type RangeResponse_KvPut struct {
-	KvPut *KvPutResponse `protobuf:"bytes,21,opt,name=kv_put,json=kvPut,proto3,oneof"`
+	KvPut *KvPutResponse `protobuf:"bytes,21,opt,name=kv_put,json=kvPut,proto3,oneof" json:"kv_put,omitempty"`
 }
 type RangeResponse_KvDelete struct {
-	KvDelete *KvDeleteResponse `protobuf:"bytes,22,opt,name=kv_delete,json=kvDelete,proto3,oneof"`
+	KvDelete *KvDeleteResponse `protobuf:"bytes,22,opt,name=kv_delete,json=kvDelete,proto3,oneof" json:"kv_delete,omitempty"`
 }
 
 func (*RangeResponse_Prepare) isRangeResponse_Resp()     {}
@@ -565,6 +390,7 @@ func (*RangeResponse_ClearUp) isRangeResponse_Resp()     {}
 func (*RangeResponse_GetLockInfo) isRangeResponse_Resp() {}
 func (*RangeResponse_Select) isRangeResponse_Resp()      {}
 func (*RangeResponse_Scan) isRangeResponse_Resp()        {}
+func (*RangeResponse_SelectFlow) isRangeResponse_Resp()  {}
 func (*RangeResponse_KvGet) isRangeResponse_Resp()       {}
 func (*RangeResponse_KvPut) isRangeResponse_Resp()       {}
 func (*RangeResponse_KvDelete) isRangeResponse_Resp()    {}
@@ -625,6 +451,13 @@ func (m *RangeResponse) GetScan() *ScanResponse {
 	return nil
 }
 
+func (m *RangeResponse) GetSelectFlow() *SelectFlowResponse {
+	if x, ok := m.GetResp().(*RangeResponse_SelectFlow); ok {
+		return x.SelectFlow
+	}
+	return nil
+}
+
 func (m *RangeResponse) GetKvGet() *KvGetResponse {
 	if x, ok := m.GetResp().(*RangeResponse_KvGet); ok {
 		return x.KvGet
@@ -646,211 +479,20 @@ func (m *RangeResponse) GetKvDelete() *KvDeleteResponse {
 	return nil
 }
 
-// XXX_OneofFuncs is for the internal use of the proto package.
-func (*RangeResponse) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
-	return _RangeResponse_OneofMarshaler, _RangeResponse_OneofUnmarshaler, _RangeResponse_OneofSizer, []interface{}{
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*RangeResponse) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
 		(*RangeResponse_Prepare)(nil),
 		(*RangeResponse_Decide)(nil),
 		(*RangeResponse_ClearUp)(nil),
 		(*RangeResponse_GetLockInfo)(nil),
 		(*RangeResponse_Select)(nil),
 		(*RangeResponse_Scan)(nil),
+		(*RangeResponse_SelectFlow)(nil),
 		(*RangeResponse_KvGet)(nil),
 		(*RangeResponse_KvPut)(nil),
 		(*RangeResponse_KvDelete)(nil),
 	}
-}
-
-func _RangeResponse_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
-	m := msg.(*RangeResponse)
-	// resp
-	switch x := m.Resp.(type) {
-	case *RangeResponse_Prepare:
-		_ = b.EncodeVarint(2<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Prepare); err != nil {
-			return err
-		}
-	case *RangeResponse_Decide:
-		_ = b.EncodeVarint(3<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Decide); err != nil {
-			return err
-		}
-	case *RangeResponse_ClearUp:
-		_ = b.EncodeVarint(4<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.ClearUp); err != nil {
-			return err
-		}
-	case *RangeResponse_GetLockInfo:
-		_ = b.EncodeVarint(5<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.GetLockInfo); err != nil {
-			return err
-		}
-	case *RangeResponse_Select:
-		_ = b.EncodeVarint(6<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Select); err != nil {
-			return err
-		}
-	case *RangeResponse_Scan:
-		_ = b.EncodeVarint(7<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Scan); err != nil {
-			return err
-		}
-	case *RangeResponse_KvGet:
-		_ = b.EncodeVarint(20<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.KvGet); err != nil {
-			return err
-		}
-	case *RangeResponse_KvPut:
-		_ = b.EncodeVarint(21<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.KvPut); err != nil {
-			return err
-		}
-	case *RangeResponse_KvDelete:
-		_ = b.EncodeVarint(22<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.KvDelete); err != nil {
-			return err
-		}
-	case nil:
-	default:
-		return fmt.Errorf("RangeResponse.Resp has unexpected type %T", x)
-	}
-	return nil
-}
-
-func _RangeResponse_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
-	m := msg.(*RangeResponse)
-	switch tag {
-	case 2: // resp.prepare
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(PrepareResponse)
-		err := b.DecodeMessage(msg)
-		m.Resp = &RangeResponse_Prepare{msg}
-		return true, err
-	case 3: // resp.decide
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(DecideResponse)
-		err := b.DecodeMessage(msg)
-		m.Resp = &RangeResponse_Decide{msg}
-		return true, err
-	case 4: // resp.clear_up
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(ClearupResponse)
-		err := b.DecodeMessage(msg)
-		m.Resp = &RangeResponse_ClearUp{msg}
-		return true, err
-	case 5: // resp.get_lock_info
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(GetLockInfoResponse)
-		err := b.DecodeMessage(msg)
-		m.Resp = &RangeResponse_GetLockInfo{msg}
-		return true, err
-	case 6: // resp.select
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(SelectResponse)
-		err := b.DecodeMessage(msg)
-		m.Resp = &RangeResponse_Select{msg}
-		return true, err
-	case 7: // resp.scan
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(ScanResponse)
-		err := b.DecodeMessage(msg)
-		m.Resp = &RangeResponse_Scan{msg}
-		return true, err
-	case 20: // resp.kv_get
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(KvGetResponse)
-		err := b.DecodeMessage(msg)
-		m.Resp = &RangeResponse_KvGet{msg}
-		return true, err
-	case 21: // resp.kv_put
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(KvPutResponse)
-		err := b.DecodeMessage(msg)
-		m.Resp = &RangeResponse_KvPut{msg}
-		return true, err
-	case 22: // resp.kv_delete
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(KvDeleteResponse)
-		err := b.DecodeMessage(msg)
-		m.Resp = &RangeResponse_KvDelete{msg}
-		return true, err
-	default:
-		return false, nil
-	}
-}
-
-func _RangeResponse_OneofSizer(msg proto.Message) (n int) {
-	m := msg.(*RangeResponse)
-	// resp
-	switch x := m.Resp.(type) {
-	case *RangeResponse_Prepare:
-		s := proto.Size(x.Prepare)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *RangeResponse_Decide:
-		s := proto.Size(x.Decide)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *RangeResponse_ClearUp:
-		s := proto.Size(x.ClearUp)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *RangeResponse_GetLockInfo:
-		s := proto.Size(x.GetLockInfo)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *RangeResponse_Select:
-		s := proto.Size(x.Select)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *RangeResponse_Scan:
-		s := proto.Size(x.Scan)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *RangeResponse_KvGet:
-		s := proto.Size(x.KvGet)
-		n += 2 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *RangeResponse_KvPut:
-		s := proto.Size(x.KvPut)
-		n += 2 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *RangeResponse_KvDelete:
-		s := proto.Size(x.KvDelete)
-		n += 2 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case nil:
-	default:
-		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
-	}
-	return n
 }
 
 type RangeResponse_Header struct {
@@ -876,7 +518,7 @@ func (m *RangeResponse_Header) XXX_Marshal(b []byte, deterministic bool) ([]byte
 		return xxx_messageInfo_RangeResponse_Header.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -926,52 +568,54 @@ func init() {
 func init() { proto.RegisterFile("dspb/api.proto", fileDescriptor_ff605de5c4859d61) }
 
 var fileDescriptor_ff605de5c4859d61 = []byte{
-	// 624 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x94, 0xdf, 0x4e, 0xd4, 0x4e,
-	0x14, 0xc7, 0x29, 0x74, 0x0b, 0xcc, 0xfe, 0xf8, 0x05, 0x87, 0x5d, 0x52, 0x36, 0x71, 0xa3, 0xdc,
-	0x48, 0x22, 0x14, 0x01, 0xf5, 0x52, 0x13, 0x84, 0x00, 0xd1, 0x0b, 0x52, 0xe3, 0x75, 0xd3, 0x4e,
-	0x0f, 0xdd, 0x4d, 0xd7, 0xce, 0x30, 0x9d, 0x6e, 0x7c, 0x0e, 0xaf, 0xf4, 0x8d, 0xbc, 0xf4, 0x11,
-	0x0c, 0x3e, 0x84, 0xb7, 0xa6, 0x67, 0x66, 0xfb, 0x0f, 0x2e, 0xbd, 0xda, 0x39, 0xe7, 0x7c, 0xbe,
-	0x3b, 0x27, 0x99, 0x4f, 0x4a, 0xfe, 0x8f, 0x73, 0x11, 0x1d, 0x86, 0x62, 0xea, 0x09, 0xc9, 0x15,
-	0xa7, 0x76, 0x59, 0x8f, 0x0e, 0x92, 0xa9, 0x9a, 0x14, 0x91, 0xc7, 0xf8, 0xe7, 0xc3, 0x84, 0x27,
-	0xfc, 0x10, 0x87, 0x51, 0x71, 0x83, 0x15, 0x16, 0x78, 0xd2, 0xa1, 0xd1, 0xeb, 0x06, 0xce, 0x26,
-	0x45, 0x14, 0xf2, 0x38, 0xaa, 0x0f, 0x1a, 0x8f, 0xc2, 0x1c, 0x44, 0x64, 0x7e, 0x4c, 0x6e, 0x13,
-	0x2f, 0x07, 0x29, 0xb9, 0x34, 0x9d, 0x0d, 0xec, 0xa4, 0x73, 0x53, 0xea, 0xed, 0xd4, 0x97, 0x4c,
-	0xd7, 0xbb, 0xdf, 0x7b, 0xe4, 0x3f, 0x3f, 0xcc, 0x12, 0xf0, 0xe1, 0xb6, 0x80, 0x5c, 0xd1, 0x23,
-	0xe2, 0x4c, 0x20, 0x8c, 0x41, 0xba, 0xd6, 0x13, 0x6b, 0xaf, 0x7f, 0xbc, 0xe3, 0x95, 0x09, 0xaf,
-	0xc9, 0x78, 0x97, 0x08, 0xf8, 0x06, 0xa4, 0x2f, 0xc8, 0xaa, 0x90, 0x20, 0x42, 0x09, 0xee, 0x32,
-	0x66, 0x06, 0x3a, 0x73, 0xad, 0x9b, 0x26, 0x75, 0xb9, 0xe4, 0x2f, 0x30, 0x7a, 0x40, 0x9c, 0x18,
-	0xd8, 0x34, 0x06, 0x77, 0x05, 0x03, 0x5b, 0x3a, 0x70, 0x86, 0xbd, 0x9a, 0x37, 0x10, 0x3d, 0x22,
-	0x6b, 0x6c, 0x06, 0xa1, 0x0c, 0x0a, 0xe1, 0xda, 0xcd, 0x1b, 0xde, 0x95, 0xdd, 0x42, 0x34, 0x6e,
-	0x40, 0xee, 0x93, 0xa0, 0x6f, 0xc8, 0x46, 0x02, 0x2a, 0x98, 0x71, 0x96, 0x06, 0xd3, 0xec, 0x86,
-	0xbb, 0x3d, 0xcc, 0xb9, 0x3a, 0x77, 0x01, 0xea, 0x03, 0x67, 0xe9, 0x55, 0x76, 0xc3, 0xeb, 0x6c,
-	0x3f, 0xa9, 0xbb, 0xe5, 0x86, 0x39, 0xcc, 0x80, 0x29, 0xd7, 0x69, 0x6e, 0xf8, 0x11, 0x7b, 0x8d,
-	0x0d, 0x35, 0x44, 0x9f, 0x11, 0x3b, 0x67, 0x61, 0xe6, 0xae, 0x22, 0xfc, 0xc8, 0xc0, 0x2c, 0xcc,
-	0x6a, 0x14, 0x01, 0xfa, 0x9c, 0x38, 0xe9, 0x3c, 0x48, 0x40, 0xb9, 0x03, 0x44, 0xa9, 0x46, 0xdf,
-	0xcf, 0x2f, 0xa0, 0xf1, 0xb7, 0xbd, 0xb4, 0xac, 0x0d, 0x2c, 0x0a, 0xe5, 0x0e, 0xdb, 0xf0, 0x75,
-	0xd1, 0x86, 0xaf, 0x0b, 0x45, 0x5f, 0x92, 0xf5, 0x74, 0x1e, 0xc4, 0x30, 0x03, 0x05, 0xee, 0x36,
-	0xf2, 0xc3, 0x05, 0x7f, 0x86, 0xdd, 0x3a, 0xb2, 0x96, 0x9a, 0xd6, 0xe8, 0xab, 0x45, 0x1c, 0xfd,
-	0x9c, 0xf4, 0x31, 0x21, 0x6c, 0x56, 0xe4, 0x0a, 0x64, 0x30, 0x8d, 0xf1, 0xf5, 0x6d, 0x7f, 0xdd,
-	0x74, 0xae, 0x62, 0xba, 0x43, 0xd6, 0x94, 0x0c, 0x19, 0x94, 0xc3, 0x65, 0x1c, 0xae, 0x62, 0xad,
-	0x47, 0xb2, 0xf4, 0xa3, 0x1c, 0xad, 0xe8, 0x11, 0xd6, 0x57, 0x31, 0x3d, 0x21, 0x7d, 0x3d, 0x02,
-	0xc1, 0xd9, 0xc4, 0xbc, 0x1e, 0xf5, 0x8c, 0xb4, 0x68, 0xd5, 0x79, 0x39, 0xf1, 0x89, 0xac, 0xce,
-	0xa7, 0x3d, 0xb2, 0x22, 0xe1, 0x76, 0xf7, 0x8f, 0x4d, 0x36, 0x8c, 0x77, 0xb9, 0xe0, 0x59, 0x0e,
-	0xf4, 0xb8, 0x23, 0xe7, 0xa8, 0x25, 0xa7, 0x86, 0xba, 0x76, 0x1e, 0x75, 0xed, 0x1c, 0x76, 0xec,
-	0xd4, 0xb1, 0xa6, 0x9e, 0x5e, 0x47, 0xcf, 0x41, 0x5b, 0xcf, 0x2a, 0xb0, 0xf0, 0xf3, 0xf8, 0x9e,
-	0x9f, 0xc3, 0x8e, 0x9f, 0xf5, 0x1d, 0x0b, 0x41, 0xdf, 0x3e, 0x2c, 0xe8, 0xce, 0x03, 0x82, 0x56,
-	0xe1, 0x96, 0xa1, 0x5e, 0xc7, 0xd0, 0x41, 0xdb, 0xd0, 0x7a, 0x49, 0xa3, 0xe8, 0x5e, 0x4b, 0x51,
-	0xda, 0x54, 0xb4, 0x62, 0xb5, 0xa3, 0xfb, 0x1d, 0x47, 0xb7, 0x5a, 0x8e, 0x56, 0xb0, 0x91, 0x74,
-	0xbf, 0x23, 0xe9, 0x56, 0x4b, 0xd2, 0x26, 0x5d, 0x5a, 0xfa, 0xea, 0xbe, 0xa5, 0xdb, 0x5d, 0x4b,
-	0xab, 0x4c, 0xad, 0x29, 0xfc, 0x03, 0x4b, 0x9f, 0x92, 0x1e, 0x7e, 0x18, 0xcd, 0xa3, 0xf6, 0xf5,
-	0xb5, 0xe7, 0x65, 0xcb, 0xd7, 0x93, 0x53, 0x87, 0xd8, 0x12, 0x72, 0x71, 0xba, 0xf9, 0xe3, 0x6e,
-	0x6c, 0xfd, 0xbc, 0x1b, 0x5b, 0xbf, 0xee, 0xc6, 0xd6, 0xb7, 0xdf, 0xe3, 0xa5, 0xc8, 0xc1, 0xcf,
-	0xe5, 0xc9, 0xdf, 0x00, 0x00, 0x00, 0xff, 0xff, 0x3e, 0x8a, 0x0c, 0x7d, 0xde, 0x05, 0x00, 0x00,
+	// 643 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x94, 0x4f, 0x4f, 0xd4, 0x40,
+	0x18, 0xc6, 0x29, 0x6c, 0xcb, 0x32, 0x2b, 0x06, 0x87, 0x5d, 0x1c, 0x36, 0x71, 0xa3, 0x5c, 0x24,
+	0x11, 0x8b, 0x80, 0x7a, 0xd0, 0x44, 0x13, 0x04, 0x81, 0xe8, 0x81, 0xd4, 0x78, 0x6e, 0xda, 0xe9,
+	0xcb, 0xee, 0xa6, 0xb5, 0x33, 0x4c, 0xa7, 0x8b, 0x9f, 0xc3, 0x93, 0x1f, 0xc4, 0x0f, 0xe1, 0xd1,
+	0x8b, 0x77, 0x83, 0x5f, 0xc4, 0x74, 0x66, 0xb6, 0xff, 0xe0, 0xe8, 0x69, 0xfb, 0x3e, 0xef, 0xef,
+	0xe9, 0x4c, 0xb2, 0xbf, 0x14, 0xdd, 0x8d, 0x32, 0x1e, 0xee, 0x06, 0x7c, 0xea, 0x72, 0xc1, 0x24,
+	0xc3, 0x9d, 0x62, 0x1e, 0xbe, 0x1c, 0x4f, 0xe5, 0x24, 0x0f, 0x5d, 0xca, 0xbe, 0xec, 0xd2, 0x49,
+	0x1e, 0x06, 0x2c, 0x0a, 0xab, 0x07, 0x45, 0xee, 0x86, 0x41, 0x06, 0x3c, 0x34, 0x3f, 0xba, 0x3d,
+	0x5c, 0x53, 0x6f, 0x03, 0x21, 0x98, 0x30, 0xc9, 0xaa, 0x4a, 0xe2, 0x99, 0x19, 0xf5, 0x71, 0xf2,
+	0x6b, 0xaa, 0xe7, 0xad, 0xdf, 0x36, 0xba, 0xe3, 0x05, 0xe9, 0x18, 0x3c, 0xb8, 0xcc, 0x21, 0x93,
+	0x78, 0x0f, 0x39, 0x13, 0x08, 0x22, 0x10, 0xc4, 0x7a, 0x68, 0x6d, 0xf7, 0xf6, 0x37, 0xdd, 0xa2,
+	0xe1, 0xd6, 0x19, 0xf7, 0x54, 0x01, 0x9e, 0x01, 0xf1, 0x33, 0xb4, 0xcc, 0x05, 0xf0, 0x40, 0x00,
+	0x59, 0x54, 0x9d, 0xbe, 0xee, 0x9c, 0xeb, 0xd0, 0xb4, 0x4e, 0x17, 0xbc, 0x39, 0x86, 0x9f, 0x22,
+	0x27, 0x02, 0x3a, 0x8d, 0x80, 0x2c, 0xa9, 0xc2, 0xba, 0x2e, 0x1c, 0xa9, 0xac, 0xe2, 0x0d, 0x84,
+	0xf7, 0x50, 0x97, 0x26, 0x10, 0x08, 0x3f, 0xe7, 0xa4, 0x53, 0x3f, 0xe1, 0x5d, 0x91, 0xe6, 0xbc,
+	0x76, 0x82, 0xe2, 0x3e, 0x73, 0xfc, 0x06, 0xad, 0x8e, 0x41, 0xfa, 0x09, 0xa3, 0xb1, 0x3f, 0x4d,
+	0x2f, 0x18, 0xb1, 0x55, 0x8f, 0xe8, 0xde, 0x09, 0xc8, 0x8f, 0x8c, 0xc6, 0x67, 0xe9, 0x05, 0xab,
+	0xba, 0xbd, 0x71, 0x95, 0x16, 0x37, 0xcc, 0x20, 0x01, 0x2a, 0x89, 0x53, 0xbf, 0xe1, 0x27, 0x95,
+	0xd5, 0x6e, 0xa8, 0x21, 0xfc, 0x18, 0x75, 0x32, 0x1a, 0xa4, 0x64, 0x59, 0xc1, 0xf7, 0x0c, 0x4c,
+	0x83, 0xb4, 0x42, 0x15, 0x80, 0x5f, 0xa1, 0x9e, 0xae, 0xf8, 0x17, 0x09, 0xbb, 0x22, 0x5d, 0xc5,
+	0xdf, 0xaf, 0xbf, 0xfc, 0x7d, 0xc2, 0xae, 0xaa, 0x16, 0xca, 0xca, 0x10, 0x3f, 0x41, 0x4e, 0x3c,
+	0xf3, 0xc7, 0x20, 0x49, 0x5f, 0xd5, 0xb0, 0xae, 0x7d, 0x98, 0x9d, 0x40, 0xed, 0x4a, 0x76, 0x5c,
+	0xcc, 0x06, 0xe6, 0xb9, 0x24, 0x83, 0x26, 0x7c, 0x9e, 0x37, 0xe1, 0xf3, 0x5c, 0xe2, 0xe7, 0x68,
+	0x25, 0x9e, 0xf9, 0x11, 0x24, 0x20, 0x81, 0x6c, 0x28, 0x7e, 0x30, 0xe7, 0x8f, 0x54, 0x5a, 0x55,
+	0xba, 0xb1, 0x89, 0x86, 0xdf, 0x2c, 0xe4, 0x68, 0x15, 0xf0, 0x03, 0x84, 0x68, 0x92, 0x67, 0x12,
+	0x84, 0x3f, 0x8d, 0x94, 0x39, 0x1d, 0x6f, 0xc5, 0x24, 0x67, 0x11, 0xde, 0x44, 0x5d, 0x29, 0x02,
+	0x0a, 0xc5, 0x72, 0x51, 0x2d, 0x97, 0xd5, 0xac, 0x57, 0xa2, 0x70, 0xab, 0x58, 0x2d, 0xe9, 0x95,
+	0x9a, 0xcf, 0x22, 0x7c, 0x80, 0x7a, 0x7a, 0x05, 0x9c, 0xd1, 0x89, 0xf9, 0xe7, 0xb1, 0x6b, 0x84,
+	0x57, 0x46, 0x1e, 0x17, 0x1b, 0x0f, 0x89, 0xf2, 0xf9, 0xd0, 0x46, 0x4b, 0x02, 0x2e, 0xb7, 0x7e,
+	0xd8, 0x68, 0xd5, 0x38, 0x9b, 0x71, 0x96, 0x66, 0x80, 0xf7, 0x5b, 0x62, 0x0f, 0x1b, 0x62, 0x6b,
+	0xa8, 0x6d, 0xf6, 0x5e, 0xdb, 0xec, 0x41, 0xcb, 0x6c, 0x5d, 0xab, 0xab, 0xed, 0xb6, 0xd4, 0xee,
+	0x37, 0xd5, 0x2e, 0x0b, 0x73, 0xb7, 0xf7, 0x6f, 0xb8, 0x3d, 0x68, 0xb9, 0x5d, 0x9d, 0x31, 0x97,
+	0xfb, 0xed, 0xed, 0x72, 0x6f, 0xde, 0x22, 0x77, 0x59, 0x6e, 0xd8, 0xed, 0xb6, 0xec, 0xee, 0x37,
+	0xed, 0xae, 0x2e, 0x69, 0xf4, 0xde, 0x6e, 0xe8, 0x8d, 0xeb, 0x7a, 0x97, 0xac, 0xf6, 0xfb, 0xf5,
+	0x6d, 0x7e, 0x93, 0x9b, 0x7e, 0x97, 0xb5, 0xba, 0xe0, 0x3b, 0x2d, 0xc1, 0xd7, 0x1b, 0x82, 0x97,
+	0x15, 0x63, 0xf8, 0x4e, 0xcb, 0xf0, 0xf5, 0x86, 0xe1, 0x75, 0xba, 0x50, 0xfc, 0xc5, 0x4d, 0xc5,
+	0x37, 0xda, 0x8a, 0x97, 0x9d, 0xca, 0x71, 0xf8, 0x0f, 0x8a, 0x3f, 0x42, 0xb6, 0xfa, 0x22, 0x1b,
+	0x23, 0x7a, 0xfa, 0xd8, 0xe3, 0x22, 0xf2, 0xf4, 0xe6, 0xd0, 0x41, 0x1d, 0x01, 0x19, 0x3f, 0x5c,
+	0xfb, 0x79, 0x3d, 0xb2, 0x7e, 0x5d, 0x8f, 0xac, 0x3f, 0xd7, 0x23, 0xeb, 0xfb, 0xdf, 0xd1, 0x42,
+	0xe8, 0xa8, 0xef, 0xf4, 0xc1, 0xbf, 0x00, 0x00, 0x00, 0xff, 0xff, 0x78, 0x2a, 0x12, 0xc0, 0x28,
+	0x06, 0x00, 0x00,
 }
 
 func (m *RangeRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -979,169 +623,263 @@ func (m *RangeRequest) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *RangeRequest) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *RangeRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.Header != nil {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintApi(dAtA, i, uint64(m.Header.Size()))
-		n1, err := m.Header.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n1
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
 	if m.Req != nil {
-		nn2, err := m.Req.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size := m.Req.Size()
+			i -= size
+			if _, err := m.Req.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
 		}
-		i += nn2
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+	if m.Header != nil {
+		{
+			size, err := m.Header.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintApi(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0xa
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 
 func (m *RangeRequest_Prepare) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *RangeRequest_Prepare) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.Prepare != nil {
-		dAtA[i] = 0x12
-		i++
-		i = encodeVarintApi(dAtA, i, uint64(m.Prepare.Size()))
-		n3, err := m.Prepare.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.Prepare.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintApi(dAtA, i, uint64(size))
 		}
-		i += n3
+		i--
+		dAtA[i] = 0x12
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *RangeRequest_Decide) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *RangeRequest_Decide) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.Decide != nil {
-		dAtA[i] = 0x1a
-		i++
-		i = encodeVarintApi(dAtA, i, uint64(m.Decide.Size()))
-		n4, err := m.Decide.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.Decide.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintApi(dAtA, i, uint64(size))
 		}
-		i += n4
+		i--
+		dAtA[i] = 0x1a
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *RangeRequest_ClearUp) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *RangeRequest_ClearUp) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.ClearUp != nil {
-		dAtA[i] = 0x22
-		i++
-		i = encodeVarintApi(dAtA, i, uint64(m.ClearUp.Size()))
-		n5, err := m.ClearUp.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.ClearUp.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintApi(dAtA, i, uint64(size))
 		}
-		i += n5
+		i--
+		dAtA[i] = 0x22
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *RangeRequest_GetLockInfo) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *RangeRequest_GetLockInfo) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.GetLockInfo != nil {
-		dAtA[i] = 0x2a
-		i++
-		i = encodeVarintApi(dAtA, i, uint64(m.GetLockInfo.Size()))
-		n6, err := m.GetLockInfo.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.GetLockInfo.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintApi(dAtA, i, uint64(size))
 		}
-		i += n6
+		i--
+		dAtA[i] = 0x2a
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *RangeRequest_Select) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *RangeRequest_Select) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.Select != nil {
-		dAtA[i] = 0x32
-		i++
-		i = encodeVarintApi(dAtA, i, uint64(m.Select.Size()))
-		n7, err := m.Select.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.Select.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintApi(dAtA, i, uint64(size))
 		}
-		i += n7
+		i--
+		dAtA[i] = 0x32
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *RangeRequest_Scan) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *RangeRequest_Scan) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.Scan != nil {
-		dAtA[i] = 0x3a
-		i++
-		i = encodeVarintApi(dAtA, i, uint64(m.Scan.Size()))
-		n8, err := m.Scan.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.Scan.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintApi(dAtA, i, uint64(size))
 		}
-		i += n8
+		i--
+		dAtA[i] = 0x3a
 	}
-	return i, nil
+	return len(dAtA) - i, nil
+}
+func (m *RangeRequest_SelectFlow) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *RangeRequest_SelectFlow) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	if m.SelectFlow != nil {
+		{
+			size, err := m.SelectFlow.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintApi(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x42
+	}
+	return len(dAtA) - i, nil
 }
 func (m *RangeRequest_KvGet) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *RangeRequest_KvGet) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.KvGet != nil {
-		dAtA[i] = 0xa2
-		i++
-		dAtA[i] = 0x1
-		i++
-		i = encodeVarintApi(dAtA, i, uint64(m.KvGet.Size()))
-		n9, err := m.KvGet.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.KvGet.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintApi(dAtA, i, uint64(size))
 		}
-		i += n9
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0xa2
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *RangeRequest_KvPut) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *RangeRequest_KvPut) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.KvPut != nil {
-		dAtA[i] = 0xaa
-		i++
-		dAtA[i] = 0x1
-		i++
-		i = encodeVarintApi(dAtA, i, uint64(m.KvPut.Size()))
-		n10, err := m.KvPut.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.KvPut.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintApi(dAtA, i, uint64(size))
 		}
-		i += n10
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0xaa
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *RangeRequest_KvDelete) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *RangeRequest_KvDelete) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.KvDelete != nil {
-		dAtA[i] = 0xb2
-		i++
-		dAtA[i] = 0x1
-		i++
-		i = encodeVarintApi(dAtA, i, uint64(m.KvDelete.Size()))
-		n11, err := m.KvDelete.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.KvDelete.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintApi(dAtA, i, uint64(size))
 		}
-		i += n11
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0xb2
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *RangeRequest_Header) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -1149,45 +887,53 @@ func (m *RangeRequest_Header) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *RangeRequest_Header) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *RangeRequest_Header) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.ClusterId != 0 {
-		dAtA[i] = 0x8
-		i++
-		i = encodeVarintApi(dAtA, i, uint64(m.ClusterId))
-	}
-	if m.TraceId != 0 {
-		dAtA[i] = 0x10
-		i++
-		i = encodeVarintApi(dAtA, i, uint64(m.TraceId))
-	}
-	if m.RangeId != 0 {
-		dAtA[i] = 0x18
-		i++
-		i = encodeVarintApi(dAtA, i, uint64(m.RangeId))
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
 	if m.RangeEpoch != nil {
-		dAtA[i] = 0x22
-		i++
-		i = encodeVarintApi(dAtA, i, uint64(m.RangeEpoch.Size()))
-		n12, err := m.RangeEpoch.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.RangeEpoch.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintApi(dAtA, i, uint64(size))
 		}
-		i += n12
+		i--
+		dAtA[i] = 0x22
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+	if m.RangeId != 0 {
+		i = encodeVarintApi(dAtA, i, uint64(m.RangeId))
+		i--
+		dAtA[i] = 0x18
 	}
-	return i, nil
+	if m.TraceId != 0 {
+		i = encodeVarintApi(dAtA, i, uint64(m.TraceId))
+		i--
+		dAtA[i] = 0x10
+	}
+	if m.ClusterId != 0 {
+		i = encodeVarintApi(dAtA, i, uint64(m.ClusterId))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
 }
 
 func (m *RangeResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -1195,169 +941,263 @@ func (m *RangeResponse) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *RangeResponse) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *RangeResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.Header != nil {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintApi(dAtA, i, uint64(m.Header.Size()))
-		n13, err := m.Header.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n13
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
 	if m.Resp != nil {
-		nn14, err := m.Resp.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size := m.Resp.Size()
+			i -= size
+			if _, err := m.Resp.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
 		}
-		i += nn14
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+	if m.Header != nil {
+		{
+			size, err := m.Header.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintApi(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0xa
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 
 func (m *RangeResponse_Prepare) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *RangeResponse_Prepare) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.Prepare != nil {
-		dAtA[i] = 0x12
-		i++
-		i = encodeVarintApi(dAtA, i, uint64(m.Prepare.Size()))
-		n15, err := m.Prepare.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.Prepare.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintApi(dAtA, i, uint64(size))
 		}
-		i += n15
+		i--
+		dAtA[i] = 0x12
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *RangeResponse_Decide) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *RangeResponse_Decide) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.Decide != nil {
-		dAtA[i] = 0x1a
-		i++
-		i = encodeVarintApi(dAtA, i, uint64(m.Decide.Size()))
-		n16, err := m.Decide.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.Decide.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintApi(dAtA, i, uint64(size))
 		}
-		i += n16
+		i--
+		dAtA[i] = 0x1a
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *RangeResponse_ClearUp) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *RangeResponse_ClearUp) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.ClearUp != nil {
-		dAtA[i] = 0x22
-		i++
-		i = encodeVarintApi(dAtA, i, uint64(m.ClearUp.Size()))
-		n17, err := m.ClearUp.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.ClearUp.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintApi(dAtA, i, uint64(size))
 		}
-		i += n17
+		i--
+		dAtA[i] = 0x22
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *RangeResponse_GetLockInfo) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *RangeResponse_GetLockInfo) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.GetLockInfo != nil {
-		dAtA[i] = 0x2a
-		i++
-		i = encodeVarintApi(dAtA, i, uint64(m.GetLockInfo.Size()))
-		n18, err := m.GetLockInfo.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.GetLockInfo.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintApi(dAtA, i, uint64(size))
 		}
-		i += n18
+		i--
+		dAtA[i] = 0x2a
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *RangeResponse_Select) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *RangeResponse_Select) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.Select != nil {
-		dAtA[i] = 0x32
-		i++
-		i = encodeVarintApi(dAtA, i, uint64(m.Select.Size()))
-		n19, err := m.Select.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.Select.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintApi(dAtA, i, uint64(size))
 		}
-		i += n19
+		i--
+		dAtA[i] = 0x32
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *RangeResponse_Scan) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *RangeResponse_Scan) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.Scan != nil {
-		dAtA[i] = 0x3a
-		i++
-		i = encodeVarintApi(dAtA, i, uint64(m.Scan.Size()))
-		n20, err := m.Scan.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.Scan.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintApi(dAtA, i, uint64(size))
 		}
-		i += n20
+		i--
+		dAtA[i] = 0x3a
 	}
-	return i, nil
+	return len(dAtA) - i, nil
+}
+func (m *RangeResponse_SelectFlow) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *RangeResponse_SelectFlow) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	if m.SelectFlow != nil {
+		{
+			size, err := m.SelectFlow.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintApi(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x42
+	}
+	return len(dAtA) - i, nil
 }
 func (m *RangeResponse_KvGet) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *RangeResponse_KvGet) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.KvGet != nil {
-		dAtA[i] = 0xa2
-		i++
-		dAtA[i] = 0x1
-		i++
-		i = encodeVarintApi(dAtA, i, uint64(m.KvGet.Size()))
-		n21, err := m.KvGet.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.KvGet.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintApi(dAtA, i, uint64(size))
 		}
-		i += n21
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0xa2
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *RangeResponse_KvPut) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *RangeResponse_KvPut) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.KvPut != nil {
-		dAtA[i] = 0xaa
-		i++
-		dAtA[i] = 0x1
-		i++
-		i = encodeVarintApi(dAtA, i, uint64(m.KvPut.Size()))
-		n22, err := m.KvPut.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.KvPut.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintApi(dAtA, i, uint64(size))
 		}
-		i += n22
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0xaa
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *RangeResponse_KvDelete) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *RangeResponse_KvDelete) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	if m.KvDelete != nil {
-		dAtA[i] = 0xb2
-		i++
-		dAtA[i] = 0x1
-		i++
-		i = encodeVarintApi(dAtA, i, uint64(m.KvDelete.Size()))
-		n23, err := m.KvDelete.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.KvDelete.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintApi(dAtA, i, uint64(size))
 		}
-		i += n23
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0xb2
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 func (m *RangeResponse_Header) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -1365,44 +1205,54 @@ func (m *RangeResponse_Header) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *RangeResponse_Header) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *RangeResponse_Header) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.ClusterId != 0 {
-		dAtA[i] = 0x8
-		i++
-		i = encodeVarintApi(dAtA, i, uint64(m.ClusterId))
-	}
-	if m.TraceId != 0 {
-		dAtA[i] = 0x10
-		i++
-		i = encodeVarintApi(dAtA, i, uint64(m.TraceId))
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
 	if m.Error != nil {
-		dAtA[i] = 0x1a
-		i++
-		i = encodeVarintApi(dAtA, i, uint64(m.Error.Size()))
-		n24, err := m.Error.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.Error.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintApi(dAtA, i, uint64(size))
 		}
-		i += n24
+		i--
+		dAtA[i] = 0x1a
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+	if m.TraceId != 0 {
+		i = encodeVarintApi(dAtA, i, uint64(m.TraceId))
+		i--
+		dAtA[i] = 0x10
 	}
-	return i, nil
+	if m.ClusterId != 0 {
+		i = encodeVarintApi(dAtA, i, uint64(m.ClusterId))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
 }
 
 func encodeVarintApi(dAtA []byte, offset int, v uint64) int {
+	offset -= sovApi(v)
+	base := offset
 	for v >= 1<<7 {
 		dAtA[offset] = uint8(v&0x7f | 0x80)
 		v >>= 7
 		offset++
 	}
 	dAtA[offset] = uint8(v)
-	return offset + 1
+	return base
 }
 func (m *RangeRequest) Size() (n int) {
 	if m == nil {
@@ -1491,6 +1341,18 @@ func (m *RangeRequest_Scan) Size() (n int) {
 	_ = l
 	if m.Scan != nil {
 		l = m.Scan.Size()
+		n += 1 + l + sovApi(uint64(l))
+	}
+	return n
+}
+func (m *RangeRequest_SelectFlow) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.SelectFlow != nil {
+		l = m.SelectFlow.Size()
 		n += 1 + l + sovApi(uint64(l))
 	}
 	return n
@@ -1647,6 +1509,18 @@ func (m *RangeResponse_Scan) Size() (n int) {
 	}
 	return n
 }
+func (m *RangeResponse_SelectFlow) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.SelectFlow != nil {
+		l = m.SelectFlow.Size()
+		n += 1 + l + sovApi(uint64(l))
+	}
+	return n
+}
 func (m *RangeResponse_KvGet) Size() (n int) {
 	if m == nil {
 		return 0
@@ -1706,14 +1580,7 @@ func (m *RangeResponse_Header) Size() (n int) {
 }
 
 func sovApi(x uint64) (n int) {
-	for {
-		n++
-		x >>= 7
-		if x == 0 {
-			break
-		}
-	}
-	return n
+	return (math_bits.Len64(x|1) + 6) / 7
 }
 func sozApi(x uint64) (n int) {
 	return sovApi(uint64((x << 1) ^ uint64((int64(x) >> 63))))
@@ -1992,6 +1859,41 @@ func (m *RangeRequest) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			m.Req = &RangeRequest_Scan{v}
+			iNdEx = postIndex
+		case 8:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SelectFlow", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowApi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthApi
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthApi
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			v := &SelectFlowRequest{}
+			if err := v.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			m.Req = &RangeRequest_SelectFlow{v}
 			iNdEx = postIndex
 		case 20:
 			if wireType != 2 {
@@ -2545,6 +2447,41 @@ func (m *RangeResponse) Unmarshal(dAtA []byte) error {
 			}
 			m.Resp = &RangeResponse_Scan{v}
 			iNdEx = postIndex
+		case 8:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SelectFlow", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowApi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthApi
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthApi
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			v := &SelectFlowResponse{}
+			if err := v.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			m.Resp = &RangeResponse_SelectFlow{v}
+			iNdEx = postIndex
 		case 20:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field KvGet", wireType)
@@ -2806,6 +2743,7 @@ func (m *RangeResponse_Header) Unmarshal(dAtA []byte) error {
 func skipApi(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0
+	depth := 0
 	for iNdEx < l {
 		var wire uint64
 		for shift := uint(0); ; shift += 7 {
@@ -2837,10 +2775,8 @@ func skipApi(dAtA []byte) (n int, err error) {
 					break
 				}
 			}
-			return iNdEx, nil
 		case 1:
 			iNdEx += 8
-			return iNdEx, nil
 		case 2:
 			var length int
 			for shift := uint(0); ; shift += 7 {
@@ -2861,55 +2797,30 @@ func skipApi(dAtA []byte) (n int, err error) {
 				return 0, ErrInvalidLengthApi
 			}
 			iNdEx += length
-			if iNdEx < 0 {
-				return 0, ErrInvalidLengthApi
-			}
-			return iNdEx, nil
 		case 3:
-			for {
-				var innerWire uint64
-				var start int = iNdEx
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return 0, ErrIntOverflowApi
-					}
-					if iNdEx >= l {
-						return 0, io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					innerWire |= (uint64(b) & 0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				innerWireType := int(innerWire & 0x7)
-				if innerWireType == 4 {
-					break
-				}
-				next, err := skipApi(dAtA[start:])
-				if err != nil {
-					return 0, err
-				}
-				iNdEx = start + next
-				if iNdEx < 0 {
-					return 0, ErrInvalidLengthApi
-				}
-			}
-			return iNdEx, nil
+			depth++
 		case 4:
-			return iNdEx, nil
+			if depth == 0 {
+				return 0, ErrUnexpectedEndOfGroupApi
+			}
+			depth--
 		case 5:
 			iNdEx += 4
-			return iNdEx, nil
 		default:
 			return 0, fmt.Errorf("proto: illegal wireType %d", wireType)
 		}
+		if iNdEx < 0 {
+			return 0, ErrInvalidLengthApi
+		}
+		if depth == 0 {
+			return iNdEx, nil
+		}
 	}
-	panic("unreachable")
+	return 0, io.ErrUnexpectedEOF
 }
 
 var (
-	ErrInvalidLengthApi = fmt.Errorf("proto: negative length found during unmarshaling")
-	ErrIntOverflowApi   = fmt.Errorf("proto: integer overflow")
+	ErrInvalidLengthApi        = fmt.Errorf("proto: negative length found during unmarshaling")
+	ErrIntOverflowApi          = fmt.Errorf("proto: integer overflow")
+	ErrUnexpectedEndOfGroupApi = fmt.Errorf("proto: unexpected end of group")
 )

@@ -30,7 +30,7 @@ namespace server {
 static const size_t kWorkThreadCapacity = 100000;
 
 Worker::WorkThread::WorkThread(WorkThreadGroup* group, const std::string& name, size_t max_capacity)
-    : parent_group_(group), capacity_(max_capacity) {
+    : parent_group_(group) {
     thr_ = std::thread([this] { this->runLoop(); });
     AnnotateThread(thr_.native_handle(), name.c_str());
 }

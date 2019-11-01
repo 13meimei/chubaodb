@@ -59,7 +59,8 @@ public:
 
     uint64_t match() const { return match_; }
     void set_match(uint64_t match) { match_ = match; }
-
+    void set_read_match(uint64_t read_match) {read_match_ = read_match;}
+    uint64_t read_match() const { return read_match_; }
     uint64_t committed() const { return committed_; }
     void set_committed(uint64_t committed) { committed_ = committed; }
 
@@ -84,6 +85,9 @@ public:
     void resume();
     bool isPaused() const;
 
+    bool alive() const;
+    void setAlive(bool alive);
+
     std::string ToString() const;
 
 private:
@@ -92,9 +96,11 @@ private:
     Inflight inflight_;   //pipeline operation
 
     bool paused_ = false;
+    bool alive_ = false;
     uint64_t inactive_ticks_ = 0;
 
     uint64_t match_ = 0;
+    uint64_t read_match_ = 0;
     uint64_t next_ = 0;
     uint64_t committed_ = 0;
     uint64_t pendingSnap_ = 0;

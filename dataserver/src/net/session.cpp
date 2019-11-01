@@ -62,7 +62,7 @@ void Session::Connect(const std::string& address, const std::string& port) {
     id_ = std::string("C[unknown<->") + address + ":" + port + "]";
     remote_addr_ = address + ":" + port;
 
-    asio::ip::tcp::resolver resolver(socket_.get_io_context());
+    asio::ip::tcp::resolver resolver(socket_.get_executor());
     asio::error_code ec;
     auto endpoints = resolver.resolve(address, port, ec);
     if (ec) {
@@ -120,7 +120,7 @@ void Session::Close() {
         return;
     }
     auto self(shared_from_this());
-    asio::post(socket_.get_io_context(), [self] { self->do_close(); });
+    asio::post(socket_.get_executor(), [self] { self->do_close(); });
 }
 
 void Session::do_close() {
@@ -138,9 +138,11 @@ void Session::do_close() {
 
 void Session::read_head() {
     auto self(shared_from_this());
+    FLOG_DEBUG("read head from: {}", socket_.remote_endpoint().address().to_string());
     asio::async_read(socket_, asio::buffer(&head_, sizeof(head_)),
             [this, self](std::error_code ec, std::size_t) {
                 if (!ec) {
+                    FLOG_DEBUG("read head from: {} finished", socket_.remote_endpoint().address().to_string());
                     head_.Decode();
                     auto ret = head_.Valid();
                     if (ret.ok()) {
@@ -239,7 +241,7 @@ void Session::Write(const MessagePtr& msg) {
     }
 
     auto self(shared_from_this());
-    asio::post(socket_.get_io_context(), [self, msg] {
+    asio::post(socket_.get_executor(), [self, msg] {
         bool write_in_progress = !self->write_msgs_.empty();
         self->write_msgs_.push_back(msg);
         if (!write_in_progress && self->established_) {

@@ -32,6 +32,8 @@ using namespace chubaodb::ds;
 using namespace google::protobuf;
 
 void RangeTestFixture::SetUp() {
+    InitLog();
+
     table_ = CreateAccountTable();
 
     context_.reset(new mock::RangeContextMock);
@@ -63,9 +65,10 @@ void RangeTestFixture::MakeHeader(RangeRequest_Header *header, uint64_t version,
     header->mutable_range_epoch()->set_conf_ver(conf_ver == 0 ? range_->meta_.GetConfVer() : conf_ver);
 }
 
-void RangeTestFixture::Process(dspb::RangeRequest& req, dspb::RangeResponse* resp) {
-    auto rpc = mock::NewMockRPCRequest(req);
-    range_->Dispatch(std::move(rpc.first), req);
+void RangeTestFixture::Process(const dspb::RangeRequest& req, dspb::RangeResponse* resp) {
+    auto req_copy = req;
+    auto rpc = mock::NewMockRPCRequest(req_copy);
+    range_->Dispatch(std::move(rpc.first), req_copy);
     auto ret = rpc.second->Get(*resp);
     if (!ret.ok()) {
         throw std::runtime_error("get process response failed: " + ret.ToString());
@@ -73,11 +76,10 @@ void RangeTestFixture::Process(dspb::RangeRequest& req, dspb::RangeResponse* res
 }
 
 Status RangeTestFixture::Split() {
-    // test only split once
+    // for testing, only split once
     if (range_->split_range_id_ != 0) {
         return Status(Status::kDuplicate, "split", "already take place");
     }
-
 
     mspb::AskSplitResponse resp;
 
@@ -98,6 +100,7 @@ Status RangeTestFixture::Split() {
 
     range_->startSplit(resp);
 
+    // check version
     if (range_->meta_.GetVersion() != old_ver + 1) {
         return Status(Status::kUnexpected, "version", std::to_string(range_->meta_.GetVersion()));
     }
@@ -109,7 +112,7 @@ Status RangeTestFixture::Split() {
     if (range_->store_->GetEndKey() != split_key) {
         return Status(Status::kUnexpected, "store end key", range_->store_->GetEndKey());
     }
-    // check new range
+    // check new range exist
     auto split_range = context_->FindRange(range_->split_range_id_);
     if (split_range == nullptr) {
         return Status(Status::kNotFound, "new split range", "");

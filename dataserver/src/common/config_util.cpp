@@ -46,7 +46,7 @@ std::pair<size_t, bool> loadThreadNum(const INIReader& reader, const char *secti
     }
 }
 
-std::pair<uint16_t, bool> loadPortNum(const INIReader& reader, const char *section, const char *item) {
+std::pair<uint16_t, bool> loadUInt16(const INIReader& reader, const char *section, const char *item) {
     auto val = reader.GetInteger(section, item, 0);
     if (val < 1 || val > static_cast<long>(std::numeric_limits<uint16_t>::max())) {
         FLOG_CRIT("[Config] invalid config {}.{}: {}", section, item, val);

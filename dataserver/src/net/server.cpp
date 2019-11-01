@@ -92,6 +92,7 @@ void Server::doAccept() {
         } else if (opt_.session_opt.statistics->session_count > opt_.max_connections) {
             FLOG_WARN("[Net] accept max connection limit reached: {}", opt_.max_connections);
         } else {
+            FLOG_DEBUG("accept connection remote: {}", socket.remote_endpoint().address().to_string());
             std::make_shared<Session>(opt_.session_opt, handler_, std::move(socket))->Start();
         }
 

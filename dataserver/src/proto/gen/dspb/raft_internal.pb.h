@@ -77,6 +77,9 @@ enum CmdType {
   TxnPrepare = 1,
   TxnDecide = 2,
   TxnClearup = 3,
+  TxnSelect = 4,
+  TxnScan = 5,
+  TxnSelectFlow = 6,
   KvGet = 20,
   KvPut = 21,
   KvDelete = 22,
@@ -484,6 +487,33 @@ class Command : public ::google::protobuf::Message /* @@protoc_insertion_point(c
   ::dspb::ClearupRequest* release_txn_clearup_req();
   void set_allocated_txn_clearup_req(::dspb::ClearupRequest* txn_clearup_req);
 
+  // .dspb.SelectRequest txn_select_req = 7;
+  bool has_txn_select_req() const;
+  void clear_txn_select_req();
+  static const int kTxnSelectReqFieldNumber = 7;
+  const ::dspb::SelectRequest& txn_select_req() const;
+  ::dspb::SelectRequest* mutable_txn_select_req();
+  ::dspb::SelectRequest* release_txn_select_req();
+  void set_allocated_txn_select_req(::dspb::SelectRequest* txn_select_req);
+
+  // .dspb.ScanRequest txn_scan_req = 8;
+  bool has_txn_scan_req() const;
+  void clear_txn_scan_req();
+  static const int kTxnScanReqFieldNumber = 8;
+  const ::dspb::ScanRequest& txn_scan_req() const;
+  ::dspb::ScanRequest* mutable_txn_scan_req();
+  ::dspb::ScanRequest* release_txn_scan_req();
+  void set_allocated_txn_scan_req(::dspb::ScanRequest* txn_scan_req);
+
+  // .dspb.SelectFlowRequest txn_select_flow_req = 9;
+  bool has_txn_select_flow_req() const;
+  void clear_txn_select_flow_req();
+  static const int kTxnSelectFlowReqFieldNumber = 9;
+  const ::dspb::SelectFlowRequest& txn_select_flow_req() const;
+  ::dspb::SelectFlowRequest* mutable_txn_select_flow_req();
+  ::dspb::SelectFlowRequest* release_txn_select_flow_req();
+  void set_allocated_txn_select_flow_req(::dspb::SelectFlowRequest* txn_select_flow_req);
+
   // .dspb.KvGetRequest kv_get_req = 20;
   bool has_kv_get_req() const;
   void clear_kv_get_req();
@@ -535,6 +565,9 @@ class Command : public ::google::protobuf::Message /* @@protoc_insertion_point(c
   ::dspb::PrepareRequest* txn_prepare_req_;
   ::dspb::DecideRequest* txn_decide_req_;
   ::dspb::ClearupRequest* txn_clearup_req_;
+  ::dspb::SelectRequest* txn_select_req_;
+  ::dspb::ScanRequest* txn_scan_req_;
+  ::dspb::SelectFlowRequest* txn_select_flow_req_;
   ::dspb::KvGetRequest* kv_get_req_;
   ::dspb::KvPutRequest* kv_put_req_;
   ::dspb::KvDeleteRequest* kv_delete_req_;
@@ -1287,6 +1320,126 @@ inline void Command::set_allocated_txn_clearup_req(::dspb::ClearupRequest* txn_c
     
   }
   // @@protoc_insertion_point(field_set_allocated:dspb.Command.txn_clearup_req)
+}
+
+// .dspb.SelectRequest txn_select_req = 7;
+inline bool Command::has_txn_select_req() const {
+  return this != internal_default_instance() && txn_select_req_ != NULL;
+}
+inline void Command::clear_txn_select_req() {
+  if (GetArenaNoVirtual() == NULL && txn_select_req_ != NULL) delete txn_select_req_;
+  txn_select_req_ = NULL;
+}
+inline const ::dspb::SelectRequest& Command::txn_select_req() const {
+  const ::dspb::SelectRequest* p = txn_select_req_;
+  // @@protoc_insertion_point(field_get:dspb.Command.txn_select_req)
+  return p != NULL ? *p : *reinterpret_cast<const ::dspb::SelectRequest*>(
+      &::dspb::_SelectRequest_default_instance_);
+}
+inline ::dspb::SelectRequest* Command::mutable_txn_select_req() {
+  
+  if (txn_select_req_ == NULL) {
+    txn_select_req_ = new ::dspb::SelectRequest;
+  }
+  // @@protoc_insertion_point(field_mutable:dspb.Command.txn_select_req)
+  return txn_select_req_;
+}
+inline ::dspb::SelectRequest* Command::release_txn_select_req() {
+  // @@protoc_insertion_point(field_release:dspb.Command.txn_select_req)
+  
+  ::dspb::SelectRequest* temp = txn_select_req_;
+  txn_select_req_ = NULL;
+  return temp;
+}
+inline void Command::set_allocated_txn_select_req(::dspb::SelectRequest* txn_select_req) {
+  delete txn_select_req_;
+  txn_select_req_ = txn_select_req;
+  if (txn_select_req) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:dspb.Command.txn_select_req)
+}
+
+// .dspb.ScanRequest txn_scan_req = 8;
+inline bool Command::has_txn_scan_req() const {
+  return this != internal_default_instance() && txn_scan_req_ != NULL;
+}
+inline void Command::clear_txn_scan_req() {
+  if (GetArenaNoVirtual() == NULL && txn_scan_req_ != NULL) delete txn_scan_req_;
+  txn_scan_req_ = NULL;
+}
+inline const ::dspb::ScanRequest& Command::txn_scan_req() const {
+  const ::dspb::ScanRequest* p = txn_scan_req_;
+  // @@protoc_insertion_point(field_get:dspb.Command.txn_scan_req)
+  return p != NULL ? *p : *reinterpret_cast<const ::dspb::ScanRequest*>(
+      &::dspb::_ScanRequest_default_instance_);
+}
+inline ::dspb::ScanRequest* Command::mutable_txn_scan_req() {
+  
+  if (txn_scan_req_ == NULL) {
+    txn_scan_req_ = new ::dspb::ScanRequest;
+  }
+  // @@protoc_insertion_point(field_mutable:dspb.Command.txn_scan_req)
+  return txn_scan_req_;
+}
+inline ::dspb::ScanRequest* Command::release_txn_scan_req() {
+  // @@protoc_insertion_point(field_release:dspb.Command.txn_scan_req)
+  
+  ::dspb::ScanRequest* temp = txn_scan_req_;
+  txn_scan_req_ = NULL;
+  return temp;
+}
+inline void Command::set_allocated_txn_scan_req(::dspb::ScanRequest* txn_scan_req) {
+  delete txn_scan_req_;
+  txn_scan_req_ = txn_scan_req;
+  if (txn_scan_req) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:dspb.Command.txn_scan_req)
+}
+
+// .dspb.SelectFlowRequest txn_select_flow_req = 9;
+inline bool Command::has_txn_select_flow_req() const {
+  return this != internal_default_instance() && txn_select_flow_req_ != NULL;
+}
+inline void Command::clear_txn_select_flow_req() {
+  if (GetArenaNoVirtual() == NULL && txn_select_flow_req_ != NULL) delete txn_select_flow_req_;
+  txn_select_flow_req_ = NULL;
+}
+inline const ::dspb::SelectFlowRequest& Command::txn_select_flow_req() const {
+  const ::dspb::SelectFlowRequest* p = txn_select_flow_req_;
+  // @@protoc_insertion_point(field_get:dspb.Command.txn_select_flow_req)
+  return p != NULL ? *p : *reinterpret_cast<const ::dspb::SelectFlowRequest*>(
+      &::dspb::_SelectFlowRequest_default_instance_);
+}
+inline ::dspb::SelectFlowRequest* Command::mutable_txn_select_flow_req() {
+  
+  if (txn_select_flow_req_ == NULL) {
+    txn_select_flow_req_ = new ::dspb::SelectFlowRequest;
+  }
+  // @@protoc_insertion_point(field_mutable:dspb.Command.txn_select_flow_req)
+  return txn_select_flow_req_;
+}
+inline ::dspb::SelectFlowRequest* Command::release_txn_select_flow_req() {
+  // @@protoc_insertion_point(field_release:dspb.Command.txn_select_flow_req)
+  
+  ::dspb::SelectFlowRequest* temp = txn_select_flow_req_;
+  txn_select_flow_req_ = NULL;
+  return temp;
+}
+inline void Command::set_allocated_txn_select_flow_req(::dspb::SelectFlowRequest* txn_select_flow_req) {
+  delete txn_select_flow_req_;
+  txn_select_flow_req_ = txn_select_flow_req;
+  if (txn_select_flow_req) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:dspb.Command.txn_select_flow_req)
 }
 
 // .dspb.KvGetRequest kv_get_req = 20;

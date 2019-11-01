@@ -16,6 +16,7 @@
 
 #include "common/ds_encoding.h"
 #include "db/mass_tree_impl/manager_impl.h"
+#include "db/rocksdb_impl/manager_impl.h"
 
 namespace chubaodb {
 namespace test {
@@ -66,6 +67,11 @@ static const char kIndexPrefixByte = '\x02';
 
 void EncodeKeyPrefix(std::string *buf, uint64_t table_id) {
     buf->push_back(kKeyPrefixByte);
+    EncodeUint64Ascending(buf, table_id);
+}
+
+void EncodeIndexKeyPrefix(std::string *buf, uint64_t table_id) {
+    buf->push_back(kIndexPrefixByte);
     EncodeUint64Ascending(buf, table_id);
 }
 
@@ -192,11 +198,58 @@ void InitLog() {
 }
 
 Status NewDBManager(const std::string& path, std::unique_ptr<ds::db::DBManager>& db_manager) {
-    // TODO: support rocksdb
-    MasstreeOptions opt;
-    opt.rcu_interval_ms = 2000;
-    opt.data_path = path;
-    db_manager.reset(new MasstreeDBManager(opt));
+    auto engine = ::getenv("ENGINE");
+
+    if (engine != nullptr && strcmp(engine, "rocksdb") == 0) {
+        RocksDBConfig opt;
+        opt.path = path;
+        opt.storage_type = 0;
+
+        opt.block_cache_size = 1024 * 1024 * 1024; // default: 1024MB
+        opt.row_cache_size = 0;
+        opt.block_size = 16 * 1024; // default: 16K
+        opt.max_open_files = 100;
+        opt.bytes_per_sync = 0;
+        opt.write_buffer_size = 128 * 1024 * 1024;
+        opt.max_write_buffer_number = 8;
+        opt.min_write_buffer_number_to_merge = 1;
+        opt.max_bytes_for_level_base = 512 * 1024 * 1024;
+        opt.max_bytes_for_level_multiplier = 10;
+        opt.target_file_size_base = 128 * 1024 * 1024;
+        opt.target_file_size_multiplier = 1;
+        opt.max_background_flushes = 2;
+        opt.max_background_compactions = 4;
+        opt.background_rate_limit = 0;
+        opt.disable_auto_compactions = false;
+        opt.read_checksum = true;
+        opt.level0_file_num_compaction_trigger = 8;
+        opt.level0_slowdown_writes_trigger = 40;
+        opt.level0_stop_writes_trigger = 46;
+        opt.disable_wal = false;
+        opt.cache_index_and_filter_blocks = false;
+        opt.compression = 0;
+
+        opt.min_blob_size = 0;
+        opt.blob_file_size = 256 * 1024 * 1024;
+        opt.enable_garbage_collection = true;
+        opt.blob_gc_percent = 75;
+        opt.blob_compression = 0;
+        opt.blob_cache_size = 0;
+        opt.blob_ttl_range = 3600; // in seconds
+
+        opt.ttl = 0;
+        opt.enable_stats = true;
+        opt.enable_debug_log = false;
+
+        db_manager.reset(new RocksDBManager(opt));
+
+    } else {
+        MasstreeOptions opt;
+        opt.rcu_interval_ms = 2000;
+        opt.data_path = path;
+        db_manager.reset(new MasstreeDBManager(opt));
+    }
+
     return db_manager->Init();
 }
 

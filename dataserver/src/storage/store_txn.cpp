@@ -18,6 +18,14 @@
 #include "common/logger.h"
 #include "common/ds_encoding.h"
 #include "row_fetcher.h"
+#include "processor.h"
+#include "processor_table_read.h"
+#include "processor_index_read.h"
+#include "processor_selection.h"
+#include "processor_limit.h"
+#include "processor_agg.h"
+#include "processor_order_by.h"
+#include "processor_data_sample.h"
 
 #include "util.h"
 
@@ -673,6 +681,128 @@ Status Store::TxnScan(const dspb::ScanRequest& req, dspb::ScanResponse* resp) {
     }
     return s;
 }
+
+Status Store::TxnSelectFlow(const dspb::SelectFlowRequest& req, dspb::SelectFlowResponse* resp)
+{
+    Status s ;
+    auto p_count = req.processors_size();
+    if (p_count < 1) {
+        return Status( Status::kInvalidArgument, " processor size less 1, cur type : ", std::to_string(p_count) );
+    }
+
+    // Suppose the first is read data.
+
+    auto processors = req.processors();
+    if (processors[0].type() != dspb::TABLE_READ_TYPE &&
+        processors[0].type() != dspb::INDEX_READ_TYPE &&
+        processors[0].type() != dspb::DATA_SAMPLE_TYPE
+    ) {
+        return Status( Status::kInvalidArgument, " the first processor type error, cur type : ",
+                std::to_string( static_cast<int>(processors[0].type())));
+    }
+
+    uint32_t col_num = 0;
+    std::vector<int> off_sets;
+
+    dspb::KeyRange range_default;
+    range_default.set_start_key(start_key_);
+    range_default.set_end_key(end_key_);
+
+    std::unique_ptr<storage::Processor> ptr;
+    if (processors[0].type() == dspb::TABLE_READ_TYPE) {
+        ptr = std::unique_ptr<Processor>(new storage::TableRead( processors[0].table_read(), range_default, *this ));
+
+        col_num = processors[0].table_read().columns_size();
+    } else if (processors[0].type() == dspb::INDEX_READ_TYPE) {
+        ptr = std::unique_ptr<Processor>(new storage::IndexRead( processors[0].index_read(), range_default, *this ));
+        col_num = processors[0].index_read().columns_size();
+    } else if (processors[0].type() == dspb::DATA_SAMPLE_TYPE) {
+        ptr = std::unique_ptr<Processor>(new storage::DataSample( processors[0].data_sample(), range_default, *this ));
+        col_num = processors[0].data_sample().columns_size();
+    } else {
+        ; // never to here.
+    }
+
+    for (const auto & i : req.output_offsets()) {
+
+        if (i >= col_num ) {
+            s = Status( Status::kInvalidArgument,
+                    "off_set is overflow",
+                    "offset:" + std::to_string(i) + "; num:" + std::to_string(col_num));
+
+            resp->set_code(s.code()); return s;
+        }
+
+        off_sets.push_back(i);
+    }
+
+    for ( int i = 1 ; i < p_count; i++) {
+        switch (processors[i].type()) {
+            case dspb::TABLE_READ_TYPE:
+            case dspb::INDEX_READ_TYPE:
+            case dspb::DATA_SAMPLE_TYPE:
+            {
+                return Status( Status::kInvalidArgument, " more table_read/index_read processor error ", "" );
+            }
+            case dspb::SELECTION_TYPE:
+            {
+                ptr = std::unique_ptr<Processor>(new Selection( processors[i].selection(), std::move(ptr)));
+                break;
+            }
+            case dspb::PROJECTION_TYPE:
+            { // Not to care about
+                break;
+            }
+            case dspb::ORDER_BY_TYPE:
+            {
+                ptr = std::unique_ptr<Processor>(new OrderBy( processors[i].ordering(), std::move(ptr)));
+                break;
+            }
+            case dspb::AGGREGATION_TYPE:
+            {
+                ptr = std::unique_ptr<Processor>(new Aggregation( processors[i].aggregation(), std::move(ptr)));
+                break;
+            }
+            case dspb::LIMIT_TYPE:
+            {
+                ptr = std::unique_ptr<Processor>(new Limit( processors[i].limit(), std::move(ptr)));
+                break;
+            }
+            default :
+            {
+                break;
+            }
+        }
+    }
+
+    while (true) {
+        RowResult rowRes;
+
+        s = ptr->next(rowRes);
+        if (!s.ok()) {
+
+            if (s.code() == Status::kNoMoreData) {
+                s = Status::OK();
+            }
+
+            break;
+        }
+
+        auto row = resp->add_rows();
+        row->set_key(rowRes.GetKey());
+        rowRes.EncodeTo( off_sets, ptr->get_col_ids(), row->mutable_value());
+        row->mutable_value()->set_version(rowRes.GetVersion());
+    }
+
+    if (s.ok()) {
+        resp->set_last_key(ptr->get_last_key());
+    }
+
+    resp->set_code(s.code());
+
+    return s;
+}
+
 
 } /* namespace storage */
 } /* namespace ds */

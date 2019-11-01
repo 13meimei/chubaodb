@@ -152,6 +152,14 @@ bool Replica::isPaused() const {
     }
 }
 
+bool Replica::alive() const {
+    return alive_;
+}
+
+void Replica::setAlive(bool alive) {
+    alive_ = alive;
+}
+
 std::string Replica::ToString() const {
     std::ostringstream ss;
     ss << "next=" << next_ << ", match=" << match_ << ", commit=" << committed_

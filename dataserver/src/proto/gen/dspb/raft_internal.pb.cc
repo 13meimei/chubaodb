@@ -106,6 +106,9 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Command, txn_prepare_req_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Command, txn_decide_req_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Command, txn_clearup_req_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Command, txn_select_req_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Command, txn_scan_req_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Command, txn_select_flow_req_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Command, kv_get_req_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Command, kv_put_req_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Command, kv_delete_req_),
@@ -136,9 +139,9 @@ static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_ATTR
   { 0, -1, sizeof(SplitCommand)},
   { 9, -1, sizeof(CmdID)},
   { 16, -1, sizeof(Command)},
-  { 31, -1, sizeof(PeerTask)},
-  { 38, -1, sizeof(SnapshotKVPair)},
-  { 46, -1, sizeof(SnapshotContext)},
+  { 34, -1, sizeof(PeerTask)},
+  { 41, -1, sizeof(SnapshotKVPair)},
+  { 49, -1, sizeof(SnapshotContext)},
 };
 
 static ::google::protobuf::Message const * const file_default_instances[] = {
@@ -205,6 +208,12 @@ void TableStruct::InitDefaultsImpl() {
       ::dspb::DecideRequest::internal_default_instance());
   _Command_default_instance_._instance.get_mutable()->txn_clearup_req_ = const_cast< ::dspb::ClearupRequest*>(
       ::dspb::ClearupRequest::internal_default_instance());
+  _Command_default_instance_._instance.get_mutable()->txn_select_req_ = const_cast< ::dspb::SelectRequest*>(
+      ::dspb::SelectRequest::internal_default_instance());
+  _Command_default_instance_._instance.get_mutable()->txn_scan_req_ = const_cast< ::dspb::ScanRequest*>(
+      ::dspb::ScanRequest::internal_default_instance());
+  _Command_default_instance_._instance.get_mutable()->txn_select_flow_req_ = const_cast< ::dspb::SelectFlowRequest*>(
+      ::dspb::SelectFlowRequest::internal_default_instance());
   _Command_default_instance_._instance.get_mutable()->kv_get_req_ = const_cast< ::dspb::KvGetRequest*>(
       ::dspb::KvGetRequest::internal_default_instance());
   _Command_default_instance_._instance.get_mutable()->kv_put_req_ = const_cast< ::dspb::KvPutRequest*>(
@@ -235,30 +244,34 @@ void AddDescriptorsImpl() {
       "split_key\030\002 \001(\014\022!\n\005epoch\030\003 \001(\0132\022.basepb."
       "RangeEpoch\022 \n\tnew_range\030\004 \001(\0132\r.basepb.R"
       "ange\"%\n\005CmdID\022\017\n\007node_id\030\001 \001(\004\022\013\n\003seq\030\002 "
-      "\001(\004\"\241\003\n\007Command\022\033\n\006cmd_id\030\001 \001(\0132\013.dspb.C"
+      "\001(\004\"\255\004\n\007Command\022\033\n\006cmd_id\030\001 \001(\0132\013.dspb.C"
       "mdID\022\037\n\010cmd_type\030\002 \001(\0162\r.dspb.CmdType\022(\n"
       "\014verify_epoch\030\003 \001(\0132\022.basepb.RangeEpoch\022"
       "-\n\017txn_prepare_req\030\004 \001(\0132\024.dspb.PrepareR"
       "equest\022+\n\016txn_decide_req\030\005 \001(\0132\023.dspb.De"
       "cideRequest\022-\n\017txn_clearup_req\030\006 \001(\0132\024.d"
-      "spb.ClearupRequest\022&\n\nkv_get_req\030\024 \001(\0132\022"
-      ".dspb.KvGetRequest\022&\n\nkv_put_req\030\025 \001(\0132\022"
-      ".dspb.KvPutRequest\022,\n\rkv_delete_req\030\026 \001("
-      "\0132\025.dspb.KvDeleteRequest\022%\n\tsplit_cmd\030d "
-      "\001(\0132\022.dspb.SplitCommand\"P\n\010PeerTask\022(\n\014v"
-      "erify_epoch\030\001 \001(\0132\022.basepb.RangeEpoch\022\032\n"
-      "\004peer\030\002 \001(\0132\014.basepb.Peer\"K\n\016SnapshotKVP"
-      "air\022\013\n\003key\030\001 \001(\014\022\r\n\005value\030\002 \001(\014\022\035\n\007cf_ty"
-      "pe\030\003 \001(\0162\014.dspb.CFType\".\n\017SnapshotContex"
-      "t\022\033\n\004meta\030\001 \001(\0132\r.basepb.Range*}\n\007CmdTyp"
-      "e\022\017\n\013Invalid_Cmd\020\000\022\016\n\nTxnPrepare\020\001\022\r\n\tTx"
-      "nDecide\020\002\022\016\n\nTxnClearup\020\003\022\t\n\005KvGet\020\024\022\t\n\005"
-      "KvPut\020\025\022\014\n\010KvDelete\020\026\022\016\n\nAdminSplit\020d*$\n"
-      "\006CFType\022\016\n\nCF_DEFAULT\020\000\022\n\n\006CF_TXN\020\001b\006pro"
-      "to3"
+      "spb.ClearupRequest\022+\n\016txn_select_req\030\007 \001"
+      "(\0132\023.dspb.SelectRequest\022\'\n\014txn_scan_req\030"
+      "\010 \001(\0132\021.dspb.ScanRequest\0224\n\023txn_select_f"
+      "low_req\030\t \001(\0132\027.dspb.SelectFlowRequest\022&"
+      "\n\nkv_get_req\030\024 \001(\0132\022.dspb.KvGetRequest\022&"
+      "\n\nkv_put_req\030\025 \001(\0132\022.dspb.KvPutRequest\022,"
+      "\n\rkv_delete_req\030\026 \001(\0132\025.dspb.KvDeleteReq"
+      "uest\022%\n\tsplit_cmd\030d \001(\0132\022.dspb.SplitComm"
+      "and\"P\n\010PeerTask\022(\n\014verify_epoch\030\001 \001(\0132\022."
+      "basepb.RangeEpoch\022\032\n\004peer\030\002 \001(\0132\014.basepb"
+      ".Peer\"K\n\016SnapshotKVPair\022\013\n\003key\030\001 \001(\014\022\r\n\005"
+      "value\030\002 \001(\014\022\035\n\007cf_type\030\003 \001(\0162\014.dspb.CFTy"
+      "pe\".\n\017SnapshotContext\022\033\n\004meta\030\001 \001(\0132\r.ba"
+      "sepb.Range*\254\001\n\007CmdType\022\017\n\013Invalid_Cmd\020\000\022"
+      "\016\n\nTxnPrepare\020\001\022\r\n\tTxnDecide\020\002\022\016\n\nTxnCle"
+      "arup\020\003\022\r\n\tTxnSelect\020\004\022\013\n\007TxnScan\020\005\022\021\n\rTx"
+      "nSelectFlow\020\006\022\t\n\005KvGet\020\024\022\t\n\005KvPut\020\025\022\014\n\010K"
+      "vDelete\020\026\022\016\n\nAdminSplit\020d*$\n\006CFType\022\016\n\nC"
+      "F_DEFAULT\020\000\022\n\n\006CF_TXN\020\001b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 1043);
+      descriptor, 1231);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "dspb/raft_internal.proto", &protobuf_RegisterTypes);
   ::basepb::protobuf_basepb_2fbasepb_2eproto::AddDescriptors();
@@ -290,6 +303,9 @@ bool CmdType_IsValid(int value) {
     case 1:
     case 2:
     case 3:
+    case 4:
+    case 5:
+    case 6:
     case 20:
     case 21:
     case 22:
@@ -1162,6 +1178,9 @@ const int Command::kVerifyEpochFieldNumber;
 const int Command::kTxnPrepareReqFieldNumber;
 const int Command::kTxnDecideReqFieldNumber;
 const int Command::kTxnClearupReqFieldNumber;
+const int Command::kTxnSelectReqFieldNumber;
+const int Command::kTxnScanReqFieldNumber;
+const int Command::kTxnSelectFlowReqFieldNumber;
 const int Command::kKvGetReqFieldNumber;
 const int Command::kKvPutReqFieldNumber;
 const int Command::kKvDeleteReqFieldNumber;
@@ -1206,6 +1225,21 @@ Command::Command(const Command& from)
   } else {
     txn_clearup_req_ = NULL;
   }
+  if (from.has_txn_select_req()) {
+    txn_select_req_ = new ::dspb::SelectRequest(*from.txn_select_req_);
+  } else {
+    txn_select_req_ = NULL;
+  }
+  if (from.has_txn_scan_req()) {
+    txn_scan_req_ = new ::dspb::ScanRequest(*from.txn_scan_req_);
+  } else {
+    txn_scan_req_ = NULL;
+  }
+  if (from.has_txn_select_flow_req()) {
+    txn_select_flow_req_ = new ::dspb::SelectFlowRequest(*from.txn_select_flow_req_);
+  } else {
+    txn_select_flow_req_ = NULL;
+  }
   if (from.has_kv_get_req()) {
     kv_get_req_ = new ::dspb::KvGetRequest(*from.kv_get_req_);
   } else {
@@ -1248,6 +1282,9 @@ void Command::SharedDtor() {
   if (this != internal_default_instance()) delete txn_prepare_req_;
   if (this != internal_default_instance()) delete txn_decide_req_;
   if (this != internal_default_instance()) delete txn_clearup_req_;
+  if (this != internal_default_instance()) delete txn_select_req_;
+  if (this != internal_default_instance()) delete txn_scan_req_;
+  if (this != internal_default_instance()) delete txn_select_flow_req_;
   if (this != internal_default_instance()) delete kv_get_req_;
   if (this != internal_default_instance()) delete kv_put_req_;
   if (this != internal_default_instance()) delete kv_delete_req_;
@@ -1303,6 +1340,18 @@ void Command::Clear() {
     delete txn_clearup_req_;
   }
   txn_clearup_req_ = NULL;
+  if (GetArenaNoVirtual() == NULL && txn_select_req_ != NULL) {
+    delete txn_select_req_;
+  }
+  txn_select_req_ = NULL;
+  if (GetArenaNoVirtual() == NULL && txn_scan_req_ != NULL) {
+    delete txn_scan_req_;
+  }
+  txn_scan_req_ = NULL;
+  if (GetArenaNoVirtual() == NULL && txn_select_flow_req_ != NULL) {
+    delete txn_select_flow_req_;
+  }
+  txn_select_flow_req_ = NULL;
   if (GetArenaNoVirtual() == NULL && kv_get_req_ != NULL) {
     delete kv_get_req_;
   }
@@ -1402,6 +1451,42 @@ bool Command::MergePartialFromCodedStream(
             static_cast< ::google::protobuf::uint8>(50u /* 50 & 0xFF */)) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
                input, mutable_txn_clearup_req()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // .dspb.SelectRequest txn_select_req = 7;
+      case 7: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(58u /* 58 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+               input, mutable_txn_select_req()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // .dspb.ScanRequest txn_scan_req = 8;
+      case 8: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(66u /* 66 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+               input, mutable_txn_scan_req()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // .dspb.SelectFlowRequest txn_select_flow_req = 9;
+      case 9: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(74u /* 74 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+               input, mutable_txn_select_flow_req()));
         } else {
           goto handle_unusual;
         }
@@ -1518,6 +1603,24 @@ void Command::SerializeWithCachedSizes(
       6, *this->txn_clearup_req_, output);
   }
 
+  // .dspb.SelectRequest txn_select_req = 7;
+  if (this->has_txn_select_req()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      7, *this->txn_select_req_, output);
+  }
+
+  // .dspb.ScanRequest txn_scan_req = 8;
+  if (this->has_txn_scan_req()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      8, *this->txn_scan_req_, output);
+  }
+
+  // .dspb.SelectFlowRequest txn_select_flow_req = 9;
+  if (this->has_txn_select_flow_req()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      9, *this->txn_select_flow_req_, output);
+  }
+
   // .dspb.KvGetRequest kv_get_req = 20;
   if (this->has_kv_get_req()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
@@ -1595,6 +1698,27 @@ void Command::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::
       InternalWriteMessageNoVirtualToArray(
         6, *this->txn_clearup_req_, deterministic, target);
+  }
+
+  // .dspb.SelectRequest txn_select_req = 7;
+  if (this->has_txn_select_req()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      InternalWriteMessageNoVirtualToArray(
+        7, *this->txn_select_req_, deterministic, target);
+  }
+
+  // .dspb.ScanRequest txn_scan_req = 8;
+  if (this->has_txn_scan_req()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      InternalWriteMessageNoVirtualToArray(
+        8, *this->txn_scan_req_, deterministic, target);
+  }
+
+  // .dspb.SelectFlowRequest txn_select_flow_req = 9;
+  if (this->has_txn_select_flow_req()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      InternalWriteMessageNoVirtualToArray(
+        9, *this->txn_select_flow_req_, deterministic, target);
   }
 
   // .dspb.KvGetRequest kv_get_req = 20;
@@ -1677,6 +1801,27 @@ size_t Command::ByteSizeLong() const {
         *this->txn_clearup_req_);
   }
 
+  // .dspb.SelectRequest txn_select_req = 7;
+  if (this->has_txn_select_req()) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+        *this->txn_select_req_);
+  }
+
+  // .dspb.ScanRequest txn_scan_req = 8;
+  if (this->has_txn_scan_req()) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+        *this->txn_scan_req_);
+  }
+
+  // .dspb.SelectFlowRequest txn_select_flow_req = 9;
+  if (this->has_txn_select_flow_req()) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+        *this->txn_select_flow_req_);
+  }
+
   // .dspb.KvGetRequest kv_get_req = 20;
   if (this->has_kv_get_req()) {
     total_size += 2 +
@@ -1755,6 +1900,15 @@ void Command::MergeFrom(const Command& from) {
   if (from.has_txn_clearup_req()) {
     mutable_txn_clearup_req()->::dspb::ClearupRequest::MergeFrom(from.txn_clearup_req());
   }
+  if (from.has_txn_select_req()) {
+    mutable_txn_select_req()->::dspb::SelectRequest::MergeFrom(from.txn_select_req());
+  }
+  if (from.has_txn_scan_req()) {
+    mutable_txn_scan_req()->::dspb::ScanRequest::MergeFrom(from.txn_scan_req());
+  }
+  if (from.has_txn_select_flow_req()) {
+    mutable_txn_select_flow_req()->::dspb::SelectFlowRequest::MergeFrom(from.txn_select_flow_req());
+  }
   if (from.has_kv_get_req()) {
     mutable_kv_get_req()->::dspb::KvGetRequest::MergeFrom(from.kv_get_req());
   }
@@ -1801,6 +1955,9 @@ void Command::InternalSwap(Command* other) {
   swap(txn_prepare_req_, other->txn_prepare_req_);
   swap(txn_decide_req_, other->txn_decide_req_);
   swap(txn_clearup_req_, other->txn_clearup_req_);
+  swap(txn_select_req_, other->txn_select_req_);
+  swap(txn_scan_req_, other->txn_scan_req_);
+  swap(txn_select_flow_req_, other->txn_select_flow_req_);
   swap(kv_get_req_, other->kv_get_req_);
   swap(kv_put_req_, other->kv_put_req_);
   swap(kv_delete_req_, other->kv_delete_req_);
@@ -2030,6 +2187,126 @@ void Command::set_allocated_txn_clearup_req(::dspb::ClearupRequest* txn_clearup_
     
   }
   // @@protoc_insertion_point(field_set_allocated:dspb.Command.txn_clearup_req)
+}
+
+// .dspb.SelectRequest txn_select_req = 7;
+bool Command::has_txn_select_req() const {
+  return this != internal_default_instance() && txn_select_req_ != NULL;
+}
+void Command::clear_txn_select_req() {
+  if (GetArenaNoVirtual() == NULL && txn_select_req_ != NULL) delete txn_select_req_;
+  txn_select_req_ = NULL;
+}
+const ::dspb::SelectRequest& Command::txn_select_req() const {
+  const ::dspb::SelectRequest* p = txn_select_req_;
+  // @@protoc_insertion_point(field_get:dspb.Command.txn_select_req)
+  return p != NULL ? *p : *reinterpret_cast<const ::dspb::SelectRequest*>(
+      &::dspb::_SelectRequest_default_instance_);
+}
+::dspb::SelectRequest* Command::mutable_txn_select_req() {
+  
+  if (txn_select_req_ == NULL) {
+    txn_select_req_ = new ::dspb::SelectRequest;
+  }
+  // @@protoc_insertion_point(field_mutable:dspb.Command.txn_select_req)
+  return txn_select_req_;
+}
+::dspb::SelectRequest* Command::release_txn_select_req() {
+  // @@protoc_insertion_point(field_release:dspb.Command.txn_select_req)
+  
+  ::dspb::SelectRequest* temp = txn_select_req_;
+  txn_select_req_ = NULL;
+  return temp;
+}
+void Command::set_allocated_txn_select_req(::dspb::SelectRequest* txn_select_req) {
+  delete txn_select_req_;
+  txn_select_req_ = txn_select_req;
+  if (txn_select_req) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:dspb.Command.txn_select_req)
+}
+
+// .dspb.ScanRequest txn_scan_req = 8;
+bool Command::has_txn_scan_req() const {
+  return this != internal_default_instance() && txn_scan_req_ != NULL;
+}
+void Command::clear_txn_scan_req() {
+  if (GetArenaNoVirtual() == NULL && txn_scan_req_ != NULL) delete txn_scan_req_;
+  txn_scan_req_ = NULL;
+}
+const ::dspb::ScanRequest& Command::txn_scan_req() const {
+  const ::dspb::ScanRequest* p = txn_scan_req_;
+  // @@protoc_insertion_point(field_get:dspb.Command.txn_scan_req)
+  return p != NULL ? *p : *reinterpret_cast<const ::dspb::ScanRequest*>(
+      &::dspb::_ScanRequest_default_instance_);
+}
+::dspb::ScanRequest* Command::mutable_txn_scan_req() {
+  
+  if (txn_scan_req_ == NULL) {
+    txn_scan_req_ = new ::dspb::ScanRequest;
+  }
+  // @@protoc_insertion_point(field_mutable:dspb.Command.txn_scan_req)
+  return txn_scan_req_;
+}
+::dspb::ScanRequest* Command::release_txn_scan_req() {
+  // @@protoc_insertion_point(field_release:dspb.Command.txn_scan_req)
+  
+  ::dspb::ScanRequest* temp = txn_scan_req_;
+  txn_scan_req_ = NULL;
+  return temp;
+}
+void Command::set_allocated_txn_scan_req(::dspb::ScanRequest* txn_scan_req) {
+  delete txn_scan_req_;
+  txn_scan_req_ = txn_scan_req;
+  if (txn_scan_req) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:dspb.Command.txn_scan_req)
+}
+
+// .dspb.SelectFlowRequest txn_select_flow_req = 9;
+bool Command::has_txn_select_flow_req() const {
+  return this != internal_default_instance() && txn_select_flow_req_ != NULL;
+}
+void Command::clear_txn_select_flow_req() {
+  if (GetArenaNoVirtual() == NULL && txn_select_flow_req_ != NULL) delete txn_select_flow_req_;
+  txn_select_flow_req_ = NULL;
+}
+const ::dspb::SelectFlowRequest& Command::txn_select_flow_req() const {
+  const ::dspb::SelectFlowRequest* p = txn_select_flow_req_;
+  // @@protoc_insertion_point(field_get:dspb.Command.txn_select_flow_req)
+  return p != NULL ? *p : *reinterpret_cast<const ::dspb::SelectFlowRequest*>(
+      &::dspb::_SelectFlowRequest_default_instance_);
+}
+::dspb::SelectFlowRequest* Command::mutable_txn_select_flow_req() {
+  
+  if (txn_select_flow_req_ == NULL) {
+    txn_select_flow_req_ = new ::dspb::SelectFlowRequest;
+  }
+  // @@protoc_insertion_point(field_mutable:dspb.Command.txn_select_flow_req)
+  return txn_select_flow_req_;
+}
+::dspb::SelectFlowRequest* Command::release_txn_select_flow_req() {
+  // @@protoc_insertion_point(field_release:dspb.Command.txn_select_flow_req)
+  
+  ::dspb::SelectFlowRequest* temp = txn_select_flow_req_;
+  txn_select_flow_req_ = NULL;
+  return temp;
+}
+void Command::set_allocated_txn_select_flow_req(::dspb::SelectFlowRequest* txn_select_flow_req) {
+  delete txn_select_flow_req_;
+  txn_select_flow_req_ = txn_select_flow_req;
+  if (txn_select_flow_req) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:dspb.Command.txn_select_flow_req)
 }
 
 // .dspb.KvGetRequest kv_get_req = 20;

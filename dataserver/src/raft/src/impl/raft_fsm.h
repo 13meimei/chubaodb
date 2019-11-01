@@ -20,6 +20,7 @@ _Pragma("once");
 #include "raft/options.h"
 #include "raft/status.h"
 #include "raft_log.h"
+#include "raft_read_context.h"
 #include "raft_types.h"
 #include "replica.h"
 #include "mutable_options.h"
@@ -57,6 +58,8 @@ public:
     Status TruncateLog(uint64_t index);
     Status DestroyLog(bool backup);
 
+    Status ReadProcess(const EntryPtr& e, uint16_t verify_result);
+    void readErrorProcess();
 private:
     static int numOfPendingConf(const std::vector<EntryPtr>& ents);
     static void takeEntries(MessagePtr& msg, std::vector<EntryPtr>& ents);
@@ -104,10 +107,14 @@ private:
     void tickHeartbeat();
     bool maybeCommit();
     void bcastAppend();
+    void bcastReadAppend();
+    bool activeQuorum() const;
     void sendAppend(uint64_t to, Replica& pr);
+    void sendReadAppend(uint64_t to, Replica& pr);
     void appendEntry(const std::vector<EntryPtr>& ents);
     std::shared_ptr<SendSnapTask> newSendSnapTask(uint64_t to, uint64_t* snap_index);
     void checkCaughtUp();
+    void resetAlive();
 
 private:
     void becomeCandidate();
@@ -121,6 +128,7 @@ private:
     void stepFollower(MessagePtr& msg);
     void tickElection();
     void handleAppendEntries(MessagePtr& msg);
+    void handleReadRequest(MessagePtr& msg);
     void handleSnapshot(MessagePtr& msg);
     Status applySnapshot(MessagePtr& msg);
     bool checkSnapshot(const pb::SnapshotMeta& meta);
@@ -163,6 +171,8 @@ private:
 
     std::shared_ptr<ApplySnapTask> applying_snap_;
     pb::SnapshotMeta applying_meta_;
+
+    std::unique_ptr<ReadIndexContext> read_context_; //pending read request
 
     std::deque<EntryPtr> pending_entries_; // pending entries submitted by user on leader
     std::deque<EntryPtr> failed_entries_;

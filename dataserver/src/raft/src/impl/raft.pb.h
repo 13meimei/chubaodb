@@ -174,12 +174,15 @@ enum MessageType {
   PRE_VOTE_REQUEST = 13,
   PRE_VOTE_RESPONSE = 14,
   LOCAL_SNAPSHOT_STATUS = 15,
+  LOCAL_MSG_READ = 16,
+  READ_INDEX_REQUEST = 17,
+  READ_INDEX_RESPONSE = 18,
   MessageType_INT_MIN_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32min,
   MessageType_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
 };
 bool MessageType_IsValid(int value);
 const MessageType MessageType_MIN = MESSAGE_TYPE_INVALID;
-const MessageType MessageType_MAX = LOCAL_SNAPSHOT_STATUS;
+const MessageType MessageType_MAX = READ_INDEX_RESPONSE;
 const int MessageType_ARRAYSIZE = MessageType_MAX + 1;
 
 const ::google::protobuf::EnumDescriptor* MessageType_descriptor();
@@ -1086,6 +1089,12 @@ class Message : public ::google::protobuf::Message /* @@protoc_insertion_point(c
   bool reject() const;
   void set_reject(bool value);
 
+  // uint64 read_sequence = 7;
+  void clear_read_sequence();
+  static const int kReadSequenceFieldNumber = 7;
+  ::google::protobuf::uint64 read_sequence() const;
+  void set_read_sequence(::google::protobuf::uint64 value);
+
   // uint64 log_term = 8;
   void clear_log_term();
   static const int kLogTermFieldNumber = 8;
@@ -1118,6 +1127,7 @@ class Message : public ::google::protobuf::Message /* @@protoc_insertion_point(c
   ::google::protobuf::uint64 commit_;
   int type_;
   bool reject_;
+  ::google::protobuf::uint64 read_sequence_;
   ::google::protobuf::uint64 log_term_;
   ::google::protobuf::uint64 log_index_;
   ::google::protobuf::uint64 reject_hint_;
@@ -2207,6 +2217,20 @@ inline void Message::set_commit(::google::protobuf::uint64 value) {
   
   commit_ = value;
   // @@protoc_insertion_point(field_set:chubaodb.raft.impl.pb.Message.commit)
+}
+
+// uint64 read_sequence = 7;
+inline void Message::clear_read_sequence() {
+  read_sequence_ = GOOGLE_ULONGLONG(0);
+}
+inline ::google::protobuf::uint64 Message::read_sequence() const {
+  // @@protoc_insertion_point(field_get:chubaodb.raft.impl.pb.Message.read_sequence)
+  return read_sequence_;
+}
+inline void Message::set_read_sequence(::google::protobuf::uint64 value) {
+  
+  read_sequence_ = value;
+  // @@protoc_insertion_point(field_set:chubaodb.raft.impl.pb.Message.read_sequence)
 }
 
 // uint64 log_term = 8;

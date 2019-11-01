@@ -35,8 +35,9 @@ public:
     NodeAddress& operator=(const NodeAddress&) = delete;
     NodeAddress& operator=(const NodeAddress&) volatile = delete;
 
-    virtual std::string GetNodeAddress(uint64_t node_id);
+    std::string GetNodeAddress(uint64_t node_id) override;
 
+    bool AddNodeAddress(uint64_t node_id, std::string address) override;
 private:
     shared_mutex mutex_;
     std::unordered_map<uint64_t, std::string> address_map_;

@@ -33,6 +33,7 @@ static const std::string kNodeHeartbeatURI = "/node/heartbeat";
 static const std::string kNodeGetURI = "/node/get";
 static const std::string kRangeHeartbeatURI = "/range/heartbeat";
 static const std::string kAskSplitURI = "/range/ask_split";
+static const cpr::Timeout kRequestTimeout{5000}; // in milliseconds
 
 MasterClientImpl::MasterClientImpl(uint64_t cluster_id, const std::vector<std::string> &ms_addrs) :
     cluster_id_(cluster_id),
@@ -53,7 +54,7 @@ Status MasterClientImpl::post(const std::string &uri,
         auto ms_addr = ms_addrs_[(index + i) % ms_addrs_.size()];
         std::string url = kProtocalSchema + ms_addr + uri;
         cpr::Url cpr_url{url};
-        cpr::Response cpr_resp = cpr::Post(cpr_url, kHTTPHeader, req_body);
+        cpr::Response cpr_resp = cpr::Post(cpr_url, kHTTPHeader, req_body, kRequestTimeout);
         if (cpr_resp.status_code == 200) {
             if (!resp.ParseFromString(cpr_resp.text)) {
                 FLOG_ERROR("[Master] post {} parse response failed.", url);

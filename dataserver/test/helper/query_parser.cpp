@@ -99,6 +99,86 @@ Status SelectResultParser::Match(
     }
 }
 
+SelectFlowResultParser::SelectFlowResultParser(const dspb::SelectFlowRequest& req,
+                                       const dspb::SelectFlowResponse& resp) {
+    dspb::ColumnInfo fake_count_col;
+    fake_count_col.set_typ(basepb::BigInt);
+    dspb::Row tmp1;
+
+    rows_.reserve(resp.rows_size());
+    auto processors = req.processors();
+    auto processor_0 = processors[0];
+    int index_agg = -1;
+    for (int i = 1; i < processors.size(); ++i) {
+        if (processors[i].type() == dspb::AGGREGATION_TYPE) {
+            index_agg = i;
+        }
+    }
+    for (const auto& r: resp.rows()) {
+        keys_.push_back(r.key());
+       
+        std::vector<std::string> values;
+        size_t offset = 0;
+
+        if (processor_0.type() == dspb::TABLE_READ_TYPE) {
+            if (index_agg != -1) {
+                int64_t value = 0;
+                for (auto &func : processors[index_agg].aggregation().func()) {
+                    if (func.expr_type() == dspb::Avg) {
+                        int64_t sum = 0;
+                        int64_t count = 0;
+                        DecodeNonSortingVarint(r.value().fields(), ++offset, &sum);
+                        DecodeNonSortingVarint(r.value().fields(), ++offset, &count);
+                        if (count > 0) {
+                            value = sum / count;
+                        }
+                    } else {
+                        DecodeNonSortingVarint(r.value().fields(), ++offset, &value);
+                    }
+                    values.push_back(std::to_string(value));
+                }
+            } else {
+                for (auto &col : processor_0.table_read().columns()) {
+                    std::string val;
+                    DecodeColumnValue(r.value().fields(), offset, col, &val);
+                    values.push_back(std::move(val));
+                }
+            }
+        }
+
+        rows_.push_back(std::move(values));
+    }
+}
+
+Status SelectFlowResultParser::Match(
+        const std::vector<std::vector<std::string>>& expected_rows) const {
+    bool matched = true;
+    do {
+        if (expected_rows.size() != rows_.size()) {
+            matched = false;
+            break;
+        }
+
+        for (size_t i = 0; i < rows_.size(); ++i) {
+            if (rows_[i] != expected_rows[i]) {
+                matched = false;
+                break;
+            }
+        }
+    } while(0);
+
+    if (matched) {
+        return Status::OK();
+    } else {
+        std::ostringstream ss;
+        ss << "\nexpected: \n";
+        ss <<  ToDebugString(expected_rows);
+        ss << "\nactual: \n";
+        ss << ToDebugString(rows_);
+        return Status(Status::kUnknown, "mismatch", ss.str());
+    }
+}
+
 } /* namespace helper */
 } /* namespace test */
 } /* namespace chubaodb */

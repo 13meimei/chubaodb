@@ -6,7 +6,7 @@ set(base_SOURCES
     system_info.cpp
     timer.cpp
     util.cpp
-        )
+)
 
 if (APPLE)
     list(APPEND base_SOURCES system_info_mac.cpp)
@@ -17,3 +17,4 @@ else()
 endif()
 
 add_library(chubaodb-base STATIC ${base_SOURCES})
+add_dependencies(chubaodb-base build-3rd)

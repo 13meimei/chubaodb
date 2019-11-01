@@ -15,9 +15,6 @@
 package master
 
 import (
-	"os"
-	"strings"
-	"time"
 	"context"
 	"fmt"
 	client "github.com/chubaodb/chubaodb/master/client/ds_client"
@@ -30,6 +27,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/cast"
 	"go.etcd.io/etcd/embed"
+	"os"
+	"strings"
+	"time"
 )
 
 type Server struct {
@@ -37,8 +37,6 @@ type Server struct {
 	etcdServer *embed.Etcd
 	ctx        context.Context
 	cancel     context.CancelFunc
-
-	monitor monitoring.Monitor
 }
 
 func NewServer(ctx context.Context, cancel context.CancelFunc) (*Server, error) {
@@ -100,10 +98,15 @@ func (s *Server) Start() (err error) {
 		panic(err)
 	}
 
-	ExportToClusterHandler(engine, baseService, s.monitor)
-	ExportToHealthHandler(engine, baseService, s.monitor)
-	ExportToNodeHandler(engine, baseService, s.monitor)
-	ExportToRangeHandler(engine, baseService, s.monitor)
+	ExportToClusterHandler(engine, baseService)
+	ExportToHealthHandler(engine, baseService)
+	ExportToNodeHandler(engine, baseService)
+	watcherService := ExportToWatcherHandler(engine, baseService)
+	ExportToRangeHandler(engine, baseService, watcherService)
+
+	go func() {
+		monitoring.ProcessMonitor(s.ctx, entity.Monitor(), time.Second)
+	}()
 
 	go func() {
 		if err := engine.Run(":" + cast.ToString(entity.Conf().Masters.Self().ApiPort)); err != nil {

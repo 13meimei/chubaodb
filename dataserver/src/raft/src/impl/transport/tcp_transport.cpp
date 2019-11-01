@@ -125,13 +125,13 @@ void TcpTransport::onMessage(const net::Context& ctx, const net::MessagePtr& msg
     auto data = msg->body.data();
     auto len = static_cast<int>(msg->body.size());
     if (raft_msg->ParseFromArray(data, len)) {
-        FLOG_DEBUG("raft[Transport] recv {} message from {}:{} to {}",
-                pb::MessageType_Name(raft_msg->type()), raft_msg->from(),
-                ctx.remote_addr, raft_msg->to());
+        FLOG_DEBUG("recv {} message from {}, from node_id: {} to node_id {}",
+                pb::MessageType_Name(raft_msg->type()), ctx.remote_addr,
+                   raft_msg->from(), raft_msg->to());
 
         handler_(raft_msg);
     } else {
-        FLOG_ERROR("raft[Transport] parse raft message failed from {}", ctx.remote_addr);
+        FLOG_ERROR("parse raft message failed from {}", ctx.remote_addr);
     }
 }
 
@@ -167,12 +167,12 @@ void TcpTransport::SendMessage(MessagePtr& msg) {
     auto& group = conn_pool_[hash_func_(msg->id()) % conn_pool_.size()];
     auto conn = group->Get(msg->to());
     if (!conn) {
-        FLOG_ERROR("raft[Transport] could not get a connection to {}", msg->to());
+        FLOG_ERROR("could not get a connection to {}", msg->to());
         return;
     }
     auto ret = conn->Send(msg);
     if (!ret.ok()) {
-        FLOG_ERROR("raft[Transport] send to {} error: {}", msg->to(), ret.ToString());
+        FLOG_ERROR("send to {} error: {}", msg->to(), ret.ToString());
         group->Remove(msg->to(), conn);
     }
 }
@@ -181,10 +181,10 @@ Status TcpTransport::newConnection(uint64_t to, TcpConnPtr& conn) {
     // resolve
     auto addr = resolver_->GetNodeAddress(to);
     if (addr.empty()) {
-        FLOG_ERROR("raft[Transport] could not resolve address of {}", to);
+        FLOG_ERROR("could not resolve address of {}", to);
         return Status(Status::kInvalidArgument, "resolve node address", std::to_string(to));
     } else {
-        FLOG_INFO("raft[Transport] resolve address of {} is {}", to, addr);
+        FLOG_INFO("resolve address of {} is {}", to, addr);
     }
 
     // split ip & port
@@ -194,7 +194,7 @@ Status TcpTransport::newConnection(uint64_t to, TcpConnPtr& conn) {
         ip = addr.substr(0, pos);
         port = addr.substr(pos + 1);
     } else {
-        FLOG_ERROR("raft[Transport] invalid address of {}: {}", to, addr);
+        FLOG_ERROR("invalid address of {}: {}", to, addr);
         return Status(Status::kInvalidArgument, "invalid node address", std::to_string(to) + ", addr=" + addr);
     }
 
@@ -203,7 +203,7 @@ Status TcpTransport::newConnection(uint64_t to, TcpConnPtr& conn) {
     auto session = std::make_shared<net::Session>(client_opt_, null_handler, client_->GetIOContext());
     session->Connect(ip, port);
     conn = std::make_shared<TcpConnection>(session);
-    FLOG_INFO("raft[Transport] new connection to {}-{}", to, addr);
+    FLOG_INFO("new connection to {}-{}", to, addr);
     return Status::OK();
 }
 

@@ -74,7 +74,7 @@ TEST_F(MetaStoreTest, ApplyIndex) {
     uint64_t applied = 1;
     auto s = store_->LoadApplyIndex(range_id, &applied);
     ASSERT_TRUE(s.ok()) << s.ToString();
-    ASSERT_EQ(applied, 0);
+    ASSERT_EQ(applied, 0U);
 
     uint64_t save_applied = chubaodb::randomInt();
     s = store_->SaveApplyIndex(range_id, save_applied);
@@ -89,7 +89,7 @@ TEST_F(MetaStoreTest, ApplyIndex) {
 
     s = store_->LoadApplyIndex(range_id, &applied);
     ASSERT_TRUE(s.ok()) << s.ToString();
-    ASSERT_EQ(applied, 0);
+    ASSERT_EQ(applied, 0U);
 }
 
 static basepb::Range genRange(uint64_t i) {
@@ -111,7 +111,7 @@ TEST_F(MetaStoreTest, Range) {
     std::vector<basepb::Range> get_results;
     s = store_->GetAllRange(&get_results);
     ASSERT_TRUE(s.ok()) << s.ToString();
-    ASSERT_EQ(get_results.size(), 1);
+    ASSERT_EQ(get_results.size(), 1U);
     ASSERT_EQ(get_results[0].id(), rng.id());
 
     s = store_->DelRange(rng.id());

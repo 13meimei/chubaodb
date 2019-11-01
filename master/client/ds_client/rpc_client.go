@@ -404,7 +404,11 @@ func (c *DSRpcClient) ChangeMember(ctx context.Context, request *dspb.ChangeRaft
 
 func (c *DSRpcClient) IsAlive(ctx context.Context) (*dspb.SchResponse_Header, *dspb.IsAliveResponse, error) {
 	out := new(dspb.SchResponse)
-	_, err := c.execute(uint16(dspb.FunctionID_kFuncSchedule), ctx, &dspb.SchReuqest{Header: &dspb.SchReuqest_Header{ClusterId: entity.Conf().Global.ClusterID}, Req: &dspb.SchReuqest_IsAlive{IsAlive: &dspb.IsAliveRequest{}}}, out)
+
+	deadline, cancelFunc := context.WithDeadline(ctx, time.Now().Add(5*time.Second))
+	defer cancelFunc()
+
+	_, err := c.execute(uint16(dspb.FunctionID_kFuncSchedule), deadline, &dspb.SchReuqest{Header: &dspb.SchReuqest_Header{ClusterId: entity.Conf().Global.ClusterID}, Req: &dspb.SchReuqest_IsAlive{IsAlive: &dspb.IsAliveRequest{}}}, out)
 	if err != nil {
 		return nil, nil, err
 	} else {

@@ -35,7 +35,7 @@ func TestRpcClient(t *testing.T) {
 		return conn, nil
 	})
 
-	response, err := client.IsAlive(context.Background(), &dspb.IsAliveRequest{})
+	header, response, err := client.IsAlive(context.Background(), &dspb.IsAliveRequest{})
 
-	fmt.Println(response, err)
+	fmt.Println(header, response, err)
 }

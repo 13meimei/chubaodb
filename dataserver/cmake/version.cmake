@@ -25,4 +25,3 @@ else()
 endif()
 
 CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/cmake/version.h.in ${PROJECT_SOURCE_DIR}/src/server/version_gen.h)
-    

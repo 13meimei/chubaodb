@@ -80,6 +80,7 @@ bool DataServer::startRaftServer() {
     ops.consensus_queue_capacity = raft_config.consensus_queue;
     ops.apply_threads_num = static_cast<uint8_t>(raft_config.apply_threads);
     ops.apply_queue_capacity = raft_config.apply_queue;
+    ops.read_option = raft_config.read_option;
     ops.tick_interval = std::chrono::milliseconds(raft_config.tick_interval_ms);
     ops.max_size_per_msg = raft_config.max_msg_size;
 
@@ -93,6 +94,12 @@ bool DataServer::startRaftServer() {
     ops.snapshot_options.ack_timeout_seconds = raft_config.snapshot_wait_ack_timeout;
     ops.snapshot_options.max_send_concurrency = raft_config.snapshot_send_concurrency;
     ops.snapshot_options.max_apply_concurrency = raft_config.snapshot_apply_concurrency;
+
+    if (ds_config.b_test) {
+        for (auto it = ds_config.test_config.nodes.begin(); it != ds_config.test_config.nodes.end(); it++) {
+            ops.transport_options.resolver->AddNodeAddress(it->first, it->second);
+        }
+    }
 
     auto rs = raft::CreateRaftServer(ops);
     context_->raft_server = rs.release();
@@ -121,6 +128,18 @@ void DataServer::registerToMaster() {
     req.set_raft_port(static_cast<uint32_t>(ds_config.raft_config.port));
     req.set_admin_port(static_cast<uint32_t>(ds_config.manager_config.port));
     req.set_version(version);
+
+    switch (ds_config.engine_type) {
+        case EngineType::kMassTree:
+            req.set_st_engine(mspb::StorageEngine::STE_MassTree);
+            break;
+        case EngineType::kRocksdb:
+            req.set_st_engine(mspb::StorageEngine::STE_RocksDB);
+            break;
+        default:
+            req.set_st_engine(mspb::StorageEngine::STE_Invalid);
+    }
+
     while (true) {
         mspb::RegisterNodeResponse resp;
         auto s = context_->master_client->NodeRegister(req, resp);
@@ -136,7 +155,11 @@ void DataServer::registerToMaster() {
 }
 
 int DataServer::Start() {
-    registerToMaster();
+    if (!ds_config.b_test) {
+        registerToMaster();
+    } else {
+        context_->node_id = ds_config.test_config.node_id;
+    }
 
     if (!startRaftServer()) {
         return -1;

@@ -15,20 +15,23 @@
 package service
 
 import (
+	gobytes "bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/chubaodb/chubaodb/master/entity"
 	"github.com/chubaodb/chubaodb/master/entity/errs"
 	"github.com/chubaodb/chubaodb/master/entity/pkg/basepb"
 	"github.com/chubaodb/chubaodb/master/entity/pkg/mspb"
 	"github.com/chubaodb/chubaodb/master/utils"
+	"github.com/chubaodb/chubaodb/master/utils/bytes"
 	"github.com/chubaodb/chubaodb/master/utils/cblog"
+	"github.com/chubaodb/chubaodb/master/utils/encoding"
 	"github.com/chubaodb/chubaodb/master/utils/hack"
 	"github.com/chubaodb/chubaodb/master/utils/log"
 	"github.com/spf13/cast"
 	"go.etcd.io/etcd/clientv3/concurrency"
-	"runtime/debug"
-	"sort"
+	"math/rand"
 	"time"
 )
 
@@ -56,6 +59,70 @@ func (cs *BaseService) GetTable(ctx context.Context, dbID uint64, dbName string,
 	} else {
 		return nil, errs.Error(mspb.ErrorType_InvalidParam)
 	}
+}
+
+func (cs *BaseService) TableDocNum(ctx context.Context) (map[uint64]map[uint64]uint64, error) {
+	dbs, err := cs.QueryDatabases(ctx)
+	if err != nil {
+		return nil, err
+	}
+	_, nodeHandlerMap, err := cs.QueryNodeHandlerMap(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	all := make(map[uint64]map[uint64]uint64)
+	for _, nh := range nodeHandlerMap {
+		if nh.State != basepb.NodeState_N_Online {
+			continue
+		}
+		for _, rh := range nh.RangeHanders {
+
+			if rh.RangeType != basepb.RangeType_RNG_Data {
+				continue
+			}
+
+			var tables map[uint64]uint64
+			var ok bool
+			if tables, ok = all[rh.DbId]; !ok {
+				tables = make(map[uint64]uint64)
+			}
+			if rh.IsLeader {
+				if _, ok := tables[rh.TableId]; ok {
+					if rh.Status != nil {
+						tables[rh.TableId] += rh.Status.KvCount
+					}
+				} else {
+					if rh.Status != nil {
+						tables[rh.TableId] = rh.Status.KvCount
+					}
+				}
+			}
+			all[rh.DbId] = tables
+		}
+	}
+	activeStatus := make(map[uint64]map[uint64]uint64, len(dbs))
+	for _, db := range dbs {
+		var tableDocs map[uint64]uint64
+		var ok bool
+		if tableDocs, ok = all[db.Id]; !ok {
+			tableDocs = make(map[uint64]uint64)
+		}
+		tables, err := cs.QueryTablesByDBID(ctx, db.Id)
+		if err != nil {
+			return nil, err
+		}
+		for _, table := range tables {
+			if table.Status != basepb.TableStatus_TableRunning {
+				delete(tableDocs, table.Id)
+				continue
+			}
+			if _, ok = tableDocs[table.Id]; !ok {
+				tableDocs[table.Id] = 0
+			}
+		}
+		activeStatus[db.Id] = tableDocs
+	}
+	return activeStatus, nil
 }
 
 func (cs *BaseService) DelTable(ctx context.Context, dbID uint64, dbName string, tableID uint64, tableName string) (*basepb.Table, error) {
@@ -102,7 +169,7 @@ func (cs *BaseService) DelTable(ctx context.Context, dbID uint64, dbName string,
 				if node, err := cs.GetNode(background, pr.NodeId); err != nil {
 					log.Error("get node err:[%s]", err.Error())
 				} else {
-					if err := cs.dsClient.DeleteRange(background, nodeServerAddr(node), rng.Id, pr.Id); err != nil {
+					if err := cs.dsClient.DeleteRange(background, NodeServerAddr(node), rng.Id, pr.Id); err != nil {
 						log.Error("delete range to node err:[%s]", err.Error())
 					}
 				}
@@ -280,7 +347,7 @@ func (cs *BaseService) DeleteDatabase(ctx context.Context, dbID uint64, dbName s
 
 //  to create table by dbName , when create it will lock by dbID , so you can not to create another table in same database
 // if return table is nil , means it record the err
-func (cs *BaseService) CreateTable(ctx context.Context, dbName, tableName, properties string, rangeKeys []string) (*basepb.Table, error) {
+func (cs *BaseService) CreateTable(ctx context.Context, dbName, tableName, properties string, storeType basepb.StoreType, replicaNum uint64, dataRangeNum uint64) (*basepb.Table, error) {
 
 	tProperty, err := utils.ParseTableProperties(properties)
 	if err != nil {
@@ -294,7 +361,7 @@ func (cs *BaseService) CreateTable(ctx context.Context, dbName, tableName, prope
 	}
 
 	//to lock cluster
-	lock := cs.NewLock(ctx, entity.LockCluster(), time.Minute*5)
+	lock := cs.NewLock(ctx, entity.LockCluster(), time.Minute)
 	if err := lock.Lock(); err != nil {
 		return nil, cblog.LogErrAndReturn(err)
 	}
@@ -326,20 +393,18 @@ func (cs *BaseService) CreateTable(ctx context.Context, dbName, tableName, prope
 	}
 
 	t := &basepb.Table{
-		Id:         uint64(tableID),
-		Name:       tableName,
-		DbName:     dbName,
-		DbId:       dataBase.GetId(),
-		Columns:    tProperty.Columns,
-		Epoch:      &basepb.TableEpoch{ConfVer: uint64(1), Version: uint64(1)},
-		CreateTime: time.Now().Unix(),
-		Indexes:    tProperty.Indexes,
-		Properties: properties,
-	}
-
-	sharingKeys, err := utils.MakeSharingKeys(uint64(tableID), rangeKeys, tProperty.Columns)
-	if err != nil {
-		return nil, cblog.LogErrAndReturn(err)
+		Id:           uint64(tableID),
+		Name:         tableName,
+		DbName:       dbName,
+		DbId:         dataBase.GetId(),
+		Columns:      tProperty.Columns,
+		Epoch:        &basepb.TableEpoch{ConfVer: uint64(1), Version: uint64(1)},
+		CreateTime:   time.Now().Unix(),
+		Indexes:      tProperty.Indexes,
+		Properties:   properties,
+		Type:         storeType,
+		ReplicaNum:   replicaNum,
+		DataRangeNum: dataRangeNum,
 	}
 
 	//get all nodes
@@ -351,13 +416,13 @@ func (cs *BaseService) CreateTable(ctx context.Context, dbName, tableName, prope
 	//filter nodes
 	nodes := make([]*basepb.Node, 0, len(allNodes))
 	for _, node := range allNodes {
-		if cs.dsClient.IsAlive(ctx, nodeServerAddr(node)) {
+		if node.State == basepb.NodeState_N_Online && cs.dsClient.IsAlive(ctx, NodeServerAddr(node)) {
 			nodes = append(nodes, node)
 		}
 	}
 
-	if len(nodes) < tProperty.ReplicaNum {
-		log.Error("not enough nodes:[%d], need replica:[%d]", len(nodes), tProperty.ReplicaNum)
+	if len(nodes) < int(t.ReplicaNum) {
+		log.Error("not enough nodes:[%d], need replica:[%d]", len(nodes), t.ReplicaNum)
 		return nil, errs.Error(mspb.ErrorType_NodeNotEnough)
 	}
 
@@ -372,11 +437,6 @@ func (cs *BaseService) CreateTable(ctx context.Context, dbName, tableName, prope
 
 	// if has err so delete table
 	defer func() {
-		if r := recover(); r != nil {
-			debug.PrintStack()
-			log.Error("create table err: %v ", r)
-		}
-
 		if t.Status != basepb.TableStatus_TableRunning { // if space is still not enabled , so to remove it
 			log.Error("table status not running so remove ")
 			if e := cs.Delete(context.Background(), entity.TableKey(dataBase.Id, t.Id)); e != nil {
@@ -386,26 +446,50 @@ func (cs *BaseService) CreateTable(ctx context.Context, dbName, tableName, prope
 	}()
 
 	var errChain = make(chan error, 1)
-	var ranges = make([]*basepb.Range, 0, len(sharingKeys)-1)
+
+	var ranges = make([]*basepb.Range, 0)
 
 	//find all pkColumns
-	var pkColumns []*basepb.Column
-	for _, c := range t.Columns {
-		if c.PrimaryKey > 0 {
-			pkColumns = append(pkColumns, c)
-		}
+	var pkColumns = []*basepb.Column{t.Columns[0]}
+
+	hotNode, warmNode, err := cs.getNodeByType(ctx, nodes, t.Type, t.ReplicaNum)
+	var rangeStoreType basepb.StoreType
+
+	var indexNodes []*basepb.Node
+	if t.Type == basepb.StoreType_Store_Warm {
+		indexNodes = warmNode
+		rangeStoreType = basepb.StoreType_Store_Warm
+	} else {
+		indexNodes = hotNode
+		rangeStoreType = basepb.StoreType_Store_Hot
 	}
 
-	for i := 0; i < len(sharingKeys); i++ {
+	startKey, endKey := utils.EncodeStorePrefix(utils.Store_Prefix_INDEX, t.Id)
+
+	keys := make([][]byte, 0, len(tProperty.Indexes)+1)
+	keys = append(keys, startKey)
+	for i := 1; i < len(tProperty.Indexes); i++ {
+		keys = append(keys, encoding.EncodeVarintAscending(startKey, int64(tProperty.Indexes[i].Id)))
+	}
+	keys = append(keys, endKey)
+
+	//make index range
+	for i := 0; i < len(keys)-1; i++ {
 		rangeID, err := cs.NewIDGenerate(ctx, entity.SequenceRangeID, 1, 5*time.Second)
 		if err != nil {
 			return nil, cblog.LogErrAndReturn(err)
 		}
 
-		targetNodes, err := cs.getNodeByLessRangeNum(ctx, nodes, tProperty.ReplicaNum)
-		if err != nil {
-			return nil, cblog.LogErrAndReturn(err)
+		rand.Shuffle(len(indexNodes), func(i, j int) {
+			indexNodes[i], indexNodes[j] = indexNodes[j], indexNodes[i]
+		})
+
+		if len(indexNodes) < int(t.ReplicaNum) {
+			log.Error("not enough index nodes:[%d], need replica:[%d]", len(nodes), t.ReplicaNum)
+			return nil, errs.Error(mspb.ErrorType_NodeNotEnough)
 		}
+
+		targetNodes := indexNodes[:int(t.ReplicaNum)]
 
 		var peers []*basepb.Peer
 		for _, node := range targetNodes {
@@ -417,11 +501,14 @@ func (cs *BaseService) CreateTable(ctx context.Context, dbName, tableName, prope
 				return nil, cblog.LogErrAndReturn(err)
 			}
 			peers = append(peers, &basepb.Peer{
-				Id:       uint64(peerID),
-				NodeId:   node.Id,
-				RaftAddr: nodeRaftAddr(node),
-				Type:     basepb.PeerType_PeerType_Normal,
+				Id:     uint64(peerID),
+				NodeId: node.Id,
+				Type:   basepb.PeerType_PeerType_Normal,
 			})
+		}
+
+		if len(peers) == 0 {
+			return nil, fmt.Errorf("peer length is 0 , impossible!!!")
 		}
 
 		r := &basepb.Range{
@@ -431,69 +518,106 @@ func (cs *BaseService) CreateTable(ctx context.Context, dbName, tableName, prope
 			Peers:       peers,
 			PrimaryKeys: pkColumns,
 			Leader:      peers[0].NodeId,
+			RangeType:   basepb.RangeType_RNG_Index,
 			RangeEpoch: &basepb.RangeEpoch{
 				ConfVer: 1,
 				Version: 1,
 			},
+			StoreType: rangeStoreType,
+			StartKey:  keys[i],
+			EndKey:    keys[i+1],
+		}
+		ranges = append(ranges, r)
+		cs.createRange(targetNodes, errChain, ctx, r)
+
+	}
+
+	//make row range
+	var dataNodes []*basepb.Node
+	if t.Type == basepb.StoreType_Store_Hot {
+		dataNodes = hotNode
+		rangeStoreType = basepb.StoreType_Store_Hot
+	} else {
+		dataNodes = warmNode
+		rangeStoreType = basepb.StoreType_Store_Warm
+	}
+
+	if len(dataNodes) < int(t.ReplicaNum) {
+		log.Error("not enough data nodes:[%d], need replica:[%d]", len(nodes), t.ReplicaNum)
+		return nil, errs.Error(mspb.ErrorType_NodeNotEnough)
+	}
+
+	rowKeys := gobytes.Buffer{}
+
+	step, keys := utils.MakeRowKeys(uint64(tableID), t.DataRangeNum)
+
+	//make data range
+	for i := 0; i < int(t.DataRangeNum); i++ {
+		rangeID, err := cs.NewIDGenerate(ctx, entity.SequenceRangeID, 1, 5*time.Second)
+		if err != nil {
+			return nil, cblog.LogErrAndReturn(err)
 		}
 
-		//the last range is index range
-		if i == len(sharingKeys)-1 {
-			r.StartKey, r.EndKey = utils.EncodeStorePrefix(utils.Store_Prefix_INDEX, t.Id)
-		} else {
-			r.StartKey = sharingKeys[i]
-			r.EndKey = sharingKeys[i+1]
+		rand.Shuffle(len(dataNodes), func(i, j int) {
+			dataNodes[i], dataNodes[j] = dataNodes[j], dataNodes[i]
+		})
+
+		targetNodes := dataNodes[:int(t.ReplicaNum)]
+
+		var peers []*basepb.Peer
+		for _, node := range targetNodes {
+			peerID, err := cs.NewIDGenerate(ctx, entity.SequencePeerID, 1, 5*time.Second)
+
+			node.RangePeers = append(node.RangePeers, &basepb.RangePeer{RangeId: uint64(rangeID), PeerId: uint64(peerID)}) //all nodes add new range server
+
+			if err != nil {
+				return nil, cblog.LogErrAndReturn(err)
+			}
+			peers = append(peers, &basepb.Peer{
+				Id:     uint64(peerID),
+				NodeId: node.Id,
+				Type:   basepb.PeerType_PeerType_Normal,
+			})
 		}
+
+		if len(peers) == 0 {
+			return nil, fmt.Errorf("peer length is 0 , impossible!!!")
+		}
+
+		r := &basepb.Range{
+			Id:          uint64(rangeID),
+			TableId:     t.Id,
+			DbId:        dataBase.Id,
+			Peers:       peers,
+			PrimaryKeys: pkColumns,
+			Leader:      peers[0].NodeId,
+			RangeType:   basepb.RangeType_RNG_Data,
+			RangeEpoch: &basepb.RangeEpoch{
+				ConfVer: 1,
+				Version: 1,
+			},
+			StoreType: rangeStoreType,
+			StartKey:  keys[i],
+			EndKey:    keys[i+1],
+		}
+
+		marshal, _ := json.Marshal(r)
+		log.Debug("create range [%s]", marshal)
+
+		rowKeys.Write(bytes.Uint64ToByte(uint64(step) * uint64(i)))
 
 		ranges = append(ranges, r)
 
-		for _, node := range targetNodes {
-			go func(node *basepb.Node, r *basepb.Range) {
-				defer func() {
-					if r := recover(); r != nil {
-						err := fmt.Errorf("create range err: %v ", r)
-						errChain <- err
-						log.Error(err.Error())
-					}
-				}()
-				log.Info("create node:[%d] range:[%d] peer:[%d]", node.Id, r.Id, r.Peers)
-				if err := cs.dsClient.CreateRange(ctx, nodeServerAddr(node), r); err != nil {
-					err := fmt.Errorf("create range err: %s ", err.Error())
-					errChain <- err
-					log.Error(err.Error())
-				}
-			}(node, r)
+		cs.createRange(targetNodes, errChain, ctx, r)
+	}
 
-		}
+	if err := cs.Put(ctx, entity.SequenceDocument(t.DbId, t.Id), rowKeys.Bytes()); err != nil {
+		return nil, err
 	}
 
 	//check all range is ok
-	for i := 0; i < len(ranges); i++ {
-		v := 0
-		for {
-			v++
-			select {
-			case err := <-errChain:
-				return nil, cblog.LogErrAndReturn(err)
-			case <-ctx.Done():
-				return nil, fmt.Errorf("create table has error")
-			default:
-
-			}
-
-			rg, err := cs.QueryRange(ctx, t.Id, ranges[i].Id)
-			if v%5 == 0 {
-				log.Debug("check the range :%d status ", ranges[i].Id)
-			}
-			if err != nil && errs.Code(err) != mspb.ErrorType_NotExistRange {
-				return nil, cblog.LogErrAndReturn(err)
-			}
-			if rg == nil {
-				time.Sleep(50 * time.Millisecond)
-				continue
-			}
-			break
-		}
+	if err = cs.checkRangeOk(ctx, ranges, errChain); err != nil {
+		return nil, err
 	}
 
 	var result *basepb.Table
@@ -511,6 +635,57 @@ func (cs *BaseService) CreateTable(ctx context.Context, dbName, tableName, prope
 
 	log.Info("create table[%s:%s] success", dbName, tableName)
 	return result, nil
+}
+
+func (cs *BaseService) createRange(targetNodes []*basepb.Node, errChain chan error, ctx context.Context, r *basepb.Range) {
+	for _, node := range targetNodes {
+		go func(node *basepb.Node, r *basepb.Range) {
+			defer func() {
+				if r := recover(); r != nil {
+					err := fmt.Errorf("create range err: %v ", r)
+					errChain <- err
+					log.Error(err.Error())
+				}
+			}()
+			log.Info("create node:[%d] range:[%d] peer:[%v]", node.Id, r.Id, r.Peers)
+			if err := cs.dsClient.CreateRange(ctx, NodeServerAddr(node), r); err != nil {
+				err := fmt.Errorf("create range err: %s ", err.Error())
+				errChain <- err
+				log.Error(err.Error())
+			}
+		}(node, r)
+	}
+}
+
+func (cs *BaseService) checkRangeOk(ctx context.Context, ranges []*basepb.Range, errChain chan error) error {
+	for i := 0; i < len(ranges); i++ {
+		v := 0
+		for {
+			v++
+			select {
+			case err := <-errChain:
+				return cblog.LogErrAndReturn(err)
+			case <-ctx.Done():
+				return fmt.Errorf("create data range has error")
+			default:
+
+			}
+
+			rg, err := cs.QueryRange(ctx, ranges[i].TableId, ranges[i].Id)
+			if v%5 == 0 {
+				log.Debug("check the range :%d status ", ranges[i].Id)
+			}
+			if err != nil && errs.Code(err) != mspb.ErrorType_NotExistRange {
+				return cblog.LogErrAndReturn(err)
+			}
+			if rg == nil {
+				time.Sleep(50 * time.Millisecond)
+				continue
+			}
+			break
+		}
+	}
+	return nil
 }
 
 // update table service
@@ -565,56 +740,31 @@ func (cs *BaseService) UpdateTable(ctx context.Context, dbName, tableName, prope
 	return table, nil
 }
 
-type kvEntry struct {
-	k uint64
-	v int
-}
+func (cs *BaseService) getNodeByType(ctx context.Context, nodes []*basepb.Node, storeType basepb.StoreType, replicaNum uint64) (hot, warm []*basepb.Node, err error) {
 
-func (cs *BaseService) getNodeByLessRangeNum(ctx context.Context, nodes []*basepb.Node, replicaNum int) ([]*basepb.Node, error) {
-
-	if len(nodes) <= replicaNum {
-		return nodes, nil
-	}
-
-	//get node has ranges
-	ranges, err := cs.QueryRanges(ctx, 0)
-	if err != nil {
-		return nil, err
-	}
-
-	nodeCount := make(map[uint64]int)
-
-	for _, n := range nodes {
-		nodeCount[n.Id] = 0
-	}
-
-	for _, r := range ranges {
-		for _, p := range r.Peers {
-			nodeCount[p.NodeId] = nodeCount[p.NodeId] + 1
+	for _, node := range nodes {
+		if node.Type == basepb.StoreType_Store_Hot {
+			hot = append(hot, node)
+		} else if node.Type == basepb.StoreType_Store_Warm {
+			warm = append(warm, node)
+		} else {
+			log.Error("err type of node:[%d] type:[%d]", node.Id, node.Type)
 		}
 	}
 
-	kvs := make([]*kvEntry, 0, len(nodeCount))
-
-	for k, v := range nodeCount {
-		kvs = append(kvs, &kvEntry{k, v})
+	if storeType != basepb.StoreType_Store_Hot && len(warm) < int(replicaNum) {
+		log.Error("not enough warm nodes:[%d], need replica:[%d]", len(warm), replicaNum)
+		err = errs.Error(mspb.ErrorType_NodeNotEnough)
+		return
 	}
 
-	sort.Slice(kvs, func(i, j int) bool {
-		return kvs[i].v < kvs[j].v
-	})
-
-	result := make([]*basepb.Node, 0, len(nodes))
-
-	for _, kv := range kvs {
-		for _, node := range nodes {
-			if kv.k == node.Id {
-				result = append(result, node)
-			}
-		}
+	if storeType != basepb.StoreType_Store_Warm && len(hot) < int(replicaNum) {
+		log.Error("not enough hot nodes:[%d], need replica:[%d]", len(hot), replicaNum)
+		err = errs.Error(mspb.ErrorType_NodeNotEnough)
+		return
 	}
 
-	return result[:replicaNum], nil
+	return
 }
 
 func (cs *BaseService) ConfigAutoSplit(ctx context.Context) bool {
@@ -673,12 +823,8 @@ func (cs *BaseService) PutBoolConfig(ctx context.Context, key string, value bool
 	return cs.Store.Put(ctx, key, []byte{v})
 }
 
-func nodeServerAddr(node *basepb.Node) string {
+func NodeServerAddr(node *basepb.Node) string {
 	return fmt.Sprintf("%s:%d", node.GetIp(), node.GetServerPort())
-}
-
-func nodeRaftAddr(node *basepb.Node) string {
-	return fmt.Sprintf("%s:%d", node.GetIp(), node.GetRaftPort())
 }
 
 func (cs *BaseService) GetDBByName(ctx context.Context, dbName string) (*basepb.DataBase, error) {

@@ -53,19 +53,24 @@ void Range::ResetStatisSize(uint64_t split_size, uint64_t max_size) {
     auto meta = meta_.Get();
 
     uint64_t total_size = 0;
+    uint64_t kv_count_1 = 0;
+    uint64_t kv_count_2 = 0;
     std::string split_key;
-    auto s = store_->StatSize(split_size, &total_size , &split_key);
+    auto s = store_->StatSize(split_size, &total_size , &split_key, &kv_count_1, &kv_count_2);
     statis_flag_ = false;
     statis_size_ = 0;
     if (!s.ok()) {
         if (s.code() == Status::kUnexpected) {
             RLOG_INFO("StatSize failed: {}", s.ToString());
+            kv_count_1_ = kv_count_1;
         } else {
             RLOG_ERROR("StatSize failed: {}", s.ToString());
         }
         return;
     }
     real_size_ = total_size;
+    kv_count_1_ = kv_count_1;
+    kv_count_2_ = kv_count_2;
     if (split_key <= meta.start_key() || split_key >= meta.end_key()) {
         RLOG_ERROR("StatSize invalid split key: {} vs scope[{}-{}]",
                 EncodeToHex(split_key),
@@ -74,7 +79,8 @@ void Range::ResetStatisSize(uint64_t split_size, uint64_t max_size) {
         return ;
     }
 
-    RLOG_INFO("StatSize real size: {}, split key: {}", real_size_, EncodeToHex(split_key));
+    RLOG_INFO("StatSize real size: {}, split key: {}, kv count : {} + {}={}",
+            real_size_, EncodeToHex(split_key), kv_count_1_, kv_count_2_, kv_count_1_+kv_count_2_);
 
     if (!verifyEpoch(meta.range_epoch())) {
         RLOG_WARN("StatSize epoch is changed");
@@ -161,6 +167,8 @@ void Range::startSplit(mspb::AskSplitResponse &resp) {
 
     // set range id
     range->set_id(resp.new_range_id());
+    // set parent range id
+    range->set_parent_range_id(id_);
     // set range start_key
     range->set_start_key(split_key);
     // range end_key doesn't need to change.
@@ -183,7 +191,7 @@ void Range::startSplit(mspb::AskSplitResponse &resp) {
 
     split_req->set_allocated_new_range(range);
 
-    auto ret = submit(cmd);
+    auto ret = submit(cmd, chubaodb::raft::WRITE_FLAG);
     if (!ret.ok()) {
         RLOG_ERROR("Split raft submit error: {}", ret.ToString());
     }
@@ -248,9 +256,11 @@ Status Range::applySplit(const dspb::Command &cmd, uint64_t index) {
         if (rng != nullptr) {
             rng->scheduleHeartbeat(false);
             rng->SetRealSize(real_size_ - rsize);
+            rng->SetKvCount(kv_count_2_);
         }
 
         real_size_ = rsize;
+        SetKvCount(kv_count_1_);
     }
 
     context_->Statistics()->DecrSplitCount();
