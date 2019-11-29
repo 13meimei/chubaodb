@@ -14,8 +14,10 @@
 
 #include <gtest/gtest.h>
 
-#include "base/util.h"
+#include "base/fs_util.h"
 #include "raft/src/impl/storage/storage_disk.h"
+#include "raft/entry_flags.h"
+
 #include "test_util.h"
 
 int main(int argc, char* argv[]) {
@@ -48,8 +50,6 @@ protected:
         ASSERT_TRUE(s.ok()) << s.ToString();
         delete storage_;
 
-        ops_.initial_first_index = 0;
-
         Open();
     }
 
@@ -79,13 +79,6 @@ protected:
     DiskStorage* storage_;
 };
 
-class StorageHoleTest : public StorageTest {
-protected:
-    void SetUp() override {
-        ops_.initial_first_index = 100;
-        StorageTest::SetUp();
-    }
-};
 
 TEST_F(StorageTest, LogEntry) {
     uint64_t lo = 1, hi = 100;
@@ -96,9 +89,9 @@ TEST_F(StorageTest, LogEntry) {
 
     uint64_t index = 0;
     s = storage_->FirstIndex(&index);
-    ASSERT_EQ(index, 1);
+    ASSERT_EQ(index, 1UL);
     s = storage_->LastIndex(&index);
-    ASSERT_EQ(index, 99);
+    ASSERT_EQ(index, 99UL);
 
     // read one by one
     for (uint64_t index = lo; index < hi; ++index) {
@@ -108,7 +101,7 @@ TEST_F(StorageTest, LogEntry) {
                 &ents, &compacted);
         ASSERT_TRUE(s.ok()) << s.ToString();
         ASSERT_FALSE(compacted);
-        ASSERT_EQ(ents.size(), 1);
+        ASSERT_EQ(ents.size(), 1U);
         s = Equal(ents[0], to_writes[index-lo]);
         ASSERT_TRUE(s.ok()) << s.ToString();
     }
@@ -164,9 +157,9 @@ TEST_F(StorageTest, LogEntry) {
 
     // test FristIndex
     s = storage_->FirstIndex(&index);
-    ASSERT_EQ(index, 1);
+    ASSERT_EQ(index, 1UL);
     s = storage_->LastIndex(&index);
-    ASSERT_EQ(index, 99);
+    ASSERT_EQ(index, 99UL);
 
     // read all entries
     ents.clear();
@@ -213,9 +206,9 @@ TEST_F(StorageTest, Conflict) {
 
     uint64_t index = 0;
     s = storage_->FirstIndex(&index);
-    ASSERT_EQ(index, 1);
+    ASSERT_EQ(index, 1U);
     s = storage_->LastIndex(&index);
-    ASSERT_EQ(index, 50);
+    ASSERT_EQ(index, 50U);
 
     // read all entries
     std::vector<EntryPtr> ents;
@@ -287,12 +280,12 @@ TEST_F(StorageTest, KeepCount) {
 
     std::cout << count << ", " << count2 << std::endl;
     ASSERT_LT(count2, count);
-    ASSERT_GE(count2, 3);
+    ASSERT_GE(count2, 3U);
 
     uint64_t index = 0;
     s = storage_->FirstIndex(&index);
     ASSERT_TRUE(s.ok()) << s.ToString();
-    ASSERT_LE(index, 100);
+    ASSERT_LE(index, 100UL);
     std::cout << "First: " << index << std::endl;
 
     std::vector<EntryPtr> ents;
@@ -372,6 +365,8 @@ TEST_F(StorageTest, DestroyBak) {
     ASSERT_FALSE(compacted);
     s = Equal(ents, to_writes);
     ASSERT_TRUE(s.ok()) << s.ToString();
+    s = bds.Destroy(false);
+    ASSERT_TRUE(s.ok()) << s.ToString();
 }
 
 #ifndef NDEBUG  // only debug
@@ -442,10 +437,10 @@ TEST_F(StorageTest, Corrupt2) {
 
     uint64_t index = 0;
     s = storage_->FirstIndex(&index);
-    ASSERT_EQ(index, 1);
+    ASSERT_EQ(index, 1U);
     s = storage_->LastIndex(&index);
-    ASSERT_LT(index, 99);
-    ASSERT_GE(index, 1);
+    ASSERT_LT(index, 99U);
+    ASSERT_GE(index, 1U);
     while (to_writes.size() > index) {
         to_writes.pop_back();
     }
@@ -476,90 +471,202 @@ TEST_F(StorageTest, Corrupt2) {
 }
 #endif
 
-TEST_F(StorageHoleTest, StartIndex) {
+TEST_F(StorageTest, LogReader) {
+    uint64_t lo = 1, hi = 100;
+    std::vector<EntryPtr> to_writes;
+    RandomEntries(lo, hi, 256, &to_writes);
+    auto s = storage_->StoreEntries(to_writes);
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+    // filter normal entries
+    std::vector<EntryPtr> normal_entries;
+    for (const auto& ent : to_writes) {
+        if (ent->type() == pb::ENTRY_NORMAL) {
+            EntryPtr ne(new pb::Entry(*ent));
+            normal_entries.push_back(std::move(ne));
+        }
+    }
+
+    auto reader = storage_->NewReader(lo);
+    ASSERT_TRUE(reader != nullptr);
+    size_t i = 0;
+    bool over = false;
     uint64_t index = 0;
-    auto s = storage_->FirstIndex(&index);
-    ASSERT_EQ(index, 100);
-    s = storage_->LastIndex(&index);
-    ASSERT_EQ(index, 99);
+    std::string data;
+    while (true) {
+        s = reader->Next(index, data, over);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+        if (over) {
+            ASSERT_EQ(i, normal_entries.size());
+            break;
+        }
+        ASSERT_EQ(index, normal_entries[i]->index());
+        ASSERT_EQ(data, normal_entries[i]->data());
+        ++i;
+    }
+}
+
+TEST_F(StorageTest, InheritLog) {
+    uint64_t lo = 1, hi = 100;
+    uint64_t split_index = 50;
+    std::vector<EntryPtr> to_writes;
+    RandomEntries(lo, hi, 256, &to_writes);
+    to_writes[split_index-lo]->set_flags(chubaodb::raft::EntryFlags::kForceRotate);
+    auto s = storage_->StoreEntries(to_writes);
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+    auto inherit_path = tmp_dir_ + "_inherit";
+    s = storage_->InheritLog(inherit_path, split_index, false);
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+    // destroy old one
+    s = storage_->Destroy(false);
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+    DiskStorage ds(2, inherit_path, DiskStorage::Options());
+    s = ds.Open();
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+    uint64_t index = 0;
+    s = ds.FirstIndex(&index);
+    ASSERT_EQ(index, 1U);
+    s = ds.LastIndex(&index);
+    ASSERT_EQ(index, 50U);
+    ASSERT_EQ(ds.InheritIndex(), split_index);
 
     std::vector<EntryPtr> ents;
     bool compacted = false;
-    s = storage_->Entries(99, 200, std::numeric_limits<uint64_t>::max(), &ents,
-                          &compacted);
-    ASSERT_TRUE(s.ok()) << s.ToString();
-    ASSERT_TRUE(compacted);
-
-    const uint64_t lo = 100, hi = 200;
-    std::vector<EntryPtr> to_writes;
-    RandomEntries(lo, hi, 256, &to_writes);
-    s = storage_->StoreEntries(to_writes);
-    ASSERT_TRUE(s.ok()) << s.ToString();
-
-    index = 0;
-    s = storage_->FirstIndex(&index);
-    ASSERT_EQ(index, lo);
-    s = storage_->LastIndex(&index);
-    ASSERT_EQ(index, hi - 1);
-
-    // read all
-    ents.clear();
-    compacted = false;
-    s = storage_->Entries(lo, hi, std::numeric_limits<uint64_t>::max(), &ents,
+    s = ds.Entries(1, split_index + 1, std::numeric_limits<uint64_t>::max(), &ents,
                           &compacted);
     ASSERT_TRUE(s.ok()) << s.ToString();
     ASSERT_FALSE(compacted);
-    s = Equal(ents, to_writes);
+    s = Equal(ents, { to_writes.begin(), to_writes.begin() + split_index - lo + 1});
     ASSERT_TRUE(s.ok()) << s.ToString();
 
     // test Term()
-    for (uint64_t i = lo; i < hi; ++i) {
+    for (uint64_t i = lo; i < split_index + 1; ++i) {
         uint64_t term = 0;
         bool compacted = false;
-        s = storage_->Term(i, &term, &compacted);
+        s = ds.Term(i, &term, &compacted);
         ASSERT_TRUE(s.ok()) << s.ToString();
         ASSERT_FALSE(compacted);
         ASSERT_EQ(term, to_writes[i - lo]->term());
     }
 
-    // with maxsize arg
-    ents.clear();
-    s = storage_->Entries(lo, hi,
-                          to_writes[0]->ByteSizeLong() + to_writes[1]->ByteSizeLong(),
-                          &ents, &compacted);
-    ASSERT_TRUE(s.ok()) << s.ToString();
-    ASSERT_FALSE(compacted);
-    std::vector<EntryPtr> ents2(to_writes.begin(), to_writes.begin() + 2);
-    s = Equal(ents, ents2);
-    ASSERT_TRUE(s.ok()) << s.ToString();
-
-    // at least one
-    ents.clear();
-    s = storage_->Entries(lo, hi, 1, &ents, &compacted);
-    ASSERT_TRUE(s.ok()) << s.ToString();
-    ASSERT_FALSE(compacted);
-    s = Equal(ents, std::vector<EntryPtr>{to_writes[0]});
-    ASSERT_TRUE(s.ok()) << s.ToString();
-
     // read compacted entry
     ents.clear();
-    s = storage_->Entries(0, hi, std::numeric_limits<uint64_t>::max(), &ents, &compacted);
+    s = storage_->Entries(0, split_index + 2, std::numeric_limits<uint64_t>::max(), &ents, &compacted);
     ASSERT_TRUE(s.ok()) << s.ToString();
     ASSERT_TRUE(compacted);
     ASSERT_TRUE(ents.empty());
 
-    // reopen
-    ReOpen();
+    // append and check
+    s = ds.StoreEntries({to_writes.begin() + split_index - lo, to_writes.end()});
+    ASSERT_TRUE(s.ok()) << s.ToString();
 
-    // test FristIndex
-    s = storage_->FirstIndex(&index);
-    ASSERT_EQ(index, lo);
-    s = storage_->LastIndex(&index);
-    ASSERT_EQ(index, hi - 1);
-
-    // read all
     ents.clear();
     compacted = false;
+    s = ds.Entries(1, hi, std::numeric_limits<uint64_t>::max(), &ents, &compacted);
+    ASSERT_TRUE(s.ok()) << s.ToString();
+    ASSERT_FALSE(compacted);
+    s = Equal(ents, to_writes);
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+    // test Term()
+    for (uint64_t i = lo; i < hi; ++i) {
+        uint64_t term = 0;
+        bool compacted = false;
+        s = ds.Term(i, &term, &compacted);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+        ASSERT_FALSE(compacted);
+        ASSERT_EQ(term, to_writes[i - lo]->term());
+    }
+
+    ds.Destroy(false);
+}
+
+TEST_F(StorageTest, InheritIndex) {
+    uint64_t lo = 1, hi = 100;
+    uint64_t split_index = 50;
+    std::vector<EntryPtr> to_writes;
+    RandomEntries(lo, hi, 256, &to_writes);
+    to_writes[split_index-lo]->set_flags(chubaodb::raft::EntryFlags::kForceRotate);
+    auto s = storage_->StoreEntries(to_writes);
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+    auto inherit_path = tmp_dir_ + "_inherit";
+    s = storage_->InheritLog(inherit_path, split_index, true);
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+    // destroy old one
+    s = storage_->Destroy(false);
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+    DiskStorage ds(2, inherit_path, DiskStorage::Options());
+    s = ds.Open();
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+    uint64_t index = 0;
+    s = ds.FirstIndex(&index);
+    ASSERT_EQ(index, split_index + 1);
+    s = ds.LastIndex(&index);
+    ASSERT_EQ(index, split_index);
+    ASSERT_EQ(ds.InheritIndex(), 0U);
+
+    std::vector<EntryPtr> ents;
+    bool compacted = false;
+    s = ds.Entries(split_index, hi, std::numeric_limits<uint64_t>::max(), &ents,
+                   &compacted);
+    ASSERT_TRUE(s.ok()) << s.ToString();
+    ASSERT_TRUE(compacted);
+
+    to_writes.clear();
+    RandomEntries(split_index+1, 200, 256, &to_writes);
+    s = ds.StoreEntries(to_writes);
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+    ents.clear();
+    compacted = false;
+    s = ds.Entries(split_index+1, 200, std::numeric_limits<uint64_t>::max(), &ents,
+                   &compacted);
+    ASSERT_TRUE(s.ok()) << s.ToString();
+    ASSERT_FALSE(compacted);
+    s = Equal(ents, to_writes);
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+    ds.Destroy(false);
+}
+
+TEST_F(StorageTest, ForceRotate) {
+    uint64_t lo = 1, hi = 100;
+    std::vector<EntryPtr> to_writes;
+    RandomEntries(lo, hi, 256, &to_writes);
+    to_writes.back()->set_flags(chubaodb::raft::EntryFlags::kForceRotate);
+    auto s = storage_->StoreEntries(to_writes);
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+    uint64_t index = 0;
+    s = storage_->FirstIndex(&index);
+    ASSERT_EQ(index, 1UL);
+    s = storage_->LastIndex(&index);
+    ASSERT_EQ(index, 99UL);
+
+    // read one by one
+    for (uint64_t index = lo; index < hi; ++index) {
+        std::vector<EntryPtr> ents;
+        bool compacted = false;
+        s = storage_->Entries(index, index + 1, std::numeric_limits<uint64_t>::max(),
+                              &ents, &compacted);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+        ASSERT_FALSE(compacted);
+        ASSERT_EQ(ents.size(), 1U);
+        s = Equal(ents[0], to_writes[index-lo]);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+    }
+
+    // read all entries
+    std::vector<EntryPtr> ents;
+    bool compacted = false;
     s = storage_->Entries(lo, hi, std::numeric_limits<uint64_t>::max(), &ents,
                           &compacted);
     ASSERT_TRUE(s.ok()) << s.ToString();
@@ -574,22 +681,9 @@ TEST_F(StorageHoleTest, StartIndex) {
         s = storage_->Term(i, &term, &compacted);
         ASSERT_TRUE(s.ok()) << s.ToString();
         ASSERT_FALSE(compacted);
-        ASSERT_EQ(term, to_writes[i - lo]->term());
+        ASSERT_EQ(term, to_writes[i - 1]->term());
     }
-
-    // with maxsize
-    ents.clear();
-    s = storage_->Entries(lo, hi,
-                          to_writes[0]->ByteSizeLong() + to_writes[1]->ByteSizeLong(),
-                          &ents, &compacted);
-    ASSERT_TRUE(s.ok()) << s.ToString();
-    ASSERT_FALSE(compacted);
-    std::vector<EntryPtr> ents3(to_writes.begin(), to_writes.begin() + 2);
-    s = Equal(ents, ents3);
-    ASSERT_TRUE(s.ok()) << s.ToString();
 }
-
-
 
 
 } /* namespace  */

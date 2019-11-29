@@ -78,10 +78,12 @@ void EncodeIndexKeyPrefix(std::string *buf, uint64_t table_id) {
 // append encoded pk values to buf
 void EncodePrimaryKey(std::string *buf, const basepb::Column& col, const std::string& val) {
     switch (col.data_type()) {
-        case basepb::Tinyint:
-        case basepb::Smallint:
+        case basepb::TinyInt:
+        case basepb::SmallInt:
+        case basepb::MediumInt:
         case basepb::Int:
-        case basepb::BigInt: {
+        case basepb::BigInt:
+        case basepb::Year: {
             if (!col.unsigned_()) {
                 int64_t i = strtoll(val.c_str(), NULL, 10);
                 EncodeVarintAscending(buf, i);
@@ -107,6 +109,21 @@ void EncodePrimaryKey(std::string *buf, const basepb::Column& col, const std::st
             break;
         }
 
+        case basepb::Decimal: {
+
+            datatype::MyDecimal dec;
+            int32_t ret;
+
+            ret = dec.FromString(val);
+            if ( ret != datatype::E_DEC_OK) {
+                dec.ResetZero();
+            }
+
+            EncodeDecimalAscending(buf, &dec);
+            break;
+        }
+
+
         default:
             throw std::runtime_error(std::string("EncodePrimaryKey: invalid column data type: ") +
                 std::to_string(static_cast<int>(col.data_type())));
@@ -115,10 +132,12 @@ void EncodePrimaryKey(std::string *buf, const basepb::Column& col, const std::st
 
 void EncodeColumnValue(std::string *buf, const basepb::Column& col, const std::string& val) {
     switch (col.data_type()) {
-    case basepb::Tinyint:
-    case basepb::Smallint:
+    case basepb::TinyInt:
+    case basepb::SmallInt:
+    case basepb::MediumInt:
     case basepb::Int:
-    case basepb::BigInt: {
+    case basepb::BigInt:
+    case basepb::Year: {
         if (!col.unsigned_()) {
             int64_t i = strtoll(val.c_str(), NULL, 10);
             EncodeIntValue(buf, static_cast<uint32_t>(col.id()), i);
@@ -144,6 +163,20 @@ void EncodeColumnValue(std::string *buf, const basepb::Column& col, const std::s
         break;
     }
 
+    case basepb::Decimal: {
+
+        datatype::MyDecimal dec;
+        int32_t ret;
+
+        ret = dec.FromString(val);
+        if ( ret != datatype::E_DEC_OK) {
+            dec.ResetZero();
+        }
+
+        EncodeDecimalValue(buf, static_cast<uint32_t>(col.id()), &dec);
+        break;
+    }
+
     default:
         throw std::runtime_error(std::string("EncodeColumnValue: invalid column data type: ") +
                                  std::to_string(static_cast<int>(col.data_type())));
@@ -152,10 +185,12 @@ void EncodeColumnValue(std::string *buf, const basepb::Column& col, const std::s
 
 void DecodeColumnValue(const std::string& buf, size_t& offset, const dspb::ColumnInfo& col, std::string *val) {
     switch (col.typ()) {
-    case basepb::Tinyint:
-    case basepb::Smallint:
+    case basepb::TinyInt:
+    case basepb::SmallInt:
+    case basepb::MediumInt:
     case basepb::Int:
-    case basepb::BigInt: {
+    case basepb::BigInt:
+    case basepb::Year: {
         int64_t i = 0;
         DecodeIntValue(buf, offset, &i);
         if (col.unsigned_()) {
@@ -182,6 +217,17 @@ void DecodeColumnValue(const std::string& buf, size_t& offset, const dspb::Colum
         break;
     }
 
+    case basepb::Decimal: {
+
+        datatype::MyDecimal dec;
+
+        DecodeDecimalValue(buf, offset, &dec);
+
+        *val = dec.ToString();
+
+        break;
+    }
+
     default:
         throw std::runtime_error(std::string("EncodeColumnValue: invalid column data type: ") +
                                  std::to_string(static_cast<int>(col.typ())));
@@ -201,52 +247,23 @@ Status NewDBManager(const std::string& path, std::unique_ptr<ds::db::DBManager>&
     auto engine = ::getenv("ENGINE");
 
     if (engine != nullptr && strcmp(engine, "rocksdb") == 0) {
+        std::cout << "Engine: rocksdb ...." << std::endl;
         RocksDBConfig opt;
         opt.path = path;
-        opt.storage_type = 0;
-
-        opt.block_cache_size = 1024 * 1024 * 1024; // default: 1024MB
-        opt.row_cache_size = 0;
-        opt.block_size = 16 * 1024; // default: 16K
-        opt.max_open_files = 100;
-        opt.bytes_per_sync = 0;
-        opt.write_buffer_size = 128 * 1024 * 1024;
-        opt.max_write_buffer_number = 8;
-        opt.min_write_buffer_number_to_merge = 1;
-        opt.max_bytes_for_level_base = 512 * 1024 * 1024;
-        opt.max_bytes_for_level_multiplier = 10;
-        opt.target_file_size_base = 128 * 1024 * 1024;
-        opt.target_file_size_multiplier = 1;
-        opt.max_background_flushes = 2;
-        opt.max_background_compactions = 4;
-        opt.background_rate_limit = 0;
-        opt.disable_auto_compactions = false;
-        opt.read_checksum = true;
-        opt.level0_file_num_compaction_trigger = 8;
-        opt.level0_slowdown_writes_trigger = 40;
-        opt.level0_stop_writes_trigger = 46;
-        opt.disable_wal = false;
-        opt.cache_index_and_filter_blocks = false;
-        opt.compression = 0;
-
-        opt.min_blob_size = 0;
-        opt.blob_file_size = 256 * 1024 * 1024;
-        opt.enable_garbage_collection = true;
-        opt.blob_gc_percent = 75;
-        opt.blob_compression = 0;
-        opt.blob_cache_size = 0;
-        opt.blob_ttl_range = 3600; // in seconds
-
-        opt.ttl = 0;
-        opt.enable_stats = true;
-        opt.enable_debug_log = false;
-
         db_manager.reset(new RocksDBManager(opt));
 
     } else {
+        std::cout << "Engine: masstree...." << std::endl;
+
         MasstreeOptions opt;
         opt.rcu_interval_ms = 2000;
         opt.data_path = path;
+        opt.rcu_interval_ms = 1000;
+        opt.checkpoint_opt.disabled = false;
+        opt.checkpoint_opt.checksum = true;
+        opt.checkpoint_opt.work_threads = 1;
+        opt.checkpoint_opt.threshold_bytes = 4096;
+        opt.checkpoint_opt.max_history = 2;
         db_manager.reset(new MasstreeDBManager(opt));
     }
 

@@ -13,7 +13,7 @@
 // permissions and limitations under the License. See the AUTHORS file
 // for names of contributors.
 //
-// Copyright 2019 The Chubao Authors.
+// Portions Copyright 2019 The Chubao Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -33,6 +33,9 @@ _Pragma("once");
 #include <string>
 #include <vector>
 #include <limits>
+#include <common/data_type/my_decimal.h>
+#include <common/data_type/my_timestamp.h>
+#include <common/data_type/my_time.h>
 
 // from https://github.com/cockroachdb/cockroach
 
@@ -47,16 +50,15 @@ enum class EncodeType : char {
     Decimal,
     Bytes,
     BytesDesc,  // Bytes encoded descendingly
+    Date,
     Time,
-    Duration,
-    True,
-    False,
 
     SentinelType = 15  // Used in the Value encoding.
 };
 
 // Reserved column id for internal use
 static const uint32_t kNoColumnID = 0;
+static const uint32_t kReservedColumnID = std::numeric_limits<uint32_t>::max() - 100;
 static const uint32_t kVersionColumnID = std::numeric_limits<uint32_t>::max();
 static const uint32_t kTxnIDColumnID = std::numeric_limits<uint32_t>::max() - 1;
 static const EncodeType kVersionColumnType = EncodeType::Int;
@@ -75,12 +77,18 @@ void EncodeIntValue(std::string* buf, uint32_t col_id, int64_t value);
 size_t IntValueSize(uint32_t col_id, int64_t value);
 void EncodeFloatValue(std::string* buf, uint32_t col_id, double value);
 void EncodeBytesValue(std::string* buf, uint32_t col_id, const char* value, size_t value_size);
+void EncodeDecimalValue(std::string* buf, uint32_t col_id, const datatype::MyDecimal* d);
+void EncodeDateValue(std::string* buf, uint32_t col_id, const datatype::MyDateTime* dt);
+void EncodeTimeValue(std::string* buf, uint32_t col_id, const datatype::MyTime* t);
 void EncodeNullValue(std::string* buf, uint32_t col_id);
 
 bool DecodeValueTag(const std::string& data, size_t& offset, uint32_t* col_id, EncodeType* type);
 bool DecodeIntValue(const std::string& data, size_t& offset, int64_t* value);
 bool DecodeFloatValue(const std::string& data, size_t& offset, double* value);
 bool DecodeBytesValue(const std::string& data, size_t& offset, std::string* value);
+bool DecodeDecimalValue(const std::string& data, size_t& offset, datatype::MyDecimal* d);
+bool DecodeDateValue(const std::string& data, size_t& offset, datatype::MyDateTime* dt);
+bool DecodeTimeValue(const std::string& data, size_t& offset, datatype::MyTime* t);
 bool SkipValue(const std::string& data, size_t& offset);
 
 void EncodeUvarintAscending(std::string* buf, uint64_t value);
@@ -88,12 +96,18 @@ void EncodeUvarintDescending(std::string* buf, uint64_t value);
 void EncodeVarintAscending(std::string* buf, int64_t value);
 void EncodeFloatAscending(std::string* buf, double value);
 void EncodeBytesAscending(std::string* buf, const char* value, size_t value_size);
+void EncodeDecimalAscending(std::string* buf, const datatype::MyDecimal* d);
+void EncodeDateAscending(std::string* buf, const datatype::MyDateTime* dt);
+void EncodeTimeAscending(std::string* buf, const datatype::MyTime* t);
 
 bool DecodeUvarintAscending(const std::string& buf, size_t& pos, uint64_t* out);
 bool DecodeUvarintDescending(const std::string& buf, size_t& pos, uint64_t* out);
 bool DecodeVarintAscending(const std::string& buf, size_t& pos, int64_t* out);
 bool DecodeFloatAscending(const std::string& buf, size_t& pos, double* out);
 bool DecodeBytesAscending(const std::string& buf, size_t& pos, std::string* out);
+bool DecodeDecimalAscending(const std::string& buf, size_t& pos, datatype::MyDecimal* d);
+bool DecodeDateAscending(const std::string& buf, size_t& pos, datatype::MyDateTime* dt);
+bool DecodeTimeAscending(const std::string& buf, size_t& pos, datatype::MyTime* t);
 
 // for tests or debug
 std::string EncodeToHexString(const std::string& str);

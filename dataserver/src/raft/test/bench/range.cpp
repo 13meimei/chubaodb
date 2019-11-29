@@ -17,6 +17,7 @@
 #include <unistd.h>
 #include <iostream>
 
+#include "base/fs_util.h"
 #include "address.h"
 #include "config.h"
 
@@ -54,9 +55,10 @@ void Range::Start() {
     RaftOptions rops;
     rops.id = id_;
     rops.statemachine = shared_from_this();
-    rops.use_memory_storage = bench_config.use_memory_raft_log;
-    rops.storage_path = "./data/" + std::to_string(node_id_) + "/" + std::to_string(id_);
-
+    rops.use_memory_storage = bench_config.raft_config.use_memory_log;
+    rops.storage_path = JoinFilePath({bench_config.raft_config.log_path,
+                                      std::to_string(node_id_),
+                                      std::to_string(id_)});
     std::vector<uint64_t> nodes;
     addr_mgr_->GetAllNodes(&nodes);
     for (auto n : nodes) {
@@ -89,7 +91,7 @@ std::shared_future<bool> Range::AsyncRequest() {
     std::shared_future<bool> f;
     uint64_t seq = request_queue_.add(&f);
     std::string cmd = std::to_string(seq);
-    auto rs = raft_->Submit(cmd);
+    auto rs = raft_->Propose(cmd, 0);
     if (!rs.ok()) {
         throw std::runtime_error(std::string("submit failed:") + rs.ToString());
     } else {
@@ -101,6 +103,10 @@ Status Range::Apply(const std::string& cmd, uint64_t index) {
     uint64_t seq = strtoull(cmd.c_str(), NULL, 10);
     request_queue_.set(seq, true);
     return Status::OK();
+}
+
+void Range::Destroy() {
+    raft_server_->DestroyRaft(id_, false);
 }
 
 } /* namespace bench */

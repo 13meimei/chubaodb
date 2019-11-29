@@ -14,6 +14,9 @@
 
 #include "range.h"
 
+#include "base/util.h"
+#include "range_logger.h"
+
 namespace chubaodb {
 namespace ds {
 namespace range {

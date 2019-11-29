@@ -20,6 +20,7 @@ import (
 	"github.com/chubaodb/chubaodb/master/entity"
 	"github.com/chubaodb/chubaodb/master/entity/errs"
 	"github.com/chubaodb/chubaodb/master/entity/pkg/basepb"
+	"github.com/chubaodb/chubaodb/master/entity/pkg/dspb"
 	"github.com/chubaodb/chubaodb/master/entity/pkg/mspb"
 	"github.com/chubaodb/chubaodb/master/service"
 	"github.com/chubaodb/chubaodb/master/utils/ginutil"
@@ -27,6 +28,7 @@ import (
 	"github.com/chubaodb/chubaodb/master/utils/monitoring"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -47,6 +49,7 @@ func ExportToNodeHandler(router *gin.Engine, nodeService *service.BaseService) {
 	router.Handle(http.MethodPost, "/node/change_state", base30.TimeOutHandler, base30.PaincHandler(c.changeState), base30.TimeOutEndHandler)
 	router.Handle(http.MethodPost, "/node/check_state", base30.TimeOutHandler, base30.PaincHandler(c.checkState), base30.TimeOutEndHandler)
 
+	router.Handle(http.MethodPost, "/node/set_loglevel", base30.TimeOutHandler, base30.PaincHandler(c.setNodeLogLevel), base30.TimeOutEndHandler)
 }
 
 func (na *nodeApi) nodeHeartbeat(c *gin.Context) {
@@ -201,4 +204,56 @@ func (na *nodeApi) checkState(c *gin.Context) {
 	}
 
 	ginutil.NewAutoMehtodName(c, na.monitor).Send(&mspb.CheckNodeStateResponse{Header: entity.OK(), State: nodeState, LeaderNum: leaderNum, RangeNum: rangeNum})
+}
+
+func (na *nodeApi) setNodeLogLevel(c *gin.Context) {
+	cc, _ := c.Get(Ctx)
+	var ctx = cc.(context.Context)
+
+	nodeIdStr := c.PostForm("nodeId")
+	if nodeIdStr == "" {
+		_, _ = c.Writer.WriteString("nodeId cannot be null or empty")
+		return
+	}
+	nodeId, err := strconv.ParseUint(nodeIdStr, 10, 64)
+	if err != nil {
+		_, _ = c.Writer.WriteString("string of nodeId parse to int error")
+		return
+	}
+	logLevel := c.PostForm("logLevel")
+	if logLevel == "" {
+		_, _ = c.Writer.WriteString("logLevel cannot be null or empty")
+		return
+	}
+
+	node, err := na.nodeService.QueryNode(ctx, nodeId)
+	if err != nil {
+		_, _ = c.Writer.WriteString(fmt.Sprintf("cannt find node by nodeId[%d], err=[%s]", nodeId, err.Error()))
+		return
+	}
+	if node == nil {
+		_, _ = c.Writer.WriteString(fmt.Sprintf("find node=nil by nodeId[%d]", nodeId))
+		return
+	}
+
+	item := &dspb.ConfigItem{
+		Key: &dspb.ConfigKey{
+			Section: "log",
+			Name:    "level",
+		},
+		Value: logLevel,
+	}
+	var configs []*dspb.ConfigItem
+	configs = append(configs, item)
+
+	nodeAdmAddr := fmt.Sprintf("%s:%d", node.Ip, node.AdminPort)
+	err = na.nodeService.AdmClient().SetConfig(nodeAdmAddr, configs)
+	if err != nil {
+		_, _ = c.Writer.WriteString(fmt.Sprintf("addr=%s set loglevel failed, err=[%s]", nodeAdmAddr, err.Error()))
+		return
+	}
+
+	log.Info(fmt.Sprintf("set ds admAddr=[%s] loglevel to [%s]", nodeAdmAddr, logLevel))
+	_, _ = c.Writer.WriteString("OK")
+	return
 }

@@ -17,6 +17,7 @@
 #include "base/status.h"
 #include "base/util.h"
 #include "common/server_config.h"
+#include "common/ds_encoding.h"
 #include "base/fs_util.h"
 #include "server/run_status.h"
 #include "storage/store.h"
@@ -173,7 +174,81 @@ basepb::Range *genRange() {
 
     return meta;
 }
+basepb::Range *genIndexKeyRange(int id) {
+    auto meta = new basepb::Range;
 
+    meta->set_id(default_range_id+1);
+    std::string start_key;
+    std::string end_key;
+    EncodeIndexKeyPrefix(&start_key, default_account_table_id);
+    EncodeVarintAscending(&start_key, id);
+    EncodeIndexKeyPrefix(&end_key, default_account_table_id);
+    EncodeVarintAscending(&end_key, id + 1);
+
+    meta->set_start_key(start_key);
+    meta->set_end_key(end_key);
+    meta->mutable_range_epoch()->set_conf_ver(1);
+    meta->mutable_range_epoch()->set_version(1);
+
+    meta->set_table_id(default_account_table_id);
+
+    auto peer = meta->add_peers();
+    peer->set_id(1);
+    peer->set_node_id(1);
+
+    peer = meta->add_peers();
+    peer->set_id(2);
+    peer->set_node_id(2);
+
+    auto pks = ptr_table_account->GetPKs();
+    for (const auto& pk : pks) {
+        auto p = meta->add_primary_keys();
+        p->CopyFrom(pk);
+    }
+
+    return meta;
+}
+
+void genKvUniqueIndexKeyData(std::map<std::string, std::string > & mp)
+{
+    typedef int col_id_type;
+    for (auto id = 0; id < 20; id++) {
+        std::string key;
+        std::string value;
+
+
+        // make row data
+        std::map<col_id_type, std::string> row;
+        row.emplace(1, std::to_string(1000+id));
+        row.emplace(2, "name_" + std::to_string(1000+id));
+        row.emplace(3, std::to_string(1000+id));
+
+        EncodeIndexKeyPrefix(&key, default_account_table_id);
+        EncodeVarintAscending(&key, default_account_index_id1);
+        auto i_col1 = ptr_table_account->GetColumn("name");
+        EncodePrimaryKey(&key, i_col1,row.at(i_col1.id()));
+
+        auto i_col2 = ptr_table_account->GetColumn("balance");
+        EncodePrimaryKey(&key, i_col2, row.at(i_col2.id()));
+
+
+        std::string tmp_v;
+        EncodeKeyPrefix(&tmp_v, default_account_table_id);
+        for ( auto & col : ptr_table_account->GetPKs()) {
+            EncodePrimaryKey(&tmp_v, col,row.at(col.id()));
+        }
+
+        basepb::Column index_id_col;
+        index_id_col.set_name("index_id_col");
+        index_id_col.set_id(default_account_index_id1);
+        index_id_col.set_data_type(basepb::Varchar);
+
+        EncodeColumnValue( &value, index_id_col, tmp_v);
+
+
+        mp.emplace(key, value);
+    }
+}
 TEST_F(SelectFlowTest, SelectFlowAndAgg) {
     std::string start_key;
     std::string end_key;
@@ -188,7 +263,7 @@ TEST_F(SelectFlowTest, SelectFlowAndAgg) {
 
 
     { // begin create range
-        dspb::SchReuqest req;
+        dspb::SchRequest req;
         req.mutable_create_range()->set_allocated_range(genRange());
 
         // create range
@@ -221,7 +296,7 @@ TEST_F(SelectFlowTest, SelectFlowAndAgg) {
             std::map<col_id_type, std::string> row;
             row.emplace(1, std::to_string(1000+id));
             row.emplace(2, "name_" + std::to_string(1000+id));
-            row.emplace(3, std::to_string(1000+id));
+            row.emplace(3, std::to_string(1000+(id%5)));
 
             // make encode key
             EncodeKeyPrefix(&key, default_account_table_id); // key:100000001 ("\x01"+"00000001")
@@ -265,7 +340,7 @@ TEST_F(SelectFlowTest, SelectFlowAndAgg) {
         table_read_processor->set_type(dspb::TABLE_READ_TYPE );
         auto table_read = table_read_processor->mutable_table_read();
         for ( const auto & col : ptr_table_account->GetAllColumns()) {
-            // table_read->add_columns()->CopyFrom(ptr_table_account->GetColumnInfo(col.id()));
+            table_read->add_columns()->CopyFrom(ptr_table_account->GetColumnInfo(col.id()));
         }
 
         table_read->set_type(dspb::KEYS_RANGE_TYPE);
@@ -280,21 +355,25 @@ TEST_F(SelectFlowTest, SelectFlowAndAgg) {
 
         dspb::Expr *func_tmp = nullptr;
         dspb::Expr *child = nullptr;
+        std::string cl_name;
+        basepb::Column cl_table;
         //avg
-        // func_tmp = agg->add_func();
-        // func_tmp->set_expr_type(dspb::Avg);
-        // std::string cl_name = "id";
-        // auto cl_table = ptr_table_account->GetColumn(cl_name);
-        // func_tmp->mutable_column()->set_id(cl_table.id());
+        func_tmp = agg->add_func();
+        func_tmp->set_expr_type(dspb::Avg);
+        child = func_tmp->add_child();
+        child->set_expr_type(dspb::Column);
+        cl_name = "balance";
+        cl_table = ptr_table_account->GetColumn(cl_name);
+        child->mutable_column()->set_id(cl_table.id());
 
         //count(id)
-        // func_tmp = agg->add_func();
-        // func_tmp->set_expr_type(dspb::Count);
-        // cl_name = "id";
-        // cl_table = ptr_table_account->GetColumn(cl_name);
-        // auto child = func_tmp->add_child();
-        // child->set_expr_type(dspb::Column);
-        // child->mutable_column()->set_id(cl_table.id());
+        func_tmp = agg->add_func();
+        func_tmp->set_expr_type(dspb::Count);
+        child = func_tmp->add_child();
+        cl_name = "id";
+        cl_table = ptr_table_account->GetColumn(cl_name);
+        child->set_expr_type(dspb::Column);
+        child->mutable_column()->set_id(cl_table.id());
 
         //count(1)
          func_tmp = agg->add_func();
@@ -304,25 +383,43 @@ TEST_F(SelectFlowTest, SelectFlowAndAgg) {
         // child->set_value("1");
         
         //Max
-        // func_tmp = agg->add_func();
-        // func_tmp->set_expr_type(dspb::Max);
-        // cl_name = "id";
-        // cl_table = ptr_table_account->GetColumn(cl_name);
-        // func_tmp->mutable_column()->set_id(cl_table.id());
+        func_tmp = agg->add_func();
+        func_tmp->set_expr_type(dspb::Max);
+        child = func_tmp->add_child();
+        child->set_expr_type(dspb::Column);
+        cl_name = "id";
+        cl_table = ptr_table_account->GetColumn(cl_name);
+        child->mutable_column()->set_id(cl_table.id());
 
-        // //Min
-        // func_tmp = agg->add_func();
-        // func_tmp->set_expr_type(dspb::Min);
-        // cl_name = "id";
-        // cl_table = ptr_table_account->GetColumn(cl_name);
-        // func_tmp->mutable_column()->set_id(cl_table.id());
+        //Min
+        func_tmp = agg->add_func();
+        func_tmp->set_expr_type(dspb::Min);
+        child = func_tmp->add_child();
+        child->set_expr_type(dspb::Column);
+        cl_name = "id";
+        cl_table = ptr_table_account->GetColumn(cl_name);
+        child->mutable_column()->set_id(cl_table.id());
 
-        // //Sum
-        // func_tmp = agg->add_func();
-        // func_tmp->set_expr_type(dspb::Sum);
+        //Sum
+        func_tmp = agg->add_func();
+        func_tmp->set_expr_type(dspb::Sum);
+        child = func_tmp->add_child();
+        child->set_expr_type(dspb::Column);
+        cl_name = "id";
+        cl_table = ptr_table_account->GetColumn(cl_name);
+        child->mutable_column()->set_id(cl_table.id());
+
+        // group by balance
+        auto group_by_tmp = agg->add_group_by();
+        group_by_tmp->set_expr_type(dspb::Column);
+        cl_name = "balance";
+        cl_table = ptr_table_account->GetColumn(cl_name);
+        group_by_tmp->mutable_column()->set_id(cl_table.id());
+        // group_by_tmp = agg->add_group_by();
+        // group_by_tmp->set_expr_type(dspb::Column);
         // cl_name = "id";
         // cl_table = ptr_table_account->GetColumn(cl_name);
-        // func_tmp->mutable_column()->set_id(cl_table.id());
+        // group_by_tmp->mutable_column()->set_id(cl_table.id());
 
         select_flow->set_gather_trace(false);
 
@@ -332,43 +429,218 @@ TEST_F(SelectFlowTest, SelectFlowAndAgg) {
         ASSERT_FALSE(resp.header().has_error());
         auto selectFlowResp = resp.select_flow();
         // std::cout << "row size:" << selectFlowResp.rows().size() << std::endl;
-        std::cout << "selectFlowResp:\n" << selectFlowResp.DebugString() << std::endl;
-        int nSum = 0;
-        for (int i = 0; i < data_count; ++i) {
-            nSum += 1000 + i;
-        }
+        // std::cout << "selectFlowResp:\n" << selectFlowResp.DebugString() << std::endl;
+        std::vector<std::vector<int64_t>> res_end{
+            {4016, 4, 4, 4, 1019, 1004, 4046, 1004},
+            {4012, 4, 4, 4, 1018, 1003, 4042, 1003},
+            {4008, 4, 4, 4, 1017, 1002, 4038, 1002},
+            {4004, 4, 4, 4, 1016, 1001, 4034, 1001},
+            {4000, 4, 4, 4, 1015, 1000, 4030, 1000}
+        };
         // std::cout << "sum:" << nSum << " agv:" << nSum/data_count << std::endl;
         size_t offset = 0;
-        int64_t value = 0;
-        //avg
-        std::string fields = selectFlowResp.rows()[0].value().fields();
-        // ASSERT_TRUE(DecodeNonSortingVarint(fields, ++offset, &value));
-        // std::cout << "avg sum:" << value << std::endl;
-        // ASSERT_EQ(value, nSum);
-        // ASSERT_TRUE(DecodeNonSortingVarint(fields, ++offset, &value));
-        // std::cout << "avg count:" << value << std::endl;
-        // ASSERT_EQ(value, data_count);
+        int64_t value = 0, sum = 0;
+        std::vector<std::vector<int64_t>>::const_iterator it = res_end.begin();
+        for (auto &row : selectFlowResp.rows()) {
+            offset = 0;
+            value = 0;
+            auto vt = *it++;
+            // avg sum
+            ASSERT_TRUE(DecodeNonSortingVarint(row.value().fields(), ++offset, &value));
+            ASSERT_EQ(value, vt[0]);
+            // avg count 
+            ASSERT_TRUE(DecodeNonSortingVarint(row.value().fields(), ++offset, &value));
+            ASSERT_EQ(value, vt[1]);
 
-        // //count(id)
-        // ASSERT_TRUE(DecodeNonSortingVarint(fields, ++offset, &value));
-        // std::cout << "count(id):" << value << std::endl;
-        // ASSERT_EQ(value, data_count);
+            // count(id)
+            ASSERT_TRUE(DecodeNonSortingVarint(row.value().fields(), ++offset, &value));
+            ASSERT_EQ(value, vt[2]);
+
+            // count(1)
+            ASSERT_TRUE(DecodeNonSortingVarint(row.value().fields(), ++offset, &value));
+            ASSERT_EQ(value, vt[3]);
+
+            // Max
+            ASSERT_TRUE(DecodeNonSortingVarint(row.value().fields(), ++offset, &value));
+            ASSERT_EQ(value, vt[4]);
+
+            // Min
+            ASSERT_TRUE(DecodeNonSortingVarint(row.value().fields(), ++offset, &value));
+            ASSERT_EQ(value, vt[5]);
+
+            // Sum
+            ASSERT_TRUE(DecodeNonSortingVarint(row.value().fields(), ++offset, &value));
+            ASSERT_EQ(value, vt[6]);
+            ASSERT_TRUE(DecodeNonSortingVarint(row.value().fields(), ++offset, &value));
+            ASSERT_EQ(value, vt[7]);
+        }
+    }
+
+    { // test select and order by and limit
+        // table_read;
+
+        dspb::RangeRequest req;
+        auto header = req.mutable_header();
+        header->set_range_id(default_range_id);
+        header->mutable_range_epoch()->set_conf_ver(1);
+        header->mutable_range_epoch()->set_version(1);
+
+        auto select_flow = req.mutable_select_flow();
+
+        // table_read
+        auto table_read_processor = select_flow->add_processors();
+        table_read_processor->set_type(dspb::TABLE_READ_TYPE );
+        auto table_read = table_read_processor->mutable_table_read();
+        for ( const auto & col : ptr_table_account->GetAllColumns()) {
+            table_read->add_columns()->CopyFrom(ptr_table_account->GetColumnInfo(col.id()));
+        }
+
+        table_read->set_type(dspb::KEYS_RANGE_TYPE);
+        table_read->mutable_range()->set_start_key(start_key);
+        table_read->mutable_range()->set_end_key(end_key);
+        table_read->set_desc(false);
+
+        // agg
+        auto agg_processor = select_flow->add_processors();
+        agg_processor->set_type(dspb::STREAM_AGGREGATION_TYPE);
+        auto agg = agg_processor->mutable_stream_aggregation();
+
+        dspb::Expr *func_tmp = nullptr;
+        dspb::Expr *child = nullptr;
+        std::string cl_name;
+        basepb::Column cl_table;
+        //avg
+        func_tmp = agg->add_func();
+        func_tmp->set_expr_type(dspb::Avg);
+        child = func_tmp->add_child();
+        child->set_expr_type(dspb::Column);
+        cl_name = "id";
+        cl_table = ptr_table_account->GetColumn(cl_name);
+        child->mutable_column()->set_id(cl_table.id());
+
+        //count(id)
+        func_tmp = agg->add_func();
+        func_tmp->set_expr_type(dspb::Count);
+        child = func_tmp->add_child();
+        cl_name = "id";
+        cl_table = ptr_table_account->GetColumn(cl_name);
+        child->set_expr_type(dspb::Column);
+        child->mutable_column()->set_id(cl_table.id());
+
         //count(1)
-        ASSERT_TRUE(DecodeNonSortingVarint(fields, ++offset, &value));
-        std::cout << "count(1):" << value << std::endl;
-        ASSERT_EQ(value, data_count);
-        // //max
-        // ASSERT_TRUE(DecodeNonSortingVarint(fields, ++offset, &value));
-        // std::cout << "max:" << value << std::endl;
-        // ASSERT_EQ(value, 1019);
-        // //min
-        // ASSERT_TRUE(DecodeNonSortingVarint(fields, ++offset, &value));
-        // std::cout << "min:" << value << std::endl;
-        // ASSERT_EQ(value, 1000);
-        // //sum
-        // ASSERT_TRUE(DecodeNonSortingVarint(fields, ++offset, &value));
-        // std::cout << "sum:" << value << std::endl;
-        // ASSERT_EQ(value, nSum);
+         func_tmp = agg->add_func();
+        func_tmp->set_expr_type(dspb::Count);
+        // child = func_tmp->add_child();
+        // child->set_expr_type(dspb::Const_Int);
+        // child->set_value("1");
+        
+        //Max
+        func_tmp = agg->add_func();
+        func_tmp->set_expr_type(dspb::Max);
+        child = func_tmp->add_child();
+        child->set_expr_type(dspb::Column);
+        cl_name = "id";
+        cl_table = ptr_table_account->GetColumn(cl_name);
+        child->mutable_column()->set_id(cl_table.id());
+
+        //Min
+        func_tmp = agg->add_func();
+        func_tmp->set_expr_type(dspb::Min);
+        child = func_tmp->add_child();
+        child->set_expr_type(dspb::Column);
+        cl_name = "id";
+        cl_table = ptr_table_account->GetColumn(cl_name);
+        child->mutable_column()->set_id(cl_table.id());
+
+        //Sum
+        func_tmp = agg->add_func();
+        func_tmp->set_expr_type(dspb::Sum);
+        child = func_tmp->add_child();
+        child->set_expr_type(dspb::Column);
+        cl_name = "id";
+        cl_table = ptr_table_account->GetColumn(cl_name);
+        child->mutable_column()->set_id(cl_table.id());
+
+        // group by balance
+        auto group_by_tmp = agg->add_group_by();
+        group_by_tmp->set_expr_type(dspb::Column);
+        cl_name = "balance";
+        cl_table = ptr_table_account->GetColumn(cl_name);
+        group_by_tmp->mutable_column()->set_id(cl_table.id());
+        // group_by_tmp = agg->add_group_by();
+        // group_by_tmp->set_expr_type(dspb::Column);
+        // cl_name = "id";
+        // cl_table = ptr_table_account->GetColumn(cl_name);
+        // group_by_tmp->mutable_column()->set_id(cl_table.id());
+
+        select_flow->set_gather_trace(false);
+
+        dspb::RangeResponse resp;
+        auto s = testSelectFlow(req, resp);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+        ASSERT_FALSE(resp.header().has_error());
+        auto selectFlowResp = resp.select_flow();
+        // std::cout << "row size:" << selectFlowResp.rows().size() << std::endl;
+        // std::cout << "selectFlowResp:\n" << selectFlowResp.DebugString() << std::endl;
+        std::vector<std::vector<int64_t>> res_end;
+        for (int i = 0; i < data_count; ++i) {
+            std::vector<int64_t> vt;
+            //agv sum
+            vt.push_back(1000 + i);
+            //agv count
+            vt.push_back(1);
+            //count(id)
+            vt.push_back(1);
+            //count(1)
+            vt.push_back(1);
+            //max
+            vt.push_back(1000 + i);
+            //min
+            vt.push_back(1000 + i);
+            //sum
+            vt.push_back(1000 + i);
+            //balanc
+            vt.push_back(1000 + i%5);
+            res_end.push_back(vt);
+        }
+        size_t offset = 0;
+        int64_t value = 0;
+        
+        std::vector<std::vector<int64_t>>::const_iterator it = res_end.begin();
+        for (auto &row : selectFlowResp.rows()) {
+            offset = 0;
+            value = 0;
+            auto vt = *it++;
+            // avg sum
+            ASSERT_TRUE(DecodeNonSortingVarint(row.value().fields(), ++offset, &value));
+            ASSERT_EQ(value, vt[0]);
+            // avg count 
+            ASSERT_TRUE(DecodeNonSortingVarint(row.value().fields(), ++offset, &value));
+            ASSERT_EQ(value, vt[1]);
+
+            // count(id)
+            ASSERT_TRUE(DecodeNonSortingVarint(row.value().fields(), ++offset, &value));
+            ASSERT_EQ(value, vt[2]);
+
+            // count(1)
+            ASSERT_TRUE(DecodeNonSortingVarint(row.value().fields(), ++offset, &value));
+            ASSERT_EQ(value, vt[3]);
+
+            // Max
+            ASSERT_TRUE(DecodeNonSortingVarint(row.value().fields(), ++offset, &value));
+            ASSERT_EQ(value, vt[4]);
+
+            // Min
+            ASSERT_TRUE(DecodeNonSortingVarint(row.value().fields(), ++offset, &value));
+            ASSERT_EQ(value, vt[5]);
+
+            // Sum
+            ASSERT_TRUE(DecodeNonSortingVarint(row.value().fields(), ++offset, &value));
+            ASSERT_EQ(value, vt[6]);
+
+            ASSERT_TRUE(DecodeNonSortingVarint(row.value().fields(), ++offset, &value));
+            ASSERT_EQ(value, vt[7]);
+        }
     }
 }
 
@@ -385,7 +657,7 @@ TEST_F(SelectFlowTest, SelectFlowAndOrdering) {
 
 
     { // begin create range
-        dspb::SchReuqest req;
+        dspb::SchRequest req;
         req.mutable_create_range()->set_allocated_range(genRange());
 
         // create range
@@ -526,7 +798,7 @@ TEST_F(SelectFlowTest, SelectFlowLimit) {
 
 
     { // begin create range
-        dspb::SchReuqest req;
+        dspb::SchRequest req;
         req.mutable_create_range()->set_allocated_range(genRange());
 
         // create range
@@ -635,5 +907,232 @@ TEST_F(SelectFlowTest, SelectFlowLimit) {
         // std::cout << "row size:" << selectFlowResp.rows().size() << std::endl;
         // std::cout << "selectFlowResp:\n" << selectFlowResp.DebugString() << std::endl;
         
+    }
+}
+
+
+
+TEST_F(SelectFlowTest, SelectFlow_index_read_unique) {
+
+    std::string start_key;
+    std::string end_key;
+
+    std::map<std::string, std::string> mp_kv;
+
+    { // create table
+        EncodeIndexKeyPrefix(&start_key, default_account_index_id1);
+        EncodeIndexKeyPrefix(&end_key, default_account_index_id1+1);
+    }
+
+
+    { // begin create range
+        dspb::SchRequest req;
+        req.mutable_create_range()->set_allocated_range(genIndexKeyRange(default_account_index_id1));
+
+        // create range
+        auto rpc = NewMockRPCRequest(req);
+        range_server_->dispatchSchedule(rpc.first);
+        ASSERT_FALSE(range_server_->ranges_.Empty());
+        ASSERT_TRUE(range_server_->Find(default_range_id+1) != nullptr);
+
+        // check meta
+        std::vector<basepb::Range> metas;
+        auto ret = range_server_->meta_store_->GetAllRange(&metas);
+        ASSERT_TRUE(metas.size() == 1) << metas.size();
+
+        // raft
+        auto raft = static_cast<RaftMock *>(range_server_->ranges_.Find(default_range_id + 1)->raft_.get());
+        raft->SetLeaderTerm(1, 1);
+        range_server_->ranges_.Find(default_range_id + 1)->is_leader_ = true;
+
+    }
+
+    { // put data
+
+        genKvUniqueIndexKeyData(mp_kv);
+
+        for (auto kv : mp_kv) {
+            // put data to db
+            dspb::RangeRequest req;
+            req.mutable_header()->set_range_id(default_range_id+1);
+            req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
+            req.mutable_header()->mutable_range_epoch()->set_version(1);
+            req.mutable_kv_put()->set_key(kv.first);
+            req.mutable_kv_put()->set_value(kv.second);
+
+            dspb::RangeResponse resp;
+            auto s = testKv(req, resp);
+            ASSERT_TRUE(s.ok()) << s.ToString();
+            ASSERT_FALSE(resp.header().has_error());
+        }
+
+    }
+
+    {   // test SelectFlow index_read test1
+        // read [start_key, end_key) data.
+
+        dspb::RangeRequest req;
+        auto header = req.mutable_header();
+        header->set_range_id(default_range_id+1);
+        header->mutable_range_epoch()->set_conf_ver(1);
+        header->mutable_range_epoch()->set_version(1);
+
+        auto select_flow = req.mutable_select_flow();
+        auto index_read_processor = select_flow->add_processors();
+        index_read_processor->set_type(dspb::INDEX_READ_TYPE);
+        auto index_read = index_read_processor-> mutable_index_read();
+
+        index_read->add_columns()->CopyFrom(ptr_table_account->GetColumnInfo("name"));
+        index_read->add_columns()->CopyFrom(ptr_table_account->GetColumnInfo("balance"));
+        index_read->add_columns()->CopyFrom(ptr_table_account->GetColumnInfo("id"));
+
+        index_read->set_type(dspb::KEYS_RANGE_TYPE);
+        index_read->mutable_range()->set_start_key(start_key);
+        index_read->mutable_range()->set_end_key(end_key);
+        index_read->set_desc(false);
+        index_read->set_unique(true);
+
+        // agg
+        auto agg_processor = select_flow->add_processors();
+        agg_processor->set_type(dspb::STREAM_AGGREGATION_TYPE);
+        auto agg = agg_processor->mutable_stream_aggregation();
+
+        dspb::Expr *func_tmp = nullptr;
+        dspb::Expr *child = nullptr;
+        std::string cl_name;
+        basepb::Column cl_table;
+        //avg
+        func_tmp = agg->add_func();
+        func_tmp->set_expr_type(dspb::Avg);
+        child = func_tmp->add_child();
+        child->set_expr_type(dspb::Column);
+        cl_name = "id";
+        cl_table = ptr_table_account->GetColumn(cl_name);
+        child->mutable_column()->set_id(cl_table.id());
+
+        //count(id)
+        func_tmp = agg->add_func();
+        func_tmp->set_expr_type(dspb::Count);
+        child = func_tmp->add_child();
+        cl_name = "id";
+        cl_table = ptr_table_account->GetColumn(cl_name);
+        child->set_expr_type(dspb::Column);
+        child->mutable_column()->set_id(cl_table.id());
+
+        //count(1)
+         func_tmp = agg->add_func();
+        func_tmp->set_expr_type(dspb::Count);
+        // child = func_tmp->add_child();
+        // child->set_expr_type(dspb::Const_Int);
+        // child->set_value("1");
+        
+        //Max
+        func_tmp = agg->add_func();
+        func_tmp->set_expr_type(dspb::Max);
+        child = func_tmp->add_child();
+        child->set_expr_type(dspb::Column);
+        cl_name = "id";
+        cl_table = ptr_table_account->GetColumn(cl_name);
+        child->mutable_column()->set_id(cl_table.id());
+
+        //Min
+        func_tmp = agg->add_func();
+        func_tmp->set_expr_type(dspb::Min);
+        child = func_tmp->add_child();
+        child->set_expr_type(dspb::Column);
+        cl_name = "id";
+        cl_table = ptr_table_account->GetColumn(cl_name);
+        child->mutable_column()->set_id(cl_table.id());
+
+        //Sum
+        func_tmp = agg->add_func();
+        func_tmp->set_expr_type(dspb::Sum);
+        child = func_tmp->add_child();
+        child->set_expr_type(dspb::Column);
+        cl_name = "id";
+        cl_table = ptr_table_account->GetColumn(cl_name);
+        child->mutable_column()->set_id(cl_table.id());
+
+        // group by balance
+        auto group_by_tmp = agg->add_group_by();
+        group_by_tmp->set_expr_type(dspb::Column);
+        cl_name = "balance";
+        cl_table = ptr_table_account->GetColumn(cl_name);
+        group_by_tmp->mutable_column()->set_id(cl_table.id());
+        // group_by_tmp = agg->add_group_by();
+        // group_by_tmp->set_expr_type(dspb::Column);
+        // cl_name = "id";
+        // cl_table = ptr_table_account->GetColumn(cl_name);
+        // group_by_tmp->mutable_column()->set_id(cl_table.id());
+
+        select_flow->set_gather_trace(false);
+
+        dspb::RangeResponse resp;
+        auto s = testSelectFlow(req, resp);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+        ASSERT_FALSE(resp.header().has_error());
+        auto selectFlowResp = resp.select_flow();
+        // std::cout << "row size:" << selectFlowResp.rows().size() << std::endl;
+        // std::cout << "selectFlowResp:\n" << selectFlowResp.DebugString() << std::endl;
+        std::vector<std::vector<int64_t>> res_end;
+        for (int i = 0; i < 20; ++i) {
+            std::vector<int64_t> vt;
+            //agv sum
+            vt.push_back(1000 + i);
+            //agv count
+            vt.push_back(1);
+            //count(id)
+            vt.push_back(1);
+            //count(1)
+            vt.push_back(1);
+            //max
+            vt.push_back(1000 + i);
+            //min
+            vt.push_back(1000 + i);
+            //sum
+            vt.push_back(1000 + i);
+            //balanc
+            vt.push_back(1000 + i);
+            res_end.push_back(vt);
+        }
+        size_t offset = 0;
+        int64_t value = 0;
+        
+        std::vector<std::vector<int64_t>>::const_iterator it = res_end.begin();
+        for (auto &row : selectFlowResp.rows()) {
+            offset = 0;
+            value = 0;
+            auto vt = *it++;
+            // avg sum
+            ASSERT_TRUE(DecodeNonSortingVarint(row.value().fields(), ++offset, &value));
+            ASSERT_EQ(value, vt[0]);
+            // avg count 
+            ASSERT_TRUE(DecodeNonSortingVarint(row.value().fields(), ++offset, &value));
+            ASSERT_EQ(value, vt[1]);
+
+            // count(id)
+            ASSERT_TRUE(DecodeNonSortingVarint(row.value().fields(), ++offset, &value));
+            ASSERT_EQ(value, vt[2]);
+
+            // count(1)
+            ASSERT_TRUE(DecodeNonSortingVarint(row.value().fields(), ++offset, &value));
+            ASSERT_EQ(value, vt[3]);
+
+            // Max
+            ASSERT_TRUE(DecodeNonSortingVarint(row.value().fields(), ++offset, &value));
+            ASSERT_EQ(value, vt[4]);
+
+            // Min
+            ASSERT_TRUE(DecodeNonSortingVarint(row.value().fields(), ++offset, &value));
+            ASSERT_EQ(value, vt[5]);
+
+            // Sum
+            ASSERT_TRUE(DecodeNonSortingVarint(row.value().fields(), ++offset, &value));
+            ASSERT_EQ(value, vt[6]);
+
+            // balance
+            ASSERT_TRUE(DecodeNonSortingVarint(row.value().fields(), ++offset, &value));
+            ASSERT_EQ(value, vt[7]);
+        }
     }
 }

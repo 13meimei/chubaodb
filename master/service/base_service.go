@@ -37,14 +37,16 @@ func NewBaseService() (*BaseService, error) {
 		return nil, cblog.LogErrAndReturn(err)
 	}
 	return &BaseService{
-		Store:    openStore,
-		dsClient: client.NewSchRPCClient(1),
+		Store:     openStore,
+		dsClient:  client.NewSchRPCClient(1),
+		admClient: client.NewAdminClient("", 1),
 	}, nil
 }
 
 type BaseService struct {
 	store.Store
-	dsClient client.SchClient
+	dsClient  client.SchClient
+	admClient client.AdminClient
 }
 
 func (bs *BaseService) QueryNode(ctx context.Context, nodeID uint64) (*basepb.Node, error) {
@@ -265,7 +267,6 @@ func (bs *BaseService) AutoIncIds(ctx context.Context, dbID, tableID uint64, siz
 		return ids, nil
 	}
 
-
 	err := bs.STM(ctx, func(stm concurrency.STM) error {
 
 		v := stm.Get(string(entity.SequenceDocument(dbID, tableID)))
@@ -282,7 +283,7 @@ func (bs *BaseService) AutoIncIds(ctx context.Context, dbID, tableID uint64, siz
 		rowKeys := bytes.Buffer{}
 
 		for i := 0; i < len(v)/8; i++ {
-			id := utilBytes.ByteArray2UInt64([]byte(v[i*8:i*8+8]))
+			id := utilBytes.ByteArray2UInt64([]byte(v[i*8 : i*8+8]))
 			ids = append(ids, id+1, id+avg)
 			rowKeys.Write(utilBytes.Uint64ToByte(id + avg))
 		}

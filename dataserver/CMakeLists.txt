@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD 11)
 
 set(CXX_FLAGS
     -std=c++11
+    -g
     -Wall
     -Wextra
     -Wformat
@@ -18,12 +19,13 @@ set(CXX_FLAGS
     -DASIO_STANDALONE
 )
 
-string(REPLACE ";" " " CMAKE_CXX_FLAGS "${CXX_FLAGS}")
+string(REPLACE ";" " " CXX_FLAGS_TEMP "${CXX_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX_FLAGS_TEMP}")
 
 if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O2 -DNDEBUG")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -DNDEBUG")
 else()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g -ggdb -DDEBUG_FLAG")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -ggdb")
 endif()
 MESSAGE(STATUS CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
 
@@ -118,7 +120,7 @@ set (depend_LIBRARYS
     chubaodb-net
     chubaodb-common
     chubaodb-base
-    mass-tree
+    ${MASSTREE_LIBRARY}
     ${PROTOBUF_LIBRARY}
     ${TBB_LIBRARY}
     ${ROCKSDB_LIBRARY}
@@ -159,4 +161,10 @@ if (BUILD_TEST)
     if (APPLE)
         target_link_libraries(chubaodb-ds-shared ${depend_LIBRARYS})
     endif()
+endif()
+
+OPTION(BUILD_TOOL "build chubaodb tools" OFF)
+MESSAGE(STATUS BUILD_TOOL=${BUILD_TOOL})
+if (BUILD_TOOL)
+    add_subdirectory(tools)
 endif()

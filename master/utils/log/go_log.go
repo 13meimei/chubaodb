@@ -4,6 +4,7 @@ import (
 	"fmt"
 	golog "log"
 	"os"
+	"strings"
 )
 
 type Level int8
@@ -26,6 +27,31 @@ type GoLog struct {
 	*golog.Logger
 	L         Level
 	LevelCode string
+}
+
+func (this *GoLog) SetLogLevel(levelStr string) {
+	level := strings.ToUpper(levelStr)
+
+	switch level {
+	case "TRACE":
+		this.L = DEBUG
+		this.LevelCode = debug
+	case "DEBUG":
+		this.L = DEBUG
+		this.LevelCode = debug
+	case "INFO":
+		this.L = INFO
+		this.LevelCode = info
+	case "WARN":
+		this.L = WARN
+		this.LevelCode = warn
+	case "ERROR":
+		this.L = ERROR
+		this.LevelCode = err
+	default:
+		this.L = INFO
+		this.LevelCode = info
+	}
 }
 
 func (this *GoLog) Flush() {

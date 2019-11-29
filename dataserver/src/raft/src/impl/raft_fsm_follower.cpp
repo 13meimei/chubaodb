@@ -1,4 +1,5 @@
-// Copyright 2019 The Chubao Authors.
+// Copyright 2015 The etcd Authors
+// Portions Copyright 2019 The Chubao Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -98,7 +99,7 @@ void RaftFsm::tickElection() {
     }
 
     ++election_elapsed_;
-    if (pastElectionTimeout() && rops_.has_campaign) {
+    if (pastElectionTimeout() ) {
         election_elapsed_ = 0;
         MessagePtr msg(new pb::Message);
         msg->set_type(pb::LOCAL_MSG_HUP);

@@ -24,7 +24,6 @@ namespace chubaodb {
 namespace test {
 namespace helper {
 
-using namespace ::chubaodb::ds::range;
 using namespace ::chubaodb::ds::storage;
 
 StoreTestFixture::StoreTestFixture(std::unique_ptr<Table> t) :

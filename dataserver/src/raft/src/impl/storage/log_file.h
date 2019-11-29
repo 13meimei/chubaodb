@@ -57,6 +57,9 @@ public:
     Status Rotate();
     Status Truncate(uint64_t index);
 
+    // clone (fd and index) to a new log file for read only
+    Status CloneForRead(std::unique_ptr<LogFile>& new_file);
+
 // for tests
 #ifndef NDEBUG
     void TEST_Append_RandomData();
@@ -90,6 +93,8 @@ private:
 
     LogIndex log_index_;
 };
+
+using LogFilePtr = std::unique_ptr<LogFile>;
 
 } /* namespace storage */
 } /* namespace impl */

@@ -74,7 +74,7 @@ void run_node(uint64_t node_id) {
     if (r->IsLeader()) {
         for (int i = 1; i <= reqs_count; ++i) {
             std::string cmd = std::to_string(i);
-            s = r->Submit(cmd);
+            s = r->Propose(cmd, 0);
             assert(s.ok());
         }
     }
@@ -113,10 +113,6 @@ int main(int argc, char* argv[]) {
         throw std::runtime_error("node number should greater than five.");
     }
 
-    config.name = "cluster_test";
-    config.path = "/tmp/test";
-    config.level = "debug";
-    LoggerInit(config);
     // init cluster members
     for (uint64_t i = 1; i <= kNodeNum; ++i) {
         Peer p;

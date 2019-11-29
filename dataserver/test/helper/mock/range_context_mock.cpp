@@ -18,7 +18,6 @@
 
 #include "base/fs_util.h"
 #include "storage/meta_store.h"
-#include "range/split_policy.h"
 #include "range/range.h"
 
 #include "../helper_util.h"
@@ -31,15 +30,6 @@ namespace mock {
 
 using namespace chubaodb::ds;
 using namespace chubaodb::ds::range;
-
-class DisableSplitPolicy : public SplitPolicy {
-public:
-    std::string Description() const override { return "DisableSplit"; }
-    bool IsEnabled() const override { return false; }
-    uint64_t CheckSize() const override { return 0; }
-    uint64_t SplitSize() const override { return 0; }
-    uint64_t MaxSize() const override { return 0; }
-};
 
 Status RangeContextMock::Init() {
     // init db
@@ -70,9 +60,6 @@ Status RangeContextMock::Init() {
     // range stats
     range_stats_.reset(new RangeStats);
 
-    // split policy
-    split_policy_.reset(new DisableSplitPolicy);
-
     return Status::OK();
 }
 
@@ -93,8 +80,11 @@ Status RangeContextMock::CreateRange(const basepb::Range& meta, uint64_t leader,
     if (it != ranges_.end()) {
         return Status(Status::kExisted);
     }
-    auto rng = std::make_shared<Range>(this, meta);
-    auto s = rng->Initialize(nullptr, leader, index);
+    RangeOptions opt;
+    opt.enable_split = false;
+    opt.heartbeat_interval_msec = 1000 * 1000;
+    auto rng = std::make_shared<Range>(opt, this, meta);
+    auto s = rng->Initialize(nullptr, leader);
     if (!s.ok()) {
         return s;
     }

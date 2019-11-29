@@ -147,7 +147,7 @@ basepb::Range *genRange2() {
 TEST_F(KvTest, Kv) {
     {
         // begin test create range 1
-        dspb::SchReuqest req;
+        dspb::SchRequest req;
         req.mutable_create_range()->set_allocated_range(genRange1());
 
         auto rpc = NewMockRPCRequest(req);
@@ -165,7 +165,7 @@ TEST_F(KvTest, Kv) {
 
     {
         // begin test create range 2
-        dspb::SchReuqest req;
+        dspb::SchRequest req;
         req.mutable_create_range()->set_allocated_range(genRange2());
 
         auto rpc = NewMockRPCRequest(req);
@@ -669,7 +669,7 @@ TEST_F(KvTest, Kv) {
 
     {
         // begin test delete range (range 1)
-        dspb::SchReuqest req;
+        dspb::SchRequest req;
         req.mutable_delete_range()->set_range_id(1);
 
         auto rpc = NewMockRPCRequest(req);
@@ -693,7 +693,7 @@ TEST_F(KvTest, Kv) {
 
     {
         // begin test delete range (range 2)
-        dspb::SchReuqest req;
+        dspb::SchRequest req;
         req.mutable_delete_range()->set_range_id(2);
         auto rpc = NewMockRPCRequest(req);
         range_server_->dispatchSchedule(rpc.first);

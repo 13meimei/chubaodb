@@ -1,4 +1,5 @@
-// Copyright 2019 The Chubao Authors.
+// Copyright 2015 The etcd Authors
+// Portions Copyright 2019 The Chubao Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,6 +16,8 @@
 _Pragma("once");
 
 #include <list>
+#include <future>
+
 #include "raft/options.h"
 #include "raft/raft.h"
 
@@ -45,7 +48,10 @@ public:
 
     Status TryToLeader() override;
 
-    Status Submit(std::string& cmd, uint64_t unique_seq, uint16_t rw_flag) override;
+    Status Propose(std::string& entry_data, uint32_t entry_flags) override;
+
+    Status ReadIndex(std::string& ctx) override;
+
     Status ChangeMemeber(const ConfChange& conf) override;
 
     bool IsLeader() const override { return sops_.node_id == bulletin_board_.Leader(); }
@@ -62,16 +68,28 @@ public:
 
     Status Destroy(bool backup);
 
+    std::unique_ptr<LogReader> ReadLog(uint64_t start_index) override;
+
+    Status InheritLog(const std::string& dest_dir, uint64_t last_index, bool only_index) override;
+
 public:
     void RecvMsg(MessagePtr msg);
     void Tick(MessagePtr msg);
     void Step(MessagePtr msg);
 
+    // notify snapshot work(apply or send) result
+    // will be called from the snapshot work threads
     void ReportSnapSendResult(const SnapContext& ctx, const SnapResult& result);
     void ReportSnapApplyResult(const SnapContext& ctx, const SnapResult& result);
 
 private:
     void initPublish();
+
+    // wrap will bind a share_from_this() along with the function `f`,
+    // so it's safe for `f` to bind a member function with the RaftImpl's `this` pointer
+    // wrapWork will also check if RaftImpl is stopped before call `f`,
+    // and handle RaftException
+    Work wrapWork(const std::function<void()>& f);
 
     void post(const std::function<void()>& f);
     bool tryPost(const std::function<void()>& f);
@@ -85,8 +103,6 @@ private:
     void persist();
     void apply();
     void publish();
-
-    void truncate(uint64_t index);
 
 private:
     const RaftServerOptions sops_;
@@ -103,6 +119,12 @@ private:
     pb::HardState prev_hard_state_;
     bool conf_changed_ = false;
     std::atomic<uint64_t> tick_count_ = {0};
+
+    std::deque<MessagePtr> propose_que_;
+    std::mutex propose_lock_;
+
+    std::deque<MessagePtr> read_index_que_;
+    std::mutex read_index_lock_;
 };
 
 } /* namespace impl */

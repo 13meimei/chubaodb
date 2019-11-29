@@ -21,6 +21,7 @@
 #include "rapidjson/writer.h"
 #include "jemalloc/jemalloc.h"
 
+#include "base/util.h"
 #include "server/version.h"
 #include "server/range_server.h"
 #include "server/run_status.h"

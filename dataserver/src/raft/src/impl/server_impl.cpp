@@ -1,4 +1,5 @@
-// Copyright 2019 The Chubao Authors.
+// Copyright 2015 The etcd Authors
+// Portions Copyright 2019 The Chubao Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -38,9 +39,6 @@ RaftServerImpl::~RaftServerImpl() {
     for (auto t: consensus_threads_) {
         delete t;
     }
-    for (auto t : apply_threads_) {
-        delete t;
-    }
 }
 
 Status RaftServerImpl::Start() {
@@ -50,20 +48,12 @@ Status RaftServerImpl::Start() {
     }
 
     for (int i = 0; i < ops_.consensus_threads_num; ++i) {
-        auto t = new WorkThread(this, ops_.consensus_queue_capacity,
+        auto t = new WorkThread(ops_.consensus_queue_capacity,
                                 std::string("raft-worker:") + std::to_string(i));
         consensus_threads_.push_back(t);
     }
     FLOG_INFO("raft[server] {} consensus threads start. queue capacity={}",
              ops_.consensus_threads_num, ops_.consensus_queue_capacity);
-
-    for (int i = 0; i < ops_.apply_threads_num; ++i) {
-        auto t = new WorkThread(this, ops_.apply_queue_capacity,
-                                std::string("raft-apply:") + std::to_string(i));
-        apply_threads_.push_back(t);
-    }
-    FLOG_INFO("raft[server] {} apply threads start. queue capacity={}",
-             ops_.apply_threads_num, ops_.apply_queue_capacity);
 
     // start transport
     if (ops_.transport_options.use_inprocess_transport) {
@@ -94,13 +84,11 @@ Status RaftServerImpl::Stop() {
 
     running_ = false;
 
-    if (tick_thr_ && tick_thr_->joinable()) tick_thr_->join();
-
-    for (auto& t : consensus_threads_) {
-        t->shutdown();
+    if (tick_thr_ && tick_thr_->joinable()) {
+        tick_thr_->join();
     }
 
-    for (auto& t : apply_threads_) {
+    for (auto& t : consensus_threads_) {
         t->shutdown();
     }
 
@@ -136,12 +124,10 @@ Status RaftServerImpl::CreateRaft(const RaftOptions& ops, std::shared_ptr<Raft>*
     }
 
     RaftContext ctx;
+    ctx.server_ = this;
     ctx.msg_sender = transport_.get();
     ctx.snapshot_manager = snapshot_manager_.get();
     ctx.consensus_thread = consensus_threads_[counter % consensus_threads_.size()];
-    if (!ops_.apply_in_place) {
-        ctx.apply_thread = apply_threads_[counter % apply_threads_.size()];
-    }
     ctx.mutable_options = &mutable_ops_;
 
     std::shared_ptr<RaftImpl> r;
@@ -249,19 +235,9 @@ void RaftServerImpl::GetStatus(ServerStatus* status) const {
 }
 
 void RaftServerImpl::PostToAllApplyThreads(const std::function<void()>& task) {
-    static std::atomic<bool> stop_flag = { false }; // alway run
-    Work w;
-    w.owner = 0;
-    w.stopped = &stop_flag;
-    w.f0 = task;
-    if (ops_.apply_in_place) {
-        for (auto t: consensus_threads_) {
-            t->tryPost(w);
-        }
-    } else {
-        for (auto t: apply_threads_) {
-            t->tryPost(w);
-        }
+    for (auto t: consensus_threads_) {
+        auto task_copy = task;
+        t->tryPost(std::move(task_copy));
     }
 }
 
@@ -396,19 +372,6 @@ void RaftServerImpl::printMetrics() {
         }
         consensus_metrics += "]";
         FLOG_INFO("raft[metric] consensus queue size: {}", consensus_metrics);
-
-        // print apply queue size
-        if (!ops_.apply_in_place) {
-            std::string apply_metrics = "[";
-            for (size_t i = 0; i < apply_threads_.size(); ++i) {
-                apply_metrics += std::to_string(apply_threads_[i]->size());
-                if (i != apply_threads_.size() - 1) {
-                    apply_metrics += ", ";
-                }
-            }
-            apply_metrics += "]";
-            FLOG_INFO("raft[metric] apply queue size: {}", apply_metrics);
-        }
     }
 }
 

@@ -14,30 +14,39 @@
 
 _Pragma("once");
 
+#include <rocksdb/db.h>
 #include <rocksdb/write_batch.h>
+
 #include "db/db.h"
 
 namespace chubaodb {
 namespace ds {
 namespace db {
 
+class MasstreeWrapper;
+
 class RocksWriteBatch: public WriteBatch {
 public:
     RocksWriteBatch(rocksdb::ColumnFamilyHandle* data_cf, rocksdb::ColumnFamilyHandle* txn_cf);
+
     ~RocksWriteBatch() {}
 
     Status Put(CFType cf, const std::string& key, const std::string& value) override;
     Status Delete(CFType cf, const std::string& key) override;
 
+    Status Put(rocksdb::ColumnFamilyHandle *cf, const std::string& key, const std::string& value);
+
+    Status WriteTxnCache(MasstreeWrapper *cache);
+
 public:
     rocksdb::WriteBatch* getBatch() { return &batch_; }
 
 private:
-    rocksdb::WriteBatch batch_;
-    uint64_t raft_index_ = 0;
+    rocksdb::ColumnFamilyHandle* const data_cf_;
+    rocksdb::ColumnFamilyHandle* const txn_cf_;
 
-    rocksdb::ColumnFamilyHandle* data_cf_;
-    rocksdb::ColumnFamilyHandle* txn_cf_;
+    rocksdb::WriteBatch batch_;
+    bool has_txn_changes_ = false;
 };
 
 } // namespace db

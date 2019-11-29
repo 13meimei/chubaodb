@@ -137,6 +137,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Entry, index_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Entry, term_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Entry, data_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Entry, flags_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(HeartbeatContext, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -215,14 +216,14 @@ static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_ATTR
   { 0, -1, sizeof(Peer)},
   { 8, -1, sizeof(ConfChange)},
   { 16, -1, sizeof(Entry)},
-  { 25, -1, sizeof(HeartbeatContext)},
-  { 31, -1, sizeof(SnapshotMeta)},
-  { 40, -1, sizeof(Snapshot)},
-  { 50, -1, sizeof(Message)},
-  { 69, -1, sizeof(HardState)},
-  { 77, -1, sizeof(TruncateMeta)},
-  { 84, -1, sizeof(IndexItem)},
-  { 92, -1, sizeof(LogIndex)},
+  { 26, -1, sizeof(HeartbeatContext)},
+  { 32, -1, sizeof(SnapshotMeta)},
+  { 41, -1, sizeof(Snapshot)},
+  { 51, -1, sizeof(Message)},
+  { 70, -1, sizeof(HardState)},
+  { 78, -1, sizeof(TruncateMeta)},
+  { 85, -1, sizeof(IndexItem)},
+  { 93, -1, sizeof(LogIndex)},
 };
 
 static ::google::protobuf::Message const * const file_default_instances[] = {
@@ -311,50 +312,50 @@ void AddDescriptorsImpl() {
       " \001(\004\"}\n\nConfChange\0223\n\004type\030\001 \001(\0162%.chuba"
       "odb.raft.impl.pb.ConfChangeType\022)\n\004Peer\030"
       "\002 \001(\0132\033.chubaodb.raft.impl.pb.Peer\022\017\n\007co"
-      "ntext\030\003 \001(\014\"b\n\005Entry\022.\n\004type\030\001 \001(\0162 .chu"
+      "ntext\030\003 \001(\014\"q\n\005Entry\022.\n\004type\030\001 \001(\0162 .chu"
       "baodb.raft.impl.pb.EntryType\022\r\n\005index\030\002 "
-      "\001(\004\022\014\n\004term\030\003 \001(\004\022\014\n\004data\030\004 \001(\014\"\037\n\020Heart"
-      "beatContext\022\013\n\003ids\030\001 \003(\004\"h\n\014SnapshotMeta"
-      "\022\r\n\005index\030\001 \001(\004\022\014\n\004term\030\002 \001(\004\022*\n\005peers\030\003"
-      " \003(\0132\033.chubaodb.raft.impl.pb.Peer\022\017\n\007con"
-      "text\030\004 \001(\014\"v\n\010Snapshot\022\014\n\004uuid\030\001 \001(\004\0221\n\004"
-      "meta\030\002 \001(\0132#.chubaodb.raft.impl.pb.Snaps"
-      "hotMeta\022\r\n\005datas\030\003 \003(\014\022\r\n\005final\030\004 \001(\010\022\013\n"
-      "\003seq\030\005 \001(\003\"\373\002\n\007Message\0220\n\004type\030\001 \001(\0162\".c"
-      "hubaodb.raft.impl.pb.MessageType\022\n\n\002id\030\002"
-      " \001(\004\022\014\n\004from\030\003 \001(\004\022\n\n\002to\030\004 \001(\004\022\014\n\004term\030\005"
-      " \001(\004\022\016\n\006commit\030\006 \001(\004\022\025\n\rread_sequence\030\007 "
-      "\001(\004\022\020\n\010log_term\030\010 \001(\004\022\021\n\tlog_index\030\t \001(\004"
-      "\022-\n\007entries\030\n \003(\0132\034.chubaodb.raft.impl.p"
-      "b.Entry\022\016\n\006reject\030\014 \001(\010\022\023\n\013reject_hint\030\r"
-      " \001(\004\0227\n\006hb_ctx\030\016 \001(\0132\'.chubaodb.raft.imp"
-      "l.pb.HeartbeatContext\0221\n\010snapshot\030\017 \001(\0132"
-      "\037.chubaodb.raft.impl.pb.Snapshot\"7\n\tHard"
-      "State\022\014\n\004term\030\001 \001(\004\022\016\n\006commit\030\002 \001(\004\022\014\n\004v"
-      "ote\030\003 \001(\004\"+\n\014TruncateMeta\022\r\n\005index\030\001 \001(\004"
-      "\022\014\n\004term\030\002 \001(\004\"8\n\tIndexItem\022\r\n\005index\030\001 \001"
-      "(\004\022\014\n\004term\030\002 \001(\004\022\016\n\006offset\030\003 \001(\r\";\n\010LogI"
-      "ndex\022/\n\005items\030\001 \003(\0132 .chubaodb.raft.impl"
-      ".pb.IndexItem*-\n\010PeerType\022\017\n\013PEER_NORMAL"
-      "\020\000\022\020\n\014PEER_LEARNER\020\001*P\n\016ConfChangeType\022\021"
-      "\n\rCONF_ADD_PEER\020\000\022\024\n\020CONF_REMOVE_PEER\020\001\022"
-      "\025\n\021CONF_PROMOTE_PEER\020\002*L\n\tEntryType\022\026\n\022E"
-      "NTRY_TYPE_INVALID\020\000\022\020\n\014ENTRY_NORMAL\020\001\022\025\n"
-      "\021ENTRY_CONF_CHANGE\020\002*\244\003\n\013MessageType\022\030\n\024"
-      "MESSAGE_TYPE_INVALID\020\000\022\032\n\026APPEND_ENTRIES"
-      "_REQUEST\020\001\022\033\n\027APPEND_ENTRIES_RESPONSE\020\002\022"
-      "\020\n\014VOTE_REQUEST\020\003\022\021\n\rVOTE_RESPONSE\020\004\022\025\n\021"
-      "HEARTBEAT_REQUEST\020\005\022\026\n\022HEARTBEAT_RESPONS"
-      "E\020\006\022\024\n\020SNAPSHOT_REQUEST\020\007\022\020\n\014SNAPSHOT_AC"
-      "K\020\t\022\021\n\rLOCAL_MSG_HUP\020\n\022\022\n\016LOCAL_MSG_PROP"
-      "\020\013\022\022\n\016LOCAL_MSG_TICK\020\014\022\024\n\020PRE_VOTE_REQUE"
-      "ST\020\r\022\025\n\021PRE_VOTE_RESPONSE\020\016\022\031\n\025LOCAL_SNA"
-      "PSHOT_STATUS\020\017\022\022\n\016LOCAL_MSG_READ\020\020\022\026\n\022RE"
-      "AD_INDEX_REQUEST\020\021\022\027\n\023READ_INDEX_RESPONS"
-      "E\020\022b\006proto3"
+      "\001(\004\022\014\n\004term\030\003 \001(\004\022\014\n\004data\030\004 \001(\014\022\r\n\005flags"
+      "\030\005 \001(\r\"\037\n\020HeartbeatContext\022\013\n\003ids\030\001 \003(\004\""
+      "h\n\014SnapshotMeta\022\r\n\005index\030\001 \001(\004\022\014\n\004term\030\002"
+      " \001(\004\022*\n\005peers\030\003 \003(\0132\033.chubaodb.raft.impl"
+      ".pb.Peer\022\017\n\007context\030\004 \001(\014\"v\n\010Snapshot\022\014\n"
+      "\004uuid\030\001 \001(\004\0221\n\004meta\030\002 \001(\0132#.chubaodb.raf"
+      "t.impl.pb.SnapshotMeta\022\r\n\005datas\030\003 \003(\014\022\r\n"
+      "\005final\030\004 \001(\010\022\013\n\003seq\030\005 \001(\003\"\373\002\n\007Message\0220\n"
+      "\004type\030\001 \001(\0162\".chubaodb.raft.impl.pb.Mess"
+      "ageType\022\n\n\002id\030\002 \001(\004\022\014\n\004from\030\003 \001(\004\022\n\n\002to\030"
+      "\004 \001(\004\022\014\n\004term\030\005 \001(\004\022\016\n\006commit\030\006 \001(\004\022\025\n\rr"
+      "ead_sequence\030\007 \001(\004\022\020\n\010log_term\030\010 \001(\004\022\021\n\t"
+      "log_index\030\t \001(\004\022-\n\007entries\030\n \003(\0132\034.chuba"
+      "odb.raft.impl.pb.Entry\022\016\n\006reject\030\014 \001(\010\022\023"
+      "\n\013reject_hint\030\r \001(\004\0227\n\006hb_ctx\030\016 \001(\0132\'.ch"
+      "ubaodb.raft.impl.pb.HeartbeatContext\0221\n\010"
+      "snapshot\030\017 \001(\0132\037.chubaodb.raft.impl.pb.S"
+      "napshot\"7\n\tHardState\022\014\n\004term\030\001 \001(\004\022\016\n\006co"
+      "mmit\030\002 \001(\004\022\014\n\004vote\030\003 \001(\004\"+\n\014TruncateMeta"
+      "\022\r\n\005index\030\001 \001(\004\022\014\n\004term\030\002 \001(\004\"8\n\tIndexIt"
+      "em\022\r\n\005index\030\001 \001(\004\022\014\n\004term\030\002 \001(\004\022\016\n\006offse"
+      "t\030\003 \001(\r\";\n\010LogIndex\022/\n\005items\030\001 \003(\0132 .chu"
+      "baodb.raft.impl.pb.IndexItem*-\n\010PeerType"
+      "\022\017\n\013PEER_NORMAL\020\000\022\020\n\014PEER_LEARNER\020\001*P\n\016C"
+      "onfChangeType\022\021\n\rCONF_ADD_PEER\020\000\022\024\n\020CONF"
+      "_REMOVE_PEER\020\001\022\025\n\021CONF_PROMOTE_PEER\020\002*L\n"
+      "\tEntryType\022\026\n\022ENTRY_TYPE_INVALID\020\000\022\020\n\014EN"
+      "TRY_NORMAL\020\001\022\025\n\021ENTRY_CONF_CHANGE\020\002*\252\003\n\013"
+      "MessageType\022\030\n\024MESSAGE_TYPE_INVALID\020\000\022\032\n"
+      "\026APPEND_ENTRIES_REQUEST\020\001\022\033\n\027APPEND_ENTR"
+      "IES_RESPONSE\020\002\022\020\n\014VOTE_REQUEST\020\003\022\021\n\rVOTE"
+      "_RESPONSE\020\004\022\025\n\021HEARTBEAT_REQUEST\020\005\022\026\n\022HE"
+      "ARTBEAT_RESPONSE\020\006\022\024\n\020SNAPSHOT_REQUEST\020\007"
+      "\022\020\n\014SNAPSHOT_ACK\020\t\022\021\n\rLOCAL_MSG_HUP\020\n\022\022\n"
+      "\016LOCAL_MSG_PROP\020\013\022\022\n\016LOCAL_MSG_TICK\020\014\022\024\n"
+      "\020PRE_VOTE_REQUEST\020\r\022\025\n\021PRE_VOTE_RESPONSE"
+      "\020\016\022\031\n\025LOCAL_SNAPSHOT_STATUS\020\017\022\030\n\024LOCAL_M"
+      "SG_READ_INDEX\020\020\022\026\n\022READ_INDEX_REQUEST\020\021\022"
+      "\027\n\023READ_INDEX_RESPONSE\020\022b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 1851);
+      descriptor, 1872);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "raft.proto", &protobuf_RegisterTypes);
 }
@@ -1260,6 +1261,7 @@ const int Entry::kTypeFieldNumber;
 const int Entry::kIndexFieldNumber;
 const int Entry::kTermFieldNumber;
 const int Entry::kDataFieldNumber;
+const int Entry::kFlagsFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 Entry::Entry()
@@ -1280,16 +1282,16 @@ Entry::Entry(const Entry& from)
     data_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.data_);
   }
   ::memcpy(&index_, &from.index_,
-    static_cast<size_t>(reinterpret_cast<char*>(&type_) -
-    reinterpret_cast<char*>(&index_)) + sizeof(type_));
+    static_cast<size_t>(reinterpret_cast<char*>(&flags_) -
+    reinterpret_cast<char*>(&index_)) + sizeof(flags_));
   // @@protoc_insertion_point(copy_constructor:chubaodb.raft.impl.pb.Entry)
 }
 
 void Entry::SharedCtor() {
   data_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   ::memset(&index_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&type_) -
-      reinterpret_cast<char*>(&index_)) + sizeof(type_));
+      reinterpret_cast<char*>(&flags_) -
+      reinterpret_cast<char*>(&index_)) + sizeof(flags_));
   _cached_size_ = 0;
 }
 
@@ -1333,8 +1335,8 @@ void Entry::Clear() {
 
   data_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   ::memset(&index_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&type_) -
-      reinterpret_cast<char*>(&index_)) + sizeof(type_));
+      reinterpret_cast<char*>(&flags_) -
+      reinterpret_cast<char*>(&index_)) + sizeof(flags_));
   _internal_metadata_.Clear();
 }
 
@@ -1403,6 +1405,20 @@ bool Entry::MergePartialFromCodedStream(
         break;
       }
 
+      // uint32 flags = 5;
+      case 5: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(40u /* 40 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 input, &flags_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
       default: {
       handle_unusual:
         if (tag == 0) {
@@ -1451,6 +1467,11 @@ void Entry::SerializeWithCachedSizes(
       4, this->data(), output);
   }
 
+  // uint32 flags = 5;
+  if (this->flags() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(5, this->flags(), output);
+  }
+
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
@@ -1486,6 +1507,11 @@ void Entry::SerializeWithCachedSizes(
     target =
       ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
         4, this->data(), target);
+  }
+
+  // uint32 flags = 5;
+  if (this->flags() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(5, this->flags(), target);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -1532,6 +1558,13 @@ size_t Entry::ByteSizeLong() const {
       ::google::protobuf::internal::WireFormatLite::EnumSize(this->type());
   }
 
+  // uint32 flags = 5;
+  if (this->flags() != 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::UInt32Size(
+        this->flags());
+  }
+
   int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
   GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
   _cached_size_ = cached_size;
@@ -1574,6 +1607,9 @@ void Entry::MergeFrom(const Entry& from) {
   if (from.type() != 0) {
     set_type(from.type());
   }
+  if (from.flags() != 0) {
+    set_flags(from.flags());
+  }
 }
 
 void Entry::CopyFrom(const ::google::protobuf::Message& from) {
@@ -1604,6 +1640,7 @@ void Entry::InternalSwap(Entry* other) {
   swap(index_, other->index_);
   swap(term_, other->term_);
   swap(type_, other->type_);
+  swap(flags_, other->flags_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   swap(_cached_size_, other->_cached_size_);
 }
@@ -1709,6 +1746,20 @@ void Entry::set_allocated_data(::std::string* data) {
   }
   data_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), data);
   // @@protoc_insertion_point(field_set_allocated:chubaodb.raft.impl.pb.Entry.data)
+}
+
+// uint32 flags = 5;
+void Entry::clear_flags() {
+  flags_ = 0u;
+}
+::google::protobuf::uint32 Entry::flags() const {
+  // @@protoc_insertion_point(field_get:chubaodb.raft.impl.pb.Entry.flags)
+  return flags_;
+}
+void Entry::set_flags(::google::protobuf::uint32 value) {
+  
+  flags_ = value;
+  // @@protoc_insertion_point(field_set:chubaodb.raft.impl.pb.Entry.flags)
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS

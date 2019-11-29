@@ -36,14 +36,12 @@ using namespace chubaodb::ds::range;
 class TestContext : public RangeContext {
 public:
     uint64_t GetNodeID() const override { return 100; }
-    SplitPolicy* GetSplitPolicy() override { return nullptr; }
     db::DBManager* DBManager() override  { return nullptr; }
     master::MasterClient* MasterClient() override { return nullptr; }
     raft::RaftServer* RaftServer() override { return nullptr; }
     storage::MetaStore* MetaStore() override { return nullptr; }
     RangeStats* Statistics() override { return nullptr; }
     uint64_t GetDBUsagePercent() const override { return 0; }
-    int HeartbeatIntervalMS() override { return 100000; }
     void ScheduleCheckSize(uint64_t range_id) override {}
     TimerQueue* GetTimerQueue() override { return nullptr; }
     std::shared_ptr<Range> FindRange(uint64_t range_id) override { return nullptr; }
@@ -72,8 +70,9 @@ TEST(RangeTree, InsertFindRemove) {
     std::unique_ptr<RangeContext> range_ctx(new TestContext);
 
     RangePtr exist_one;
+    RangeOptions opt;
     auto s = tree.Insert(1, [&](RangePtr& ptr) {
-        ptr = std::make_shared<Range>(range_ctx.get(), meta);
+        ptr = std::make_shared<Range>(opt, range_ctx.get(), meta);
         return Status::OK();
     }, exist_one);
     ASSERT_TRUE(s.ok()) << s.ToString();
@@ -91,7 +90,7 @@ TEST(RangeTree, InsertFindRemove) {
 
     // insert duplicate
     s = tree.Insert(1, [&](RangePtr& ptr) {
-        ptr = std::make_shared<Range>(range_ctx.get(), meta);
+        ptr = std::make_shared<Range>(opt, range_ctx.get(), meta);
         return Status::OK();
     }, exist_one);
     ASSERT_EQ(s.code(), Status::kExisted);

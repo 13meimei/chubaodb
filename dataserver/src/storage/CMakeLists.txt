@@ -16,6 +16,7 @@ set(storage_SOURCES
     processor_limit.cpp
     processor_selection.cpp
     processor_agg.cpp
+    processor_stream_agg.cpp
     processor_order_by.cpp
     processor_data_sample.cpp
     )

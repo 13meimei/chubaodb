@@ -111,6 +111,7 @@ type (
 		GetPeerInfo(ctx context.Context, in *dspb.GetPeerInfoRequest) (*dspb.SchResponse_Header, *dspb.GetPeerInfoResponse, error)
 		IsAlive(ctx context.Context) (*dspb.SchResponse_Header, *dspb.IsAliveResponse, error)
 		NodeInfo(ctx context.Context) (*dspb.SchResponse_Header, *dspb.NodeInfoResponse, error)
+		Admin(ctx context.Context, in *dspb.AdminRequest) (*dspb.AdminResponse, error)
 		Close()
 	}
 )
@@ -394,7 +395,7 @@ func (c *DSRpcClient) executeWithFlags(funId uint16, ctx context.Context, in pro
 
 func (c *DSRpcClient) ChangeMember(ctx context.Context, request *dspb.ChangeRaftMemberRequest) (*dspb.SchResponse_Header, *dspb.ChangeRaftMemberResponse, error) {
 	out := new(dspb.SchResponse)
-	_, err := c.execute(uint16(dspb.FunctionID_kFuncSchedule), ctx, &dspb.SchReuqest{Header: &dspb.SchReuqest_Header{ClusterId: entity.Conf().Global.ClusterID}, Req: &dspb.SchReuqest_ChangeRaftMember{ChangeRaftMember: request}}, out)
+	_, err := c.execute(uint16(dspb.FunctionID_kFuncSchedule), ctx, &dspb.SchRequest{Header: &dspb.SchRequest_Header{ClusterId: entity.Conf().Global.ClusterID}, Req: &dspb.SchRequest_ChangeRaftMember{ChangeRaftMember: request}}, out)
 	if err != nil {
 		return nil, nil, err
 	} else {
@@ -408,7 +409,7 @@ func (c *DSRpcClient) IsAlive(ctx context.Context) (*dspb.SchResponse_Header, *d
 	deadline, cancelFunc := context.WithDeadline(ctx, time.Now().Add(5*time.Second))
 	defer cancelFunc()
 
-	_, err := c.execute(uint16(dspb.FunctionID_kFuncSchedule), deadline, &dspb.SchReuqest{Header: &dspb.SchReuqest_Header{ClusterId: entity.Conf().Global.ClusterID}, Req: &dspb.SchReuqest_IsAlive{IsAlive: &dspb.IsAliveRequest{}}}, out)
+	_, err := c.execute(uint16(dspb.FunctionID_kFuncSchedule), deadline, &dspb.SchRequest{Header: &dspb.SchRequest_Header{ClusterId: entity.Conf().Global.ClusterID}, Req: &dspb.SchRequest_IsAlive{IsAlive: &dspb.IsAliveRequest{}}}, out)
 	if err != nil {
 		return nil, nil, err
 	} else {
@@ -418,7 +419,7 @@ func (c *DSRpcClient) IsAlive(ctx context.Context) (*dspb.SchResponse_Header, *d
 
 func (c *DSRpcClient) NodeInfo(ctx context.Context) (*dspb.SchResponse_Header, *dspb.NodeInfoResponse, error) {
 	out := new(dspb.SchResponse)
-	_, err := c.execute(uint16(dspb.FunctionID_kFuncSchedule), ctx, &dspb.SchReuqest{Header: &dspb.SchReuqest_Header{ClusterId: entity.Conf().Global.ClusterID}, Req: &dspb.SchReuqest_NodeInfo{NodeInfo: &dspb.NodeInfoRequest{}}}, out)
+	_, err := c.execute(uint16(dspb.FunctionID_kFuncSchedule), ctx, &dspb.SchRequest{Header: &dspb.SchRequest_Header{ClusterId: entity.Conf().Global.ClusterID}, Req: &dspb.SchRequest_NodeInfo{NodeInfo: &dspb.NodeInfoRequest{}}}, out)
 	if err != nil {
 		return nil, nil, err
 	} else {
@@ -428,7 +429,7 @@ func (c *DSRpcClient) NodeInfo(ctx context.Context) (*dspb.SchResponse_Header, *
 
 func (c *DSRpcClient) CreateRange(ctx context.Context, in *dspb.CreateRangeRequest) (*dspb.SchResponse_Header, *dspb.CreateRangeResponse, error) {
 	out := new(dspb.SchResponse)
-	_, err := c.execute(uint16(dspb.FunctionID_kFuncSchedule), ctx, &dspb.SchReuqest{Header: &dspb.SchReuqest_Header{ClusterId: entity.Conf().Global.ClusterID}, Req: &dspb.SchReuqest_CreateRange{CreateRange: in}}, out)
+	_, err := c.execute(uint16(dspb.FunctionID_kFuncSchedule), ctx, &dspb.SchRequest{Header: &dspb.SchRequest_Header{ClusterId: entity.Conf().Global.ClusterID}, Req: &dspb.SchRequest_CreateRange{CreateRange: in}}, out)
 	if err != nil {
 		return nil, nil, err
 	} else {
@@ -438,7 +439,7 @@ func (c *DSRpcClient) CreateRange(ctx context.Context, in *dspb.CreateRangeReque
 
 func (c *DSRpcClient) DeleteRange(ctx context.Context, in *dspb.DeleteRangeRequest) (*dspb.SchResponse_Header, *dspb.DeleteRangeResponse, error) {
 	out := new(dspb.SchResponse)
-	_, err := c.execute(uint16(dspb.FunctionID_kFuncSchedule), ctx, &dspb.SchReuqest{Header: &dspb.SchReuqest_Header{ClusterId: entity.Conf().Global.ClusterID}, Req: &dspb.SchReuqest_DeleteRange{DeleteRange: in}}, out)
+	_, err := c.execute(uint16(dspb.FunctionID_kFuncSchedule), ctx, &dspb.SchRequest{Header: &dspb.SchRequest_Header{ClusterId: entity.Conf().Global.ClusterID}, Req: &dspb.SchRequest_DeleteRange{DeleteRange: in}}, out)
 	if err != nil {
 		return nil, nil, err
 	} else {
@@ -448,7 +449,7 @@ func (c *DSRpcClient) DeleteRange(ctx context.Context, in *dspb.DeleteRangeReque
 
 func (c *DSRpcClient) TransferLeader(ctx context.Context, in *dspb.TransferRangeLeaderRequest) (*dspb.SchResponse_Header, *dspb.TransferRangeLeaderResponse, error) {
 	out := new(dspb.SchResponse)
-	_, err := c.execute(uint16(dspb.FunctionID_kFuncSchedule), ctx, &dspb.SchReuqest{Header: &dspb.SchReuqest_Header{ClusterId: entity.Conf().Global.ClusterID}, Req: &dspb.SchReuqest_TransferRangeLeader{TransferRangeLeader: in}}, out)
+	_, err := c.execute(uint16(dspb.FunctionID_kFuncSchedule), ctx, &dspb.SchRequest{Header: &dspb.SchRequest_Header{ClusterId: entity.Conf().Global.ClusterID}, Req: &dspb.SchRequest_TransferRangeLeader{TransferRangeLeader: in}}, out)
 	if err != nil {
 		return nil, nil, err
 	} else {
@@ -458,11 +459,21 @@ func (c *DSRpcClient) TransferLeader(ctx context.Context, in *dspb.TransferRange
 
 func (c *DSRpcClient) GetPeerInfo(ctx context.Context, in *dspb.GetPeerInfoRequest) (*dspb.SchResponse_Header, *dspb.GetPeerInfoResponse, error) {
 	out := new(dspb.SchResponse)
-	_, err := c.execute(uint16(dspb.FunctionID_kFuncSchedule), ctx, &dspb.SchReuqest{Header: &dspb.SchReuqest_Header{ClusterId: entity.Conf().Global.ClusterID}, Req: &dspb.SchReuqest_GetPeerInfo{GetPeerInfo: in}}, out)
+	_, err := c.execute(uint16(dspb.FunctionID_kFuncSchedule), ctx, &dspb.SchRequest{Header: &dspb.SchRequest_Header{ClusterId: entity.Conf().Global.ClusterID}, Req: &dspb.SchRequest_GetPeerInfo{GetPeerInfo: in}}, out)
 	if err != nil {
 		return nil, nil, err
 	} else {
 		return out.Header, out.GetGetPeerInfo(), nil
+	}
+}
+
+func (c *DSRpcClient) Admin(ctx context.Context, in *dspb.AdminRequest) (*dspb.AdminResponse, error) {
+	out := new(dspb.AdminResponse)
+	_, err := c.execute(uint16(dspb.FunctionID_kFuncAdmin), ctx, in, out)
+	if err != nil {
+		return nil, err
+	} else {
+		return out, nil
 	}
 }
 

@@ -463,6 +463,18 @@ Status LogFile::Truncate(uint64_t index) {
     }
 }
 
+Status LogFile::CloneForRead(std::unique_ptr<LogFile>& new_file) {
+    new_file.reset(new LogFile(GetDirName(file_path_), seq_, index_, true));
+    int new_fd = ::open(this->file_path_.c_str(), O_RDONLY, 0644);
+    if (-1 == new_fd) {
+        return Status(Status::kIOError, "open", strErrno(errno));
+    }
+    new_file->fd_ = new_fd;
+    new_file->file_size_ = this->file_size_;
+    new_file->log_index_.CopyFrom(this->log_index_);
+    return Status::OK();
+}
+
 #ifndef NDEBUG
 void LogFile::TEST_Append_RandomData() {
     std::string data = randomString(10);

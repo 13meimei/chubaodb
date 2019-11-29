@@ -83,6 +83,10 @@ Status Store::Destroy() {
     return db_->Destroy();
 }
 
+std::string Store::GetStartKey() const {
+    return start_key_;
+}
+
 void Store::SetEndKey(std::string end_key) {
     std::unique_lock<std::mutex> lock(key_lock_);
     assert(start_key_ < end_key);

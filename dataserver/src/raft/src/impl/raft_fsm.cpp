@@ -1,4 +1,5 @@
-// Copyright 2019 The Chubao Authors.
+// Copyright 2015 The etcd Authors
+// Portions Copyright 2019 The Chubao Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -127,7 +128,6 @@ Status RaftFsm::start() {
         ops.log_file_size = rops_.log_file_size;
         ops.max_log_files = rops_.max_log_files;
         ops.allow_corrupt_startup = rops_.allow_log_corrupt;
-        ops.initial_first_index = rops_.initial_first_index;
         storage_ = std::shared_ptr<storage::Storage>(
             new storage::DiskStorage(id_, rops_.storage_path, ops));
     }
@@ -249,7 +249,7 @@ bool RaftFsm::stepIgnoreTerm(MessagePtr& msg) {
         case pb::LOCAL_MSG_PROP:
             step_func_(msg);
             return true;
-        case pb::LOCAL_MSG_READ:
+        case pb::LOCAL_MSG_READ_INDEX:
             step_func_(msg);
             return true;
         case pb::HEARTBEAT_REQUEST:
@@ -510,7 +510,7 @@ Status RaftFsm::smApply(const EntryPtr& entry) {
 
 Status RaftFsm::ReadProcess(const EntryPtr& entry, uint16_t verify_result) {
     if (!entry->data().empty()) {
-        return sm_->Read(entry->data(), verify_result);
+        return sm_->ApplyReadIndex(entry->data(), verify_result);
     }
     return Status(Status::kInvalidArgument, "read unknown raft entry type",
                   std::to_string(static_cast<int>(entry->type())));

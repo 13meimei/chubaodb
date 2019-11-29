@@ -18,7 +18,6 @@ _Pragma("once");
 #include <mutex>
 #include <condition_variable>
 
-#include "base/system_info.h"
 #include "common/masstree_options.h"
 #include "db/db_manager.h"
 
@@ -42,7 +41,7 @@ public:
     Status CreateDB(uint64_t range_id, const std::string& start_key,
             const std::string& end_key, std::unique_ptr<DB>& db) override;
 
-    Status GetUsage(const SystemInfo& sys_info, DBUsage& usage) override;
+    Status GetUsage(DBUsage& usage) override;
 
     std::string MetricInfo(bool verbose) override;
 
@@ -55,6 +54,8 @@ public:
 
     void RCUFree(bool wait);
 
+    Status DumpTree(const std::string& dest_dir = "/tmp");
+
 private:
     Status createDB(uint64_t range_id, const std::string& start_key,
                     const std::string& end_key, bool from_split,
@@ -65,7 +66,6 @@ private:
 
     MasstreeWrapper *default_tree_ = nullptr;
     MasstreeWrapper *txn_tree_ = nullptr;
-    std::unique_ptr<SystemInfo> sys_info_;
 
     CheckpointSchedular* checkpoint_schedular_ = nullptr;
 };

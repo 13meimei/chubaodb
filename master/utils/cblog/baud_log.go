@@ -91,3 +91,10 @@ func (l *baudLog) Fault(format string, v ...interface{}) {
 func (l *baudLog) Flush() {
 	l.l.lockAndFlushAll()
 }
+
+func (l *baudLog) SetLogLevel(levelStr string) {
+	var ok bool
+	if l.l.outputLevel, ok = severityByName(levelStr); !ok {
+		l.l.outputLevel = infoLog
+	}
+}

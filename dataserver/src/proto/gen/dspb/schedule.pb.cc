@@ -18,14 +18,14 @@
 // @@protoc_insertion_point(includes)
 
 namespace dspb {
-class SchReuqest_HeaderDefaultTypeInternal {
+class SchRequest_HeaderDefaultTypeInternal {
 public:
- ::google::protobuf::internal::ExplicitlyConstructed<SchReuqest_Header>
+ ::google::protobuf::internal::ExplicitlyConstructed<SchRequest_Header>
      _instance;
-} _SchReuqest_Header_default_instance_;
-class SchReuqestDefaultTypeInternal {
+} _SchRequest_Header_default_instance_;
+class SchRequestDefaultTypeInternal {
 public:
- ::google::protobuf::internal::ExplicitlyConstructed<SchReuqest>
+ ::google::protobuf::internal::ExplicitlyConstructed<SchRequest>
      _instance;
   const ::dspb::CreateRangeRequest* create_range_;
   const ::dspb::DeleteRangeRequest* delete_range_;
@@ -34,7 +34,7 @@ public:
   const ::dspb::IsAliveRequest* is_alive_;
   const ::dspb::NodeInfoRequest* node_info_;
   const ::dspb::ChangeRaftMemberRequest* change_raft_member_;
-} _SchReuqest_default_instance_;
+} _SchRequest_default_instance_;
 class SchResponse_HeaderDefaultTypeInternal {
 public:
  ::google::protobuf::internal::ExplicitlyConstructed<SchResponse_Header>
@@ -184,25 +184,25 @@ PROTOBUF_CONSTEXPR_VAR ::google::protobuf::internal::ParseTable const
 
 const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
   ~0u,  // no _has_bits_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SchReuqest_Header, _internal_metadata_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SchRequest_Header, _internal_metadata_),
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SchReuqest_Header, cluster_id_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SchRequest_Header, cluster_id_),
   ~0u,  // no _has_bits_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SchReuqest, _internal_metadata_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SchRequest, _internal_metadata_),
   ~0u,  // no _extensions_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SchReuqest, _oneof_case_[0]),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SchRequest, _oneof_case_[0]),
   ~0u,  // no _weak_field_map_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SchReuqest, header_),
-  offsetof(SchReuqestDefaultTypeInternal, create_range_),
-  offsetof(SchReuqestDefaultTypeInternal, delete_range_),
-  offsetof(SchReuqestDefaultTypeInternal, transfer_range_leader_),
-  offsetof(SchReuqestDefaultTypeInternal, get_peer_info_),
-  offsetof(SchReuqestDefaultTypeInternal, is_alive_),
-  offsetof(SchReuqestDefaultTypeInternal, node_info_),
-  offsetof(SchReuqestDefaultTypeInternal, change_raft_member_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SchReuqest, req_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SchRequest, header_),
+  offsetof(SchRequestDefaultTypeInternal, create_range_),
+  offsetof(SchRequestDefaultTypeInternal, delete_range_),
+  offsetof(SchRequestDefaultTypeInternal, transfer_range_leader_),
+  offsetof(SchRequestDefaultTypeInternal, get_peer_info_),
+  offsetof(SchRequestDefaultTypeInternal, is_alive_),
+  offsetof(SchRequestDefaultTypeInternal, node_info_),
+  offsetof(SchRequestDefaultTypeInternal, change_raft_member_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SchRequest, req_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SchResponse_Header, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -351,8 +351,8 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   ~0u,  // no _weak_field_map_
 };
 static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
-  { 0, -1, sizeof(SchReuqest_Header)},
-  { 6, -1, sizeof(SchReuqest)},
+  { 0, -1, sizeof(SchRequest_Header)},
+  { 6, -1, sizeof(SchRequest)},
   { 20, -1, sizeof(SchResponse_Header)},
   { 27, -1, sizeof(SchResponse)},
   { 41, -1, sizeof(CreateRangeRequest)},
@@ -375,8 +375,8 @@ static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_ATTR
 };
 
 static ::google::protobuf::Message const * const file_default_instances[] = {
-  reinterpret_cast<const ::google::protobuf::Message*>(&_SchReuqest_Header_default_instance_),
-  reinterpret_cast<const ::google::protobuf::Message*>(&_SchReuqest_default_instance_),
+  reinterpret_cast<const ::google::protobuf::Message*>(&_SchRequest_Header_default_instance_),
+  reinterpret_cast<const ::google::protobuf::Message*>(&_SchRequest_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_SchResponse_Header_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_SchResponse_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_CreateRangeRequest_default_instance_),
@@ -426,11 +426,11 @@ void TableStruct::InitDefaultsImpl() {
   ::google::protobuf::internal::InitProtobufDefaults();
   ::basepb::protobuf_basepb_2fbasepb_2eproto::InitDefaults();
   ::dspb::protobuf_dspb_2ferror_2eproto::InitDefaults();
-  _SchReuqest_Header_default_instance_._instance.DefaultConstruct();
+  _SchRequest_Header_default_instance_._instance.DefaultConstruct();
   ::google::protobuf::internal::OnShutdownDestroyMessage(
-      &_SchReuqest_Header_default_instance_);_SchReuqest_default_instance_._instance.DefaultConstruct();
+      &_SchRequest_Header_default_instance_);_SchRequest_default_instance_._instance.DefaultConstruct();
   ::google::protobuf::internal::OnShutdownDestroyMessage(
-      &_SchReuqest_default_instance_);_SchResponse_Header_default_instance_._instance.DefaultConstruct();
+      &_SchRequest_default_instance_);_SchResponse_Header_default_instance_._instance.DefaultConstruct();
   ::google::protobuf::internal::OnShutdownDestroyMessage(
       &_SchResponse_Header_default_instance_);_SchResponse_default_instance_._instance.DefaultConstruct();
   ::google::protobuf::internal::OnShutdownDestroyMessage(
@@ -468,21 +468,21 @@ void TableStruct::InitDefaultsImpl() {
   ::google::protobuf::internal::OnShutdownDestroyMessage(
       &_ChangeRaftMemberRequest_default_instance_);_ChangeRaftMemberResponse_default_instance_._instance.DefaultConstruct();
   ::google::protobuf::internal::OnShutdownDestroyMessage(
-      &_ChangeRaftMemberResponse_default_instance_);_SchReuqest_default_instance_._instance.get_mutable()->header_ = const_cast< ::dspb::SchReuqest_Header*>(
-      ::dspb::SchReuqest_Header::internal_default_instance());
-  _SchReuqest_default_instance_.create_range_ = const_cast< ::dspb::CreateRangeRequest*>(
+      &_ChangeRaftMemberResponse_default_instance_);_SchRequest_default_instance_._instance.get_mutable()->header_ = const_cast< ::dspb::SchRequest_Header*>(
+      ::dspb::SchRequest_Header::internal_default_instance());
+  _SchRequest_default_instance_.create_range_ = const_cast< ::dspb::CreateRangeRequest*>(
       ::dspb::CreateRangeRequest::internal_default_instance());
-  _SchReuqest_default_instance_.delete_range_ = const_cast< ::dspb::DeleteRangeRequest*>(
+  _SchRequest_default_instance_.delete_range_ = const_cast< ::dspb::DeleteRangeRequest*>(
       ::dspb::DeleteRangeRequest::internal_default_instance());
-  _SchReuqest_default_instance_.transfer_range_leader_ = const_cast< ::dspb::TransferRangeLeaderRequest*>(
+  _SchRequest_default_instance_.transfer_range_leader_ = const_cast< ::dspb::TransferRangeLeaderRequest*>(
       ::dspb::TransferRangeLeaderRequest::internal_default_instance());
-  _SchReuqest_default_instance_.get_peer_info_ = const_cast< ::dspb::GetPeerInfoRequest*>(
+  _SchRequest_default_instance_.get_peer_info_ = const_cast< ::dspb::GetPeerInfoRequest*>(
       ::dspb::GetPeerInfoRequest::internal_default_instance());
-  _SchReuqest_default_instance_.is_alive_ = const_cast< ::dspb::IsAliveRequest*>(
+  _SchRequest_default_instance_.is_alive_ = const_cast< ::dspb::IsAliveRequest*>(
       ::dspb::IsAliveRequest::internal_default_instance());
-  _SchReuqest_default_instance_.node_info_ = const_cast< ::dspb::NodeInfoRequest*>(
+  _SchRequest_default_instance_.node_info_ = const_cast< ::dspb::NodeInfoRequest*>(
       ::dspb::NodeInfoRequest::internal_default_instance());
-  _SchReuqest_default_instance_.change_raft_member_ = const_cast< ::dspb::ChangeRaftMemberRequest*>(
+  _SchRequest_default_instance_.change_raft_member_ = const_cast< ::dspb::ChangeRaftMemberRequest*>(
       ::dspb::ChangeRaftMemberRequest::internal_default_instance());
   _SchResponse_Header_default_instance_._instance.get_mutable()->error_ = const_cast< ::dspb::Error*>(
       ::dspb::Error::internal_default_instance());
@@ -527,8 +527,8 @@ void AddDescriptorsImpl() {
   InitDefaults();
   static const char descriptor[] GOOGLE_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
       "\n\023dspb/schedule.proto\022\004dspb\032\023basepb/base"
-      "pb.proto\032\020dspb/error.proto\"\307\003\n\nSchReuqes"
-      "t\022\'\n\006header\030\001 \001(\0132\027.dspb.SchReuqest.Head"
+      "pb.proto\032\020dspb/error.proto\"\307\003\n\nSchReques"
+      "t\022\'\n\006header\030\001 \001(\0132\027.dspb.SchRequest.Head"
       "er\0220\n\014create_range\030\002 \001(\0132\030.dspb.CreateRa"
       "ngeRequestH\000\0220\n\014delete_range\030\003 \001(\0132\030.dsp"
       "b.DeleteRangeRequestH\000\022A\n\025transfer_range"
@@ -639,64 +639,64 @@ const int ChangeRaftMemberRequest::ChangeType_ARRAYSIZE;
 // ===================================================================
 
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int SchReuqest_Header::kClusterIdFieldNumber;
+const int SchRequest_Header::kClusterIdFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
-SchReuqest_Header::SchReuqest_Header()
+SchRequest_Header::SchRequest_Header()
   : ::google::protobuf::Message(), _internal_metadata_(NULL) {
   if (GOOGLE_PREDICT_TRUE(this != internal_default_instance())) {
     protobuf_dspb_2fschedule_2eproto::InitDefaults();
   }
   SharedCtor();
-  // @@protoc_insertion_point(constructor:dspb.SchReuqest.Header)
+  // @@protoc_insertion_point(constructor:dspb.SchRequest.Header)
 }
-SchReuqest_Header::SchReuqest_Header(const SchReuqest_Header& from)
+SchRequest_Header::SchRequest_Header(const SchRequest_Header& from)
   : ::google::protobuf::Message(),
       _internal_metadata_(NULL),
       _cached_size_(0) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
   cluster_id_ = from.cluster_id_;
-  // @@protoc_insertion_point(copy_constructor:dspb.SchReuqest.Header)
+  // @@protoc_insertion_point(copy_constructor:dspb.SchRequest.Header)
 }
 
-void SchReuqest_Header::SharedCtor() {
+void SchRequest_Header::SharedCtor() {
   cluster_id_ = GOOGLE_ULONGLONG(0);
   _cached_size_ = 0;
 }
 
-SchReuqest_Header::~SchReuqest_Header() {
-  // @@protoc_insertion_point(destructor:dspb.SchReuqest.Header)
+SchRequest_Header::~SchRequest_Header() {
+  // @@protoc_insertion_point(destructor:dspb.SchRequest.Header)
   SharedDtor();
 }
 
-void SchReuqest_Header::SharedDtor() {
+void SchRequest_Header::SharedDtor() {
 }
 
-void SchReuqest_Header::SetCachedSize(int size) const {
+void SchRequest_Header::SetCachedSize(int size) const {
   GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
   _cached_size_ = size;
   GOOGLE_SAFE_CONCURRENT_WRITES_END();
 }
-const ::google::protobuf::Descriptor* SchReuqest_Header::descriptor() {
+const ::google::protobuf::Descriptor* SchRequest_Header::descriptor() {
   protobuf_dspb_2fschedule_2eproto::protobuf_AssignDescriptorsOnce();
   return protobuf_dspb_2fschedule_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
 }
 
-const SchReuqest_Header& SchReuqest_Header::default_instance() {
+const SchRequest_Header& SchRequest_Header::default_instance() {
   protobuf_dspb_2fschedule_2eproto::InitDefaults();
   return *internal_default_instance();
 }
 
-SchReuqest_Header* SchReuqest_Header::New(::google::protobuf::Arena* arena) const {
-  SchReuqest_Header* n = new SchReuqest_Header;
+SchRequest_Header* SchRequest_Header::New(::google::protobuf::Arena* arena) const {
+  SchRequest_Header* n = new SchRequest_Header;
   if (arena != NULL) {
     arena->Own(n);
   }
   return n;
 }
 
-void SchReuqest_Header::Clear() {
-// @@protoc_insertion_point(message_clear_start:dspb.SchReuqest.Header)
+void SchRequest_Header::Clear() {
+// @@protoc_insertion_point(message_clear_start:dspb.SchRequest.Header)
   ::google::protobuf::uint32 cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
@@ -705,11 +705,11 @@ void SchReuqest_Header::Clear() {
   _internal_metadata_.Clear();
 }
 
-bool SchReuqest_Header::MergePartialFromCodedStream(
+bool SchRequest_Header::MergePartialFromCodedStream(
     ::google::protobuf::io::CodedInputStream* input) {
 #define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
   ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:dspb.SchReuqest.Header)
+  // @@protoc_insertion_point(parse_start:dspb.SchRequest.Header)
   for (;;) {
     ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
     tag = p.first;
@@ -741,17 +741,17 @@ bool SchReuqest_Header::MergePartialFromCodedStream(
     }
   }
 success:
-  // @@protoc_insertion_point(parse_success:dspb.SchReuqest.Header)
+  // @@protoc_insertion_point(parse_success:dspb.SchRequest.Header)
   return true;
 failure:
-  // @@protoc_insertion_point(parse_failure:dspb.SchReuqest.Header)
+  // @@protoc_insertion_point(parse_failure:dspb.SchRequest.Header)
   return false;
 #undef DO_
 }
 
-void SchReuqest_Header::SerializeWithCachedSizes(
+void SchRequest_Header::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:dspb.SchReuqest.Header)
+  // @@protoc_insertion_point(serialize_start:dspb.SchRequest.Header)
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
@@ -764,13 +764,13 @@ void SchReuqest_Header::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
   }
-  // @@protoc_insertion_point(serialize_end:dspb.SchReuqest.Header)
+  // @@protoc_insertion_point(serialize_end:dspb.SchRequest.Header)
 }
 
-::google::protobuf::uint8* SchReuqest_Header::InternalSerializeWithCachedSizesToArray(
+::google::protobuf::uint8* SchRequest_Header::InternalSerializeWithCachedSizesToArray(
     bool deterministic, ::google::protobuf::uint8* target) const {
   (void)deterministic; // Unused
-  // @@protoc_insertion_point(serialize_to_array_start:dspb.SchReuqest.Header)
+  // @@protoc_insertion_point(serialize_to_array_start:dspb.SchRequest.Header)
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
@@ -783,12 +783,12 @@ void SchReuqest_Header::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
   }
-  // @@protoc_insertion_point(serialize_to_array_end:dspb.SchReuqest.Header)
+  // @@protoc_insertion_point(serialize_to_array_end:dspb.SchRequest.Header)
   return target;
 }
 
-size_t SchReuqest_Header::ByteSizeLong() const {
-// @@protoc_insertion_point(message_byte_size_start:dspb.SchReuqest.Header)
+size_t SchRequest_Header::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:dspb.SchRequest.Header)
   size_t total_size = 0;
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -810,23 +810,23 @@ size_t SchReuqest_Header::ByteSizeLong() const {
   return total_size;
 }
 
-void SchReuqest_Header::MergeFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:dspb.SchReuqest.Header)
+void SchRequest_Header::MergeFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_merge_from_start:dspb.SchRequest.Header)
   GOOGLE_DCHECK_NE(&from, this);
-  const SchReuqest_Header* source =
-      ::google::protobuf::internal::DynamicCastToGenerated<const SchReuqest_Header>(
+  const SchRequest_Header* source =
+      ::google::protobuf::internal::DynamicCastToGenerated<const SchRequest_Header>(
           &from);
   if (source == NULL) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:dspb.SchReuqest.Header)
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:dspb.SchRequest.Header)
     ::google::protobuf::internal::ReflectionOps::Merge(from, this);
   } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:dspb.SchReuqest.Header)
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:dspb.SchRequest.Header)
     MergeFrom(*source);
   }
 }
 
-void SchReuqest_Header::MergeFrom(const SchReuqest_Header& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:dspb.SchReuqest.Header)
+void SchRequest_Header::MergeFrom(const SchRequest_Header& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:dspb.SchRequest.Header)
   GOOGLE_DCHECK_NE(&from, this);
   _internal_metadata_.MergeFrom(from._internal_metadata_);
   ::google::protobuf::uint32 cached_has_bits = 0;
@@ -837,55 +837,55 @@ void SchReuqest_Header::MergeFrom(const SchReuqest_Header& from) {
   }
 }
 
-void SchReuqest_Header::CopyFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:dspb.SchReuqest.Header)
+void SchRequest_Header::CopyFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_copy_from_start:dspb.SchRequest.Header)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
-void SchReuqest_Header::CopyFrom(const SchReuqest_Header& from) {
-// @@protoc_insertion_point(class_specific_copy_from_start:dspb.SchReuqest.Header)
+void SchRequest_Header::CopyFrom(const SchRequest_Header& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:dspb.SchRequest.Header)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
-bool SchReuqest_Header::IsInitialized() const {
+bool SchRequest_Header::IsInitialized() const {
   return true;
 }
 
-void SchReuqest_Header::Swap(SchReuqest_Header* other) {
+void SchRequest_Header::Swap(SchRequest_Header* other) {
   if (other == this) return;
   InternalSwap(other);
 }
-void SchReuqest_Header::InternalSwap(SchReuqest_Header* other) {
+void SchRequest_Header::InternalSwap(SchRequest_Header* other) {
   using std::swap;
   swap(cluster_id_, other->cluster_id_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   swap(_cached_size_, other->_cached_size_);
 }
 
-::google::protobuf::Metadata SchReuqest_Header::GetMetadata() const {
+::google::protobuf::Metadata SchRequest_Header::GetMetadata() const {
   protobuf_dspb_2fschedule_2eproto::protobuf_AssignDescriptorsOnce();
   return protobuf_dspb_2fschedule_2eproto::file_level_metadata[kIndexInFileMessages];
 }
 
 #if PROTOBUF_INLINE_NOT_IN_HEADERS
-// SchReuqest_Header
+// SchRequest_Header
 
 // uint64 cluster_id = 1;
-void SchReuqest_Header::clear_cluster_id() {
+void SchRequest_Header::clear_cluster_id() {
   cluster_id_ = GOOGLE_ULONGLONG(0);
 }
-::google::protobuf::uint64 SchReuqest_Header::cluster_id() const {
-  // @@protoc_insertion_point(field_get:dspb.SchReuqest.Header.cluster_id)
+::google::protobuf::uint64 SchRequest_Header::cluster_id() const {
+  // @@protoc_insertion_point(field_get:dspb.SchRequest.Header.cluster_id)
   return cluster_id_;
 }
-void SchReuqest_Header::set_cluster_id(::google::protobuf::uint64 value) {
+void SchRequest_Header::set_cluster_id(::google::protobuf::uint64 value) {
   
   cluster_id_ = value;
-  // @@protoc_insertion_point(field_set:dspb.SchReuqest.Header.cluster_id)
+  // @@protoc_insertion_point(field_set:dspb.SchRequest.Header.cluster_id)
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
@@ -893,31 +893,31 @@ void SchReuqest_Header::set_cluster_id(::google::protobuf::uint64 value) {
 // ===================================================================
 
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int SchReuqest::kHeaderFieldNumber;
-const int SchReuqest::kCreateRangeFieldNumber;
-const int SchReuqest::kDeleteRangeFieldNumber;
-const int SchReuqest::kTransferRangeLeaderFieldNumber;
-const int SchReuqest::kGetPeerInfoFieldNumber;
-const int SchReuqest::kIsAliveFieldNumber;
-const int SchReuqest::kNodeInfoFieldNumber;
-const int SchReuqest::kChangeRaftMemberFieldNumber;
+const int SchRequest::kHeaderFieldNumber;
+const int SchRequest::kCreateRangeFieldNumber;
+const int SchRequest::kDeleteRangeFieldNumber;
+const int SchRequest::kTransferRangeLeaderFieldNumber;
+const int SchRequest::kGetPeerInfoFieldNumber;
+const int SchRequest::kIsAliveFieldNumber;
+const int SchRequest::kNodeInfoFieldNumber;
+const int SchRequest::kChangeRaftMemberFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
-SchReuqest::SchReuqest()
+SchRequest::SchRequest()
   : ::google::protobuf::Message(), _internal_metadata_(NULL) {
   if (GOOGLE_PREDICT_TRUE(this != internal_default_instance())) {
     protobuf_dspb_2fschedule_2eproto::InitDefaults();
   }
   SharedCtor();
-  // @@protoc_insertion_point(constructor:dspb.SchReuqest)
+  // @@protoc_insertion_point(constructor:dspb.SchRequest)
 }
-SchReuqest::SchReuqest(const SchReuqest& from)
+SchRequest::SchRequest(const SchRequest& from)
   : ::google::protobuf::Message(),
       _internal_metadata_(NULL),
       _cached_size_(0) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
   if (from.has_header()) {
-    header_ = new ::dspb::SchReuqest_Header(*from.header_);
+    header_ = new ::dspb::SchRequest_Header(*from.header_);
   } else {
     header_ = NULL;
   }
@@ -955,52 +955,52 @@ SchReuqest::SchReuqest(const SchReuqest& from)
       break;
     }
   }
-  // @@protoc_insertion_point(copy_constructor:dspb.SchReuqest)
+  // @@protoc_insertion_point(copy_constructor:dspb.SchRequest)
 }
 
-void SchReuqest::SharedCtor() {
+void SchRequest::SharedCtor() {
   header_ = NULL;
   clear_has_req();
   _cached_size_ = 0;
 }
 
-SchReuqest::~SchReuqest() {
-  // @@protoc_insertion_point(destructor:dspb.SchReuqest)
+SchRequest::~SchRequest() {
+  // @@protoc_insertion_point(destructor:dspb.SchRequest)
   SharedDtor();
 }
 
-void SchReuqest::SharedDtor() {
+void SchRequest::SharedDtor() {
   if (this != internal_default_instance()) delete header_;
   if (has_req()) {
     clear_req();
   }
 }
 
-void SchReuqest::SetCachedSize(int size) const {
+void SchRequest::SetCachedSize(int size) const {
   GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
   _cached_size_ = size;
   GOOGLE_SAFE_CONCURRENT_WRITES_END();
 }
-const ::google::protobuf::Descriptor* SchReuqest::descriptor() {
+const ::google::protobuf::Descriptor* SchRequest::descriptor() {
   protobuf_dspb_2fschedule_2eproto::protobuf_AssignDescriptorsOnce();
   return protobuf_dspb_2fschedule_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
 }
 
-const SchReuqest& SchReuqest::default_instance() {
+const SchRequest& SchRequest::default_instance() {
   protobuf_dspb_2fschedule_2eproto::InitDefaults();
   return *internal_default_instance();
 }
 
-SchReuqest* SchReuqest::New(::google::protobuf::Arena* arena) const {
-  SchReuqest* n = new SchReuqest;
+SchRequest* SchRequest::New(::google::protobuf::Arena* arena) const {
+  SchRequest* n = new SchRequest;
   if (arena != NULL) {
     arena->Own(n);
   }
   return n;
 }
 
-void SchReuqest::clear_req() {
-// @@protoc_insertion_point(one_of_clear_start:dspb.SchReuqest)
+void SchRequest::clear_req() {
+// @@protoc_insertion_point(one_of_clear_start:dspb.SchRequest)
   switch (req_case()) {
     case kCreateRange: {
       delete req_.create_range_;
@@ -1038,8 +1038,8 @@ void SchReuqest::clear_req() {
 }
 
 
-void SchReuqest::Clear() {
-// @@protoc_insertion_point(message_clear_start:dspb.SchReuqest)
+void SchRequest::Clear() {
+// @@protoc_insertion_point(message_clear_start:dspb.SchRequest)
   ::google::protobuf::uint32 cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
@@ -1052,17 +1052,17 @@ void SchReuqest::Clear() {
   _internal_metadata_.Clear();
 }
 
-bool SchReuqest::MergePartialFromCodedStream(
+bool SchRequest::MergePartialFromCodedStream(
     ::google::protobuf::io::CodedInputStream* input) {
 #define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
   ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:dspb.SchReuqest)
+  // @@protoc_insertion_point(parse_start:dspb.SchRequest)
   for (;;) {
     ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
     tag = p.first;
     if (!p.second) goto handle_unusual;
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // .dspb.SchReuqest.Header header = 1;
+      // .dspb.SchRequest.Header header = 1;
       case 1: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
@@ -1170,21 +1170,21 @@ bool SchReuqest::MergePartialFromCodedStream(
     }
   }
 success:
-  // @@protoc_insertion_point(parse_success:dspb.SchReuqest)
+  // @@protoc_insertion_point(parse_success:dspb.SchRequest)
   return true;
 failure:
-  // @@protoc_insertion_point(parse_failure:dspb.SchReuqest)
+  // @@protoc_insertion_point(parse_failure:dspb.SchRequest)
   return false;
 #undef DO_
 }
 
-void SchReuqest::SerializeWithCachedSizes(
+void SchRequest::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:dspb.SchReuqest)
+  // @@protoc_insertion_point(serialize_start:dspb.SchRequest)
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // .dspb.SchReuqest.Header header = 1;
+  // .dspb.SchRequest.Header header = 1;
   if (this->has_header()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
       1, *this->header_, output);
@@ -1236,17 +1236,17 @@ void SchReuqest::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
   }
-  // @@protoc_insertion_point(serialize_end:dspb.SchReuqest)
+  // @@protoc_insertion_point(serialize_end:dspb.SchRequest)
 }
 
-::google::protobuf::uint8* SchReuqest::InternalSerializeWithCachedSizesToArray(
+::google::protobuf::uint8* SchRequest::InternalSerializeWithCachedSizesToArray(
     bool deterministic, ::google::protobuf::uint8* target) const {
   (void)deterministic; // Unused
-  // @@protoc_insertion_point(serialize_to_array_start:dspb.SchReuqest)
+  // @@protoc_insertion_point(serialize_to_array_start:dspb.SchRequest)
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // .dspb.SchReuqest.Header header = 1;
+  // .dspb.SchRequest.Header header = 1;
   if (this->has_header()) {
     target = ::google::protobuf::internal::WireFormatLite::
       InternalWriteMessageNoVirtualToArray(
@@ -1306,12 +1306,12 @@ void SchReuqest::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
   }
-  // @@protoc_insertion_point(serialize_to_array_end:dspb.SchReuqest)
+  // @@protoc_insertion_point(serialize_to_array_end:dspb.SchRequest)
   return target;
 }
 
-size_t SchReuqest::ByteSizeLong() const {
-// @@protoc_insertion_point(message_byte_size_start:dspb.SchReuqest)
+size_t SchRequest::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:dspb.SchRequest)
   size_t total_size = 0;
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -1319,7 +1319,7 @@ size_t SchReuqest::ByteSizeLong() const {
       ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
   }
-  // .dspb.SchReuqest.Header header = 1;
+  // .dspb.SchRequest.Header header = 1;
   if (this->has_header()) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
@@ -1387,30 +1387,30 @@ size_t SchReuqest::ByteSizeLong() const {
   return total_size;
 }
 
-void SchReuqest::MergeFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:dspb.SchReuqest)
+void SchRequest::MergeFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_merge_from_start:dspb.SchRequest)
   GOOGLE_DCHECK_NE(&from, this);
-  const SchReuqest* source =
-      ::google::protobuf::internal::DynamicCastToGenerated<const SchReuqest>(
+  const SchRequest* source =
+      ::google::protobuf::internal::DynamicCastToGenerated<const SchRequest>(
           &from);
   if (source == NULL) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:dspb.SchReuqest)
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:dspb.SchRequest)
     ::google::protobuf::internal::ReflectionOps::Merge(from, this);
   } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:dspb.SchReuqest)
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:dspb.SchRequest)
     MergeFrom(*source);
   }
 }
 
-void SchReuqest::MergeFrom(const SchReuqest& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:dspb.SchReuqest)
+void SchRequest::MergeFrom(const SchRequest& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:dspb.SchRequest)
   GOOGLE_DCHECK_NE(&from, this);
   _internal_metadata_.MergeFrom(from._internal_metadata_);
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
   if (from.has_header()) {
-    mutable_header()->::dspb::SchReuqest_Header::MergeFrom(from.header());
+    mutable_header()->::dspb::SchRequest_Header::MergeFrom(from.header());
   }
   switch (from.req_case()) {
     case kCreateRange: {
@@ -1447,29 +1447,29 @@ void SchReuqest::MergeFrom(const SchReuqest& from) {
   }
 }
 
-void SchReuqest::CopyFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:dspb.SchReuqest)
+void SchRequest::CopyFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_copy_from_start:dspb.SchRequest)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
-void SchReuqest::CopyFrom(const SchReuqest& from) {
-// @@protoc_insertion_point(class_specific_copy_from_start:dspb.SchReuqest)
+void SchRequest::CopyFrom(const SchRequest& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:dspb.SchRequest)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
-bool SchReuqest::IsInitialized() const {
+bool SchRequest::IsInitialized() const {
   return true;
 }
 
-void SchReuqest::Swap(SchReuqest* other) {
+void SchRequest::Swap(SchRequest* other) {
   if (other == this) return;
   InternalSwap(other);
 }
-void SchReuqest::InternalSwap(SchReuqest* other) {
+void SchRequest::InternalSwap(SchRequest* other) {
   using std::swap;
   swap(header_, other->header_);
   swap(req_, other->req_);
@@ -1478,44 +1478,44 @@ void SchReuqest::InternalSwap(SchReuqest* other) {
   swap(_cached_size_, other->_cached_size_);
 }
 
-::google::protobuf::Metadata SchReuqest::GetMetadata() const {
+::google::protobuf::Metadata SchRequest::GetMetadata() const {
   protobuf_dspb_2fschedule_2eproto::protobuf_AssignDescriptorsOnce();
   return protobuf_dspb_2fschedule_2eproto::file_level_metadata[kIndexInFileMessages];
 }
 
 #if PROTOBUF_INLINE_NOT_IN_HEADERS
-// SchReuqest
+// SchRequest
 
-// .dspb.SchReuqest.Header header = 1;
-bool SchReuqest::has_header() const {
+// .dspb.SchRequest.Header header = 1;
+bool SchRequest::has_header() const {
   return this != internal_default_instance() && header_ != NULL;
 }
-void SchReuqest::clear_header() {
+void SchRequest::clear_header() {
   if (GetArenaNoVirtual() == NULL && header_ != NULL) delete header_;
   header_ = NULL;
 }
-const ::dspb::SchReuqest_Header& SchReuqest::header() const {
-  const ::dspb::SchReuqest_Header* p = header_;
-  // @@protoc_insertion_point(field_get:dspb.SchReuqest.header)
-  return p != NULL ? *p : *reinterpret_cast<const ::dspb::SchReuqest_Header*>(
-      &::dspb::_SchReuqest_Header_default_instance_);
+const ::dspb::SchRequest_Header& SchRequest::header() const {
+  const ::dspb::SchRequest_Header* p = header_;
+  // @@protoc_insertion_point(field_get:dspb.SchRequest.header)
+  return p != NULL ? *p : *reinterpret_cast<const ::dspb::SchRequest_Header*>(
+      &::dspb::_SchRequest_Header_default_instance_);
 }
-::dspb::SchReuqest_Header* SchReuqest::mutable_header() {
+::dspb::SchRequest_Header* SchRequest::mutable_header() {
   
   if (header_ == NULL) {
-    header_ = new ::dspb::SchReuqest_Header;
+    header_ = new ::dspb::SchRequest_Header;
   }
-  // @@protoc_insertion_point(field_mutable:dspb.SchReuqest.header)
+  // @@protoc_insertion_point(field_mutable:dspb.SchRequest.header)
   return header_;
 }
-::dspb::SchReuqest_Header* SchReuqest::release_header() {
-  // @@protoc_insertion_point(field_release:dspb.SchReuqest.header)
+::dspb::SchRequest_Header* SchRequest::release_header() {
+  // @@protoc_insertion_point(field_release:dspb.SchRequest.header)
   
-  ::dspb::SchReuqest_Header* temp = header_;
+  ::dspb::SchRequest_Header* temp = header_;
   header_ = NULL;
   return temp;
 }
-void SchReuqest::set_allocated_header(::dspb::SchReuqest_Header* header) {
+void SchRequest::set_allocated_header(::dspb::SchRequest_Header* header) {
   delete header_;
   header_ = header;
   if (header) {
@@ -1523,39 +1523,39 @@ void SchReuqest::set_allocated_header(::dspb::SchReuqest_Header* header) {
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:dspb.SchReuqest.header)
+  // @@protoc_insertion_point(field_set_allocated:dspb.SchRequest.header)
 }
 
 // .dspb.CreateRangeRequest create_range = 2;
-bool SchReuqest::has_create_range() const {
+bool SchRequest::has_create_range() const {
   return req_case() == kCreateRange;
 }
-void SchReuqest::set_has_create_range() {
+void SchRequest::set_has_create_range() {
   _oneof_case_[0] = kCreateRange;
 }
-void SchReuqest::clear_create_range() {
+void SchRequest::clear_create_range() {
   if (has_create_range()) {
     delete req_.create_range_;
     clear_has_req();
   }
 }
- const ::dspb::CreateRangeRequest& SchReuqest::create_range() const {
-  // @@protoc_insertion_point(field_get:dspb.SchReuqest.create_range)
+ const ::dspb::CreateRangeRequest& SchRequest::create_range() const {
+  // @@protoc_insertion_point(field_get:dspb.SchRequest.create_range)
   return has_create_range()
       ? *req_.create_range_
       : ::dspb::CreateRangeRequest::default_instance();
 }
-::dspb::CreateRangeRequest* SchReuqest::mutable_create_range() {
+::dspb::CreateRangeRequest* SchRequest::mutable_create_range() {
   if (!has_create_range()) {
     clear_req();
     set_has_create_range();
     req_.create_range_ = new ::dspb::CreateRangeRequest;
   }
-  // @@protoc_insertion_point(field_mutable:dspb.SchReuqest.create_range)
+  // @@protoc_insertion_point(field_mutable:dspb.SchRequest.create_range)
   return req_.create_range_;
 }
-::dspb::CreateRangeRequest* SchReuqest::release_create_range() {
-  // @@protoc_insertion_point(field_release:dspb.SchReuqest.create_range)
+::dspb::CreateRangeRequest* SchRequest::release_create_range() {
+  // @@protoc_insertion_point(field_release:dspb.SchRequest.create_range)
   if (has_create_range()) {
     clear_has_req();
     ::dspb::CreateRangeRequest* temp = req_.create_range_;
@@ -1565,45 +1565,45 @@ void SchReuqest::clear_create_range() {
     return NULL;
   }
 }
-void SchReuqest::set_allocated_create_range(::dspb::CreateRangeRequest* create_range) {
+void SchRequest::set_allocated_create_range(::dspb::CreateRangeRequest* create_range) {
   clear_req();
   if (create_range) {
     set_has_create_range();
     req_.create_range_ = create_range;
   }
-  // @@protoc_insertion_point(field_set_allocated:dspb.SchReuqest.create_range)
+  // @@protoc_insertion_point(field_set_allocated:dspb.SchRequest.create_range)
 }
 
 // .dspb.DeleteRangeRequest delete_range = 3;
-bool SchReuqest::has_delete_range() const {
+bool SchRequest::has_delete_range() const {
   return req_case() == kDeleteRange;
 }
-void SchReuqest::set_has_delete_range() {
+void SchRequest::set_has_delete_range() {
   _oneof_case_[0] = kDeleteRange;
 }
-void SchReuqest::clear_delete_range() {
+void SchRequest::clear_delete_range() {
   if (has_delete_range()) {
     delete req_.delete_range_;
     clear_has_req();
   }
 }
- const ::dspb::DeleteRangeRequest& SchReuqest::delete_range() const {
-  // @@protoc_insertion_point(field_get:dspb.SchReuqest.delete_range)
+ const ::dspb::DeleteRangeRequest& SchRequest::delete_range() const {
+  // @@protoc_insertion_point(field_get:dspb.SchRequest.delete_range)
   return has_delete_range()
       ? *req_.delete_range_
       : ::dspb::DeleteRangeRequest::default_instance();
 }
-::dspb::DeleteRangeRequest* SchReuqest::mutable_delete_range() {
+::dspb::DeleteRangeRequest* SchRequest::mutable_delete_range() {
   if (!has_delete_range()) {
     clear_req();
     set_has_delete_range();
     req_.delete_range_ = new ::dspb::DeleteRangeRequest;
   }
-  // @@protoc_insertion_point(field_mutable:dspb.SchReuqest.delete_range)
+  // @@protoc_insertion_point(field_mutable:dspb.SchRequest.delete_range)
   return req_.delete_range_;
 }
-::dspb::DeleteRangeRequest* SchReuqest::release_delete_range() {
-  // @@protoc_insertion_point(field_release:dspb.SchReuqest.delete_range)
+::dspb::DeleteRangeRequest* SchRequest::release_delete_range() {
+  // @@protoc_insertion_point(field_release:dspb.SchRequest.delete_range)
   if (has_delete_range()) {
     clear_has_req();
     ::dspb::DeleteRangeRequest* temp = req_.delete_range_;
@@ -1613,45 +1613,45 @@ void SchReuqest::clear_delete_range() {
     return NULL;
   }
 }
-void SchReuqest::set_allocated_delete_range(::dspb::DeleteRangeRequest* delete_range) {
+void SchRequest::set_allocated_delete_range(::dspb::DeleteRangeRequest* delete_range) {
   clear_req();
   if (delete_range) {
     set_has_delete_range();
     req_.delete_range_ = delete_range;
   }
-  // @@protoc_insertion_point(field_set_allocated:dspb.SchReuqest.delete_range)
+  // @@protoc_insertion_point(field_set_allocated:dspb.SchRequest.delete_range)
 }
 
 // .dspb.TransferRangeLeaderRequest transfer_range_leader = 4;
-bool SchReuqest::has_transfer_range_leader() const {
+bool SchRequest::has_transfer_range_leader() const {
   return req_case() == kTransferRangeLeader;
 }
-void SchReuqest::set_has_transfer_range_leader() {
+void SchRequest::set_has_transfer_range_leader() {
   _oneof_case_[0] = kTransferRangeLeader;
 }
-void SchReuqest::clear_transfer_range_leader() {
+void SchRequest::clear_transfer_range_leader() {
   if (has_transfer_range_leader()) {
     delete req_.transfer_range_leader_;
     clear_has_req();
   }
 }
- const ::dspb::TransferRangeLeaderRequest& SchReuqest::transfer_range_leader() const {
-  // @@protoc_insertion_point(field_get:dspb.SchReuqest.transfer_range_leader)
+ const ::dspb::TransferRangeLeaderRequest& SchRequest::transfer_range_leader() const {
+  // @@protoc_insertion_point(field_get:dspb.SchRequest.transfer_range_leader)
   return has_transfer_range_leader()
       ? *req_.transfer_range_leader_
       : ::dspb::TransferRangeLeaderRequest::default_instance();
 }
-::dspb::TransferRangeLeaderRequest* SchReuqest::mutable_transfer_range_leader() {
+::dspb::TransferRangeLeaderRequest* SchRequest::mutable_transfer_range_leader() {
   if (!has_transfer_range_leader()) {
     clear_req();
     set_has_transfer_range_leader();
     req_.transfer_range_leader_ = new ::dspb::TransferRangeLeaderRequest;
   }
-  // @@protoc_insertion_point(field_mutable:dspb.SchReuqest.transfer_range_leader)
+  // @@protoc_insertion_point(field_mutable:dspb.SchRequest.transfer_range_leader)
   return req_.transfer_range_leader_;
 }
-::dspb::TransferRangeLeaderRequest* SchReuqest::release_transfer_range_leader() {
-  // @@protoc_insertion_point(field_release:dspb.SchReuqest.transfer_range_leader)
+::dspb::TransferRangeLeaderRequest* SchRequest::release_transfer_range_leader() {
+  // @@protoc_insertion_point(field_release:dspb.SchRequest.transfer_range_leader)
   if (has_transfer_range_leader()) {
     clear_has_req();
     ::dspb::TransferRangeLeaderRequest* temp = req_.transfer_range_leader_;
@@ -1661,45 +1661,45 @@ void SchReuqest::clear_transfer_range_leader() {
     return NULL;
   }
 }
-void SchReuqest::set_allocated_transfer_range_leader(::dspb::TransferRangeLeaderRequest* transfer_range_leader) {
+void SchRequest::set_allocated_transfer_range_leader(::dspb::TransferRangeLeaderRequest* transfer_range_leader) {
   clear_req();
   if (transfer_range_leader) {
     set_has_transfer_range_leader();
     req_.transfer_range_leader_ = transfer_range_leader;
   }
-  // @@protoc_insertion_point(field_set_allocated:dspb.SchReuqest.transfer_range_leader)
+  // @@protoc_insertion_point(field_set_allocated:dspb.SchRequest.transfer_range_leader)
 }
 
 // .dspb.GetPeerInfoRequest get_peer_info = 5;
-bool SchReuqest::has_get_peer_info() const {
+bool SchRequest::has_get_peer_info() const {
   return req_case() == kGetPeerInfo;
 }
-void SchReuqest::set_has_get_peer_info() {
+void SchRequest::set_has_get_peer_info() {
   _oneof_case_[0] = kGetPeerInfo;
 }
-void SchReuqest::clear_get_peer_info() {
+void SchRequest::clear_get_peer_info() {
   if (has_get_peer_info()) {
     delete req_.get_peer_info_;
     clear_has_req();
   }
 }
- const ::dspb::GetPeerInfoRequest& SchReuqest::get_peer_info() const {
-  // @@protoc_insertion_point(field_get:dspb.SchReuqest.get_peer_info)
+ const ::dspb::GetPeerInfoRequest& SchRequest::get_peer_info() const {
+  // @@protoc_insertion_point(field_get:dspb.SchRequest.get_peer_info)
   return has_get_peer_info()
       ? *req_.get_peer_info_
       : ::dspb::GetPeerInfoRequest::default_instance();
 }
-::dspb::GetPeerInfoRequest* SchReuqest::mutable_get_peer_info() {
+::dspb::GetPeerInfoRequest* SchRequest::mutable_get_peer_info() {
   if (!has_get_peer_info()) {
     clear_req();
     set_has_get_peer_info();
     req_.get_peer_info_ = new ::dspb::GetPeerInfoRequest;
   }
-  // @@protoc_insertion_point(field_mutable:dspb.SchReuqest.get_peer_info)
+  // @@protoc_insertion_point(field_mutable:dspb.SchRequest.get_peer_info)
   return req_.get_peer_info_;
 }
-::dspb::GetPeerInfoRequest* SchReuqest::release_get_peer_info() {
-  // @@protoc_insertion_point(field_release:dspb.SchReuqest.get_peer_info)
+::dspb::GetPeerInfoRequest* SchRequest::release_get_peer_info() {
+  // @@protoc_insertion_point(field_release:dspb.SchRequest.get_peer_info)
   if (has_get_peer_info()) {
     clear_has_req();
     ::dspb::GetPeerInfoRequest* temp = req_.get_peer_info_;
@@ -1709,45 +1709,45 @@ void SchReuqest::clear_get_peer_info() {
     return NULL;
   }
 }
-void SchReuqest::set_allocated_get_peer_info(::dspb::GetPeerInfoRequest* get_peer_info) {
+void SchRequest::set_allocated_get_peer_info(::dspb::GetPeerInfoRequest* get_peer_info) {
   clear_req();
   if (get_peer_info) {
     set_has_get_peer_info();
     req_.get_peer_info_ = get_peer_info;
   }
-  // @@protoc_insertion_point(field_set_allocated:dspb.SchReuqest.get_peer_info)
+  // @@protoc_insertion_point(field_set_allocated:dspb.SchRequest.get_peer_info)
 }
 
 // .dspb.IsAliveRequest is_alive = 6;
-bool SchReuqest::has_is_alive() const {
+bool SchRequest::has_is_alive() const {
   return req_case() == kIsAlive;
 }
-void SchReuqest::set_has_is_alive() {
+void SchRequest::set_has_is_alive() {
   _oneof_case_[0] = kIsAlive;
 }
-void SchReuqest::clear_is_alive() {
+void SchRequest::clear_is_alive() {
   if (has_is_alive()) {
     delete req_.is_alive_;
     clear_has_req();
   }
 }
- const ::dspb::IsAliveRequest& SchReuqest::is_alive() const {
-  // @@protoc_insertion_point(field_get:dspb.SchReuqest.is_alive)
+ const ::dspb::IsAliveRequest& SchRequest::is_alive() const {
+  // @@protoc_insertion_point(field_get:dspb.SchRequest.is_alive)
   return has_is_alive()
       ? *req_.is_alive_
       : ::dspb::IsAliveRequest::default_instance();
 }
-::dspb::IsAliveRequest* SchReuqest::mutable_is_alive() {
+::dspb::IsAliveRequest* SchRequest::mutable_is_alive() {
   if (!has_is_alive()) {
     clear_req();
     set_has_is_alive();
     req_.is_alive_ = new ::dspb::IsAliveRequest;
   }
-  // @@protoc_insertion_point(field_mutable:dspb.SchReuqest.is_alive)
+  // @@protoc_insertion_point(field_mutable:dspb.SchRequest.is_alive)
   return req_.is_alive_;
 }
-::dspb::IsAliveRequest* SchReuqest::release_is_alive() {
-  // @@protoc_insertion_point(field_release:dspb.SchReuqest.is_alive)
+::dspb::IsAliveRequest* SchRequest::release_is_alive() {
+  // @@protoc_insertion_point(field_release:dspb.SchRequest.is_alive)
   if (has_is_alive()) {
     clear_has_req();
     ::dspb::IsAliveRequest* temp = req_.is_alive_;
@@ -1757,45 +1757,45 @@ void SchReuqest::clear_is_alive() {
     return NULL;
   }
 }
-void SchReuqest::set_allocated_is_alive(::dspb::IsAliveRequest* is_alive) {
+void SchRequest::set_allocated_is_alive(::dspb::IsAliveRequest* is_alive) {
   clear_req();
   if (is_alive) {
     set_has_is_alive();
     req_.is_alive_ = is_alive;
   }
-  // @@protoc_insertion_point(field_set_allocated:dspb.SchReuqest.is_alive)
+  // @@protoc_insertion_point(field_set_allocated:dspb.SchRequest.is_alive)
 }
 
 // .dspb.NodeInfoRequest node_info = 7;
-bool SchReuqest::has_node_info() const {
+bool SchRequest::has_node_info() const {
   return req_case() == kNodeInfo;
 }
-void SchReuqest::set_has_node_info() {
+void SchRequest::set_has_node_info() {
   _oneof_case_[0] = kNodeInfo;
 }
-void SchReuqest::clear_node_info() {
+void SchRequest::clear_node_info() {
   if (has_node_info()) {
     delete req_.node_info_;
     clear_has_req();
   }
 }
- const ::dspb::NodeInfoRequest& SchReuqest::node_info() const {
-  // @@protoc_insertion_point(field_get:dspb.SchReuqest.node_info)
+ const ::dspb::NodeInfoRequest& SchRequest::node_info() const {
+  // @@protoc_insertion_point(field_get:dspb.SchRequest.node_info)
   return has_node_info()
       ? *req_.node_info_
       : ::dspb::NodeInfoRequest::default_instance();
 }
-::dspb::NodeInfoRequest* SchReuqest::mutable_node_info() {
+::dspb::NodeInfoRequest* SchRequest::mutable_node_info() {
   if (!has_node_info()) {
     clear_req();
     set_has_node_info();
     req_.node_info_ = new ::dspb::NodeInfoRequest;
   }
-  // @@protoc_insertion_point(field_mutable:dspb.SchReuqest.node_info)
+  // @@protoc_insertion_point(field_mutable:dspb.SchRequest.node_info)
   return req_.node_info_;
 }
-::dspb::NodeInfoRequest* SchReuqest::release_node_info() {
-  // @@protoc_insertion_point(field_release:dspb.SchReuqest.node_info)
+::dspb::NodeInfoRequest* SchRequest::release_node_info() {
+  // @@protoc_insertion_point(field_release:dspb.SchRequest.node_info)
   if (has_node_info()) {
     clear_has_req();
     ::dspb::NodeInfoRequest* temp = req_.node_info_;
@@ -1805,45 +1805,45 @@ void SchReuqest::clear_node_info() {
     return NULL;
   }
 }
-void SchReuqest::set_allocated_node_info(::dspb::NodeInfoRequest* node_info) {
+void SchRequest::set_allocated_node_info(::dspb::NodeInfoRequest* node_info) {
   clear_req();
   if (node_info) {
     set_has_node_info();
     req_.node_info_ = node_info;
   }
-  // @@protoc_insertion_point(field_set_allocated:dspb.SchReuqest.node_info)
+  // @@protoc_insertion_point(field_set_allocated:dspb.SchRequest.node_info)
 }
 
 // .dspb.ChangeRaftMemberRequest change_raft_member = 8;
-bool SchReuqest::has_change_raft_member() const {
+bool SchRequest::has_change_raft_member() const {
   return req_case() == kChangeRaftMember;
 }
-void SchReuqest::set_has_change_raft_member() {
+void SchRequest::set_has_change_raft_member() {
   _oneof_case_[0] = kChangeRaftMember;
 }
-void SchReuqest::clear_change_raft_member() {
+void SchRequest::clear_change_raft_member() {
   if (has_change_raft_member()) {
     delete req_.change_raft_member_;
     clear_has_req();
   }
 }
- const ::dspb::ChangeRaftMemberRequest& SchReuqest::change_raft_member() const {
-  // @@protoc_insertion_point(field_get:dspb.SchReuqest.change_raft_member)
+ const ::dspb::ChangeRaftMemberRequest& SchRequest::change_raft_member() const {
+  // @@protoc_insertion_point(field_get:dspb.SchRequest.change_raft_member)
   return has_change_raft_member()
       ? *req_.change_raft_member_
       : ::dspb::ChangeRaftMemberRequest::default_instance();
 }
-::dspb::ChangeRaftMemberRequest* SchReuqest::mutable_change_raft_member() {
+::dspb::ChangeRaftMemberRequest* SchRequest::mutable_change_raft_member() {
   if (!has_change_raft_member()) {
     clear_req();
     set_has_change_raft_member();
     req_.change_raft_member_ = new ::dspb::ChangeRaftMemberRequest;
   }
-  // @@protoc_insertion_point(field_mutable:dspb.SchReuqest.change_raft_member)
+  // @@protoc_insertion_point(field_mutable:dspb.SchRequest.change_raft_member)
   return req_.change_raft_member_;
 }
-::dspb::ChangeRaftMemberRequest* SchReuqest::release_change_raft_member() {
-  // @@protoc_insertion_point(field_release:dspb.SchReuqest.change_raft_member)
+::dspb::ChangeRaftMemberRequest* SchRequest::release_change_raft_member() {
+  // @@protoc_insertion_point(field_release:dspb.SchRequest.change_raft_member)
   if (has_change_raft_member()) {
     clear_has_req();
     ::dspb::ChangeRaftMemberRequest* temp = req_.change_raft_member_;
@@ -1853,23 +1853,23 @@ void SchReuqest::clear_change_raft_member() {
     return NULL;
   }
 }
-void SchReuqest::set_allocated_change_raft_member(::dspb::ChangeRaftMemberRequest* change_raft_member) {
+void SchRequest::set_allocated_change_raft_member(::dspb::ChangeRaftMemberRequest* change_raft_member) {
   clear_req();
   if (change_raft_member) {
     set_has_change_raft_member();
     req_.change_raft_member_ = change_raft_member;
   }
-  // @@protoc_insertion_point(field_set_allocated:dspb.SchReuqest.change_raft_member)
+  // @@protoc_insertion_point(field_set_allocated:dspb.SchRequest.change_raft_member)
 }
 
-bool SchReuqest::has_req() const {
+bool SchRequest::has_req() const {
   return req_case() != REQ_NOT_SET;
 }
-void SchReuqest::clear_has_req() {
+void SchRequest::clear_has_req() {
   _oneof_case_[0] = REQ_NOT_SET;
 }
-SchReuqest::ReqCase SchReuqest::req_case() const {
-  return SchReuqest::ReqCase(_oneof_case_[0]);
+SchRequest::ReqCase SchRequest::req_case() const {
+  return SchRequest::ReqCase(_oneof_case_[0]);
 }
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
 

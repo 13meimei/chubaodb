@@ -36,6 +36,8 @@ std::string SliceSeparate(const std::string &l, const std::string &r, size_t max
 std::string NextComparable(const std::string& str);
 
 void AnnotateThread(pthread_t handle, const char *name);
+size_t GetThreadID();
+std::string GetThreadName();
 
 int ParseBytesValue(const char* str, int64_t* value);
 

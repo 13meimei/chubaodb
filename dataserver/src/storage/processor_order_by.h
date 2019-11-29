@@ -33,7 +33,7 @@ namespace storage {
 class OrderBy : public Processor {
 
 public:
-    OrderBy(const dspb::Ordering &ordering, std::unique_ptr<Processor> processor);
+    OrderBy(const dspb::Ordering &ordering, std::unique_ptr<Processor> processor, bool gather_trace);
     ~OrderBy();
 
     OrderBy() = delete;
@@ -49,6 +49,8 @@ public:
     virtual const std::vector<uint64_t> get_col_ids() override {
         return processor_->get_col_ids();
     }
+
+    virtual void get_stats(std::vector<ProcessorStat> &stats) override;
 private:
     Status OrderingCheck();
     void FetchOrderByRows();
@@ -62,7 +64,7 @@ private:
     std::unique_ptr<Processor> processor_;
     std::multiset<RowResult> set_result_;
     std::multiset<RowResult>::const_iterator set_result_it_;
-    std::vector<ColumnOrderByInfo> col_order_by_infos_;
+    std::vector<RowColumnInfo> col_order_by_infos_;
 };
 
 } /* namespace storage */

@@ -32,12 +32,12 @@ using namespace chubaodb::ds::server;
 
 int pid_fd = -1;
 
-void printUsage(char *name) {
-    std::cout << name << " Usage: " << std::endl;
-    std::cout << "\t--conf=<config file>: required, configure file" << std::endl;
-    std::cout << "\t--test: test scene" << std::endl;
-    std::cout << "\t--debug: non-daemon processes for debugging" << std::endl;
-    std::cout << "\t--version: print version info" << std::endl;
+void printUsage(const char *name) {
+    std::cout << name << " usage: " << std::endl;
+    std::cout << "\t-c or --conf=<config file>: required, configure file" << std::endl;
+    std::cout << "\t-t or --test: test scene" << std::endl;
+    std::cout << "\t-d or --debug: non-daemon processes for debugging" << std::endl;
+    std::cout << "\t-v or --version: print version info" << std::endl;
 }
 
 void daemonInit() {
@@ -220,7 +220,6 @@ void runServer(const std::string &server_name, const std::string& conf_file, boo
     }
 
     // init logger
-    // TODO: use basename of server_name as logger's name
     if (!LoggerInit(ds_config.logger_config)) {
         exit(EXIT_FAILURE);
     }
@@ -228,7 +227,7 @@ void runServer(const std::string &server_name, const std::string& conf_file, boo
         exit(EXIT_FAILURE);
     }
 
-    if (DataServer::Instance().Start() < 0) {
+    if (!DataServer::Instance().Start()) {
         exit(EXIT_FAILURE);
     }
 
@@ -263,7 +262,7 @@ int main(int argc, char *argv[]) {
                 std::cout << GetVersionInfo() << std::endl;
                 return 0;
             case 'c':
-                conf_file = optarg;
+                if (optarg != nullptr) conf_file = optarg;
                 break;
             case 'd':
                 daemon = false;
@@ -276,6 +275,13 @@ int main(int argc, char *argv[]) {
                 return 0;
         }
     }
+
+    if (conf_file.empty()) {
+        std::cerr << server_name << ": configure file is required" << std::endl;
+        printUsage(argv[0]);
+        return -1;
+    }
+
     runServer(server_name, conf_file, daemon, btest);
 
     return 0;

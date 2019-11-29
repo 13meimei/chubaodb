@@ -19,6 +19,8 @@
 #include <sys/time.h>
 #include <time.h>
 #include <unistd.h>
+#include <pthread.h>
+#include <sys/syscall.h>
 #include <errno.h>
 
 namespace chubaodb {
@@ -167,6 +169,24 @@ void AnnotateThread(pthread_t handle, const char *name) {
     pthread_setname_np(handle, name);
 #endif
 #endif
+}
+
+size_t GetThreadID() {
+#ifdef __linux__
+    return (size_t)syscall(SYS_gettid);
+#elif __APPLE__
+    uint64_t thread_id = 0;
+    pthread_threadid_np(NULL, &thread_id);
+    return static_cast<size_t>(thread_id);
+#else
+    return 0;
+#endif
+}
+
+std::string GetThreadName() {
+    char buf[32] = {'\0'};
+    pthread_getname_np(pthread_self(), buf, 32);
+    return buf;
 }
 
 int ParseBytesValue(const char* str, int64_t* value) {

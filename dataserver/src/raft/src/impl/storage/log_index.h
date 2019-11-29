@@ -34,6 +34,8 @@ public:
     LogIndex(const LogIndex&) = delete;
     LogIndex& operator=(const LogIndex&) = delete;
 
+    void CopyFrom(const LogIndex& from);
+
     Status ParseFrom(const Record& rec, const std::vector<char>& payload);
     void Serialize(pb::LogIndex* pb_msg);
 

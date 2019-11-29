@@ -48,6 +48,7 @@ private:
     Status getPending(const dspb::GetPendingsRequest& req, dspb::GetPendingsResponse* resp);
     Status flushDB(const dspb::FlushDBRequest& req, dspb::FlushDBResponse* resp);
     Status profile(const dspb::ProfileRequest& req, dspb::ProfileResponse *resp);
+    Status dump(const dspb::DumpRequest& req, dspb::DumpResponse *resp);
 
 private:
     server::ContextServer* context_ = nullptr;

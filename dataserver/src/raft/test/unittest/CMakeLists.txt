@@ -27,6 +27,6 @@ foreach(testfile ${raft_unit_TESTS})
     get_filename_component(exename ${testfile} NAME_WE)
     add_executable(${exename} ${testfile})
     target_link_libraries(${exename} ${raft_unit_DEPS})
+    target_include_directories(${exename} PUBLIC ${GTEST_INCLUDE_DIR} ${GMOCK_INCLUDE_DIR})
     add_test(NAME ${exename} COMMAND ${exename})
 endforeach(testfile ${TESTS})
-

@@ -32,7 +32,7 @@ namespace storage {
 class Limit : public Processor {
 
 public:
-    Limit(const dspb::Limit &limit, std::unique_ptr<Processor> processor);
+    Limit(const dspb::Limit &limit, std::unique_ptr<Processor> processor, bool gather_trace);
     ~Limit();
 
     Limit() = delete;
@@ -49,6 +49,7 @@ public:
         return processor_->get_col_ids();
     }
 
+    virtual void get_stats(std::vector<ProcessorStat> &stats) override;
 private:
     u_int64_t limit_;
     u_int64_t index_ = 0;

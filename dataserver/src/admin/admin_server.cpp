@@ -18,10 +18,8 @@
 #include "common/logger.h"
 #include "server/range_server.h"
 #include "server/worker.h"
-
-#ifdef CHUBAO_USE_TCMALLOC
-#include <gperftools/malloc_extension.h>
-#endif
+#include "db/rocksdb_impl/manager_impl.h"
+#include "db/mass_tree_impl/manager_impl.h"
 
 namespace chubaodb {
 namespace ds {
@@ -84,6 +82,8 @@ Status AdminServer::execute(const AdminRequest& req, AdminResponse* resp) {
             return flushDB(req.flush_db(), resp->mutable_flush_db());
         case AdminRequest::kProfile:
             return profile(req.profile(), resp->mutable_profile());
+        case AdminRequest::kDump:
+            return dump(req.dump(), resp->mutable_dump());
         default:
             return Status(Status::kNotSupported, "admin type", std::to_string(req.req_case()));
     }
@@ -127,8 +127,36 @@ Status AdminServer::forceSplit(const ForceSplitRequest& req, ForceSplitResponse*
 }
 
 Status AdminServer::compaction(const CompactionRequest& req, CompactionResponse* resp) {
-    // TODO: FIXME
-    return Status(Status::kNotSupported);
+    if (ds_config.engine_type != EngineType::kRocksdb) {
+        return Status(Status::kNotSupported,
+                "compaction engine", EngineTypeName(ds_config.engine_type));
+    }
+
+    // engine type is rocksdb now
+    auto db = dynamic_cast<db::RocksDBManager*>(context_->db_manager);
+    if (db == nullptr) {
+        return Status(Status::kNotSupported,
+                      "unknown db instance", typeid(context_->db_manager).name());
+    }
+
+    // db handle got
+    Status s;
+    rocksdb::CompactRangeOptions options;
+    if (req.range_id() == 0) {
+        s = db->CompactRange(options, nullptr, nullptr);
+    } else {
+        auto rng = context_->range_server->Find(req.range_id());
+        if (rng == nullptr) {
+            return Status(Status::kNotFound, "range", std::to_string(req.range_id()));
+        }
+        auto meta = rng->GetMeta();
+        resp->set_begin_key(meta.start_key());
+        resp->set_end_key(meta.end_key());
+        rocksdb::Slice begin = meta.start_key();
+        rocksdb::Slice end = meta.end_key();
+        s = db->CompactRange(options, &begin, &end);
+    }
+    return s;
 }
 
 Status AdminServer::clearQueue(const ClearQueueRequest& req, ClearQueueResponse* resp) {
@@ -158,7 +186,36 @@ Status AdminServer::getPending(const GetPendingsRequest& req, GetPendingsRespons
 }
 
 Status AdminServer::flushDB(const FlushDBRequest& req, FlushDBResponse* resp) {
-    return Status::OK();
+    if (ds_config.engine_type != EngineType::kRocksdb) {
+        return Status(Status::kNotSupported,
+                      "compaction engine", EngineTypeName(ds_config.engine_type));
+    }
+
+    // engine type is rocksdb now
+    auto db = dynamic_cast<db::RocksDBManager*>(context_->db_manager);
+    if (db == nullptr) {
+        return Status(Status::kNotSupported,
+                      "unknown db instance", typeid(context_->db_manager).name());
+    }
+    // flush
+    rocksdb::FlushOptions fops;
+    fops.wait = req.wait();
+    return db->Flush(fops);
+}
+
+Status AdminServer::dump(const dspb::DumpRequest& req, dspb::DumpResponse *resp) {
+    if (ds_config.engine_type != EngineType::kMassTree) {
+        return Status(Status::kNotSupported,
+                      "dump", EngineTypeName(ds_config.engine_type));
+    }
+
+    // engine type is masstree now
+    auto db = dynamic_cast<db::MasstreeDBManager*>(context_->db_manager);
+    if (db == nullptr) {
+        return Status(Status::kNotSupported,
+                      "unknown db instance", typeid(context_->db_manager).name());
+    }
+    return db->DumpTree("/tmp");
 }
 
 } // namespace admin

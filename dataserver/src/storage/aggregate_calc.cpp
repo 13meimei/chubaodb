@@ -11,7 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
 // implied. See the License for the specific language governing
 // permissions and limitations under the License.
-
+#include "common/logger.h"
+#include "base/status.h"
 #include "aggregate_calc.h"
 #include "field_value.h"
 
@@ -19,49 +20,24 @@ namespace chubaodb {
 namespace ds {
 namespace storage {
 
-std::unique_ptr<AggreCalculator> AggreCalculator::New(const std::string& name,
-                                                      const u_int64_t id) {
-    if (name == "count") {
-        return std::unique_ptr<AggreCalculator>(new CountCalculator(id));
-    } else if (name == "min") {
-        return std::unique_ptr<AggreCalculator>(new MinCalculator(id));
-    } else if (name == "max") {
-        return std::unique_ptr<AggreCalculator>(new MaxCalculator(id));
-    } else if (name == "sum") {
-        return std::unique_ptr<AggreCalculator>(new SumCalculator(id));
-    } else if (name == "avg") {
-        return std::unique_ptr<AggreCalculator>(new SumCalculator(id));
+Status checkFunc(const dspb::Expr &f) {
+    Status s;
+    if (f.child_size() == 1) {
+        if (f.child(0).expr_type() != dspb::Column) {
+            s = Status( Status::kNotSupported,
+                        "func column type error",
+                        "expr_type:" + std::to_string(f.child(0).expr_type()));
+        }
     } else {
-        return nullptr;
+        s = Status( Status::kNotSupported,
+                        "func column is not one",
+                        "column size:" + std::to_string(f.child_size()));
     }
-}
-
-std::unique_ptr<AggreCalculator> AggreCalculator::New(dspb::ExprType type,
-                                                      const u_int64_t id) {
-
-    switch (type)
-    {
-    case dspb::Avg:
-        return std::unique_ptr<AggreCalculator>(new AvgCalculator(id));
-    case dspb::Count:
-        return std::unique_ptr<AggreCalculator>(new CountCalculator(id));
-    case dspb::Max:
-        return std::unique_ptr<AggreCalculator>(new MaxCalculator(id));
-    case dspb::Min:
-        return std::unique_ptr<AggreCalculator>(new MinCalculator(id));
-    case dspb::Sum:
-            return std::unique_ptr<AggreCalculator>(new SumCalculator(id));
-    default:
-        return nullptr;
-    }
+    return s;
 }
 
 std::unique_ptr<AggreCalculator> AggreCalculator::New(const dspb::Expr &f) {
-    switch (f.expr_type())
-    {
-    case dspb::Avg:
-        return std::unique_ptr<AggreCalculator>(new AvgCalculator(f.has_column() ? f.column().id() : 0));
-    case dspb::Count:
+    if (f.expr_type() == dspb::Count) {
         if (f.child_size() == 1) {
             switch (f.child(0).expr_type())
             {
@@ -77,16 +53,29 @@ std::unique_ptr<AggreCalculator> AggreCalculator::New(const dspb::Expr &f) {
             // count(*) or count(1) ...
             return std::unique_ptr<AggreCalculator>(new CountCalculator(AggreCalculator::default_const_col_id));
         }
-        
-    case dspb::Max:
-        return std::unique_ptr<AggreCalculator>(new MaxCalculator(f.has_column() ? f.column().id() : 0));
-    case dspb::Min:
-        return std::unique_ptr<AggreCalculator>(new MinCalculator(f.has_column() ? f.column().id() : 0));
-    case dspb::Sum:
-            return std::unique_ptr<AggreCalculator>(new SumCalculator(f.has_column() ? f.column().id() : 0));
-    default:
-        return nullptr;
+    } else {
+        Status s = checkFunc(f);
+        if (!s.ok()) {
+            FLOG_ERROR("AggreCalculator checkFunc: {}", s.ToString());
+            return nullptr;
+        }
+        switch (f.expr_type())
+        {
+        case dspb::Avg:
+            return std::unique_ptr<AggreCalculator>(new AvgCalculator(f.child(0).column().id()));
+        case dspb::Max:
+            return std::unique_ptr<AggreCalculator>(new MaxCalculator(f.child(0).column().id()));
+        case dspb::Min:
+            return std::unique_ptr<AggreCalculator>(new MinCalculator(f.child(0).column().id()));
+        case dspb::Sum:
+                return std::unique_ptr<AggreCalculator>(new SumCalculator(f.child(0).column().id()));
+        case dspb::Distinct:
+                return std::unique_ptr<AggreCalculator>(new FristCalculator(f.child(0).column().id()));
+        default:
+            return nullptr;
+        }
     }
+    
 }
 
 CountCalculator::CountCalculator(const u_int64_t id) : AggreCalculator(id) {}
@@ -152,6 +141,26 @@ void MaxCalculator::Add(const FieldValue* f) {
 std::unique_ptr<FieldValue> MaxCalculator::Result() {
     FieldValue* result = nullptr;
     std::swap(result, max_value_);
+    return std::unique_ptr<FieldValue>(result);
+}
+
+//FristCalculator
+FristCalculator::FristCalculator(const u_int64_t id) : AggreCalculator(id) {}
+FristCalculator::~FristCalculator() {
+    if (value_) {
+        delete value_; 
+    }
+}
+
+void FristCalculator::Add(const FieldValue* f) {
+    if (value_ == nullptr && f != nullptr) {
+        value_ = CopyValue(*f);
+    }
+}
+
+std::unique_ptr<FieldValue> FristCalculator::Result() {
+    FieldValue* result = nullptr;
+    std::swap(result, value_);
     return std::unique_ptr<FieldValue>(result);
 }
 

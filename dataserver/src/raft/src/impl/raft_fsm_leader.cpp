@@ -1,4 +1,5 @@
-// Copyright 2019 The Chubao Authors.
+// Copyright 2015 The etcd Authors
+// Portions Copyright 2019 The Chubao Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -62,12 +63,86 @@ void RaftFsm::becomeLeader() {
     FLOG_INFO("node_id: {}, raft[{}] become leader at term {}", node_id_, id_, term_);
 }
 
-void RaftFsm::stepLeader(MessagePtr& msg) {
+void RaftFsm::stepReadIndex(MessagePtr& msg) {
+    FLOG_DEBUG("node_id: {}, raft: {} recv read request", node_id_, id_);
+    if (msg->entries_size() == 0) {
+        return;
+    }
+    for (int i = 0; i < msg->entries_size(); ++i) {
+        msg->mutable_entries(i)->set_index(++read_index_seq_);
+    }
+
     std::vector<EntryPtr> ents;
-    uint64_t commit_index;
-    uint64_t apply_index;
+    takeEntries(msg, ents);
+    auto commit_index = raft_log_->committed();
+    auto apply_index = raft_log_->applied();
+    if (sops_.read_option == LEASE_ONLY) {
+        FLOG_DEBUG("node_id: {}, raft: {} lease only", node_id_, id_);
+        if (commit_index == apply_index) {
+            FLOG_DEBUG("node_id: {}, raft: {} commit_index equal apply_index", node_id_, id_);
+            //commit_index is equal to apply_index, directly read and return client
+            for (auto& entry: ents) {
+                FLOG_DEBUG("node_id: {}, raft: {} precess uinque_seq: {}", node_id_, id_, entry->index());
+                auto s = ReadProcess(entry, chubaodb::raft::READ_SUCCESS);
+                if (!s.ok()) {
+                    //todo implements
+                    throw RaftException(std::string("statemachine read entry[") +
+                                        std::to_string(entry->index()) + "] error: " + s.ToString());
+                }
+            }
+        } else {
+            //commit_index gt apply_index, wait apply to commit index, then return client
+            FLOG_DEBUG("node_id: {}, raft: {} commit_index greater than apply_index", node_id_, id_);
+            for (auto& entry: ents) {
+                FLOG_DEBUG("node_id: {}, raft: {} precess uinque_seq: {}", node_id_, id_, entry->index());
+                read_context_->AddReadIndex(entry->index(), commit_index, entry);
+                //self is set active
+                read_context_->SetVerifyResult(node_id_, entry->index(), true);
+            }
+        }
+    } else {
+        //consensus read
+        if (replicas_.size() == 1) { //only one replicate
+            if (commit_index == apply_index) {
+                //commit_index is equal to apply_index, directly read and return client
+                FLOG_DEBUG("node_id: {}, raft: {} commit_index equal apply_index", node_id_, id_);
+                for (auto& entry: ents) {
+                    FLOG_DEBUG("node_id: {}, raft: {} precess uinque_seq: {}", node_id_, id_, entry->index());
+                    auto s = ReadProcess(entry, chubaodb::raft::READ_SUCCESS);
+                    if (!s.ok()) {
+                        //todo implements
+                        throw RaftException(std::string("statemachine read entry[") +
+                                            std::to_string(entry->index()) + "] error: " + s.ToString());
+                    }
+                }
+            } else {
+                //commit_index gt apply_index, wait apply to commit index, then return client
+                FLOG_DEBUG("node_id: {}, raft: {} commit_index greater than apply_index", node_id_, id_);
+                for (auto& entry: ents) {
+                    FLOG_DEBUG("node_id: {}, raft: {} precess uinque_seq: {}", node_id_, id_, entry->index());
+                    read_context_->AddReadIndex(entry->index(), commit_index, entry);
+                    //self is set active
+                    read_context_->SetVerifyResult(node_id_, entry->index(), true);
+                }
+            }
+        } else {
+            for (auto& entry: ents) {
+                FLOG_DEBUG("node_id: {}, raft: {} precess uinque_seq: {}", node_id_, id_, entry->index());
+                read_context_->AddReadIndex(entry->index(), commit_index, entry);
+                //self is set active
+                read_context_->SetVerifyResult(node_id_, entry->index(), true);
+            }
+            FLOG_DEBUG("node_id: {}, raft: {} consensus read and replicate more than 1, so broadcast to follower", node_id_, id_);
+            //broadcast read request to follower
+            bcastReadAppend();
+        }
+    }
+}
+
+void RaftFsm::stepLeader(MessagePtr& msg) {
     if (msg->type() == pb::LOCAL_MSG_PROP) {
         if (replicas_.find(node_id_) != replicas_.end() && msg->entries_size() > 0) {
+            std::vector<EntryPtr> ents;
             takeEntries(msg, ents);
             auto li = raft_log_->lastIndex();
             for (auto& entry : ents) {
@@ -91,74 +166,8 @@ void RaftFsm::stepLeader(MessagePtr& msg) {
         return;
     }
 
-    if (msg->type() == pb::LOCAL_MSG_READ) {
-        FLOG_DEBUG("node_id: {}, raft: {} recv read request", node_id_, id_);
-        if (msg->entries_size() > 0) {
-            takeEntries(msg, ents);
-            commit_index = raft_log_->committed();
-            apply_index = raft_log_->applied();
-            if (sops_.read_option == LEASE_ONLY) {
-                FLOG_DEBUG("node_id: {}, raft: {} lease only", node_id_, id_);
-                if (commit_index == apply_index) {
-                    FLOG_DEBUG("node_id: {}, raft: {} commit_index equal apply_index", node_id_, id_);
-                    //commit_index is equal to apply_index, directly read and return client
-                    for (auto& entry: ents) {
-                        FLOG_DEBUG("node_id: {}, raft: {} precess uinque_seq: {}", node_id_, id_, entry->index());
-                        auto s = ReadProcess(entry, chubaodb::raft::READ_SUCCESS);
-                        if (!s.ok()) {
-                            //todo implements
-                            throw RaftException(std::string("statemachine read entry[") +
-                                                std::to_string(entry->index()) + "] error: " + s.ToString());
-                        }
-                    }
-                } else {
-                    //commit_index gt apply_index, wait apply to commit index, then return client
-                    FLOG_DEBUG("node_id: {}, raft: {} commit_index greater than apply_index", node_id_, id_);
-                    for (auto& entry: ents) {
-                        FLOG_DEBUG("node_id: {}, raft: {} precess uinque_seq: {}", node_id_, id_, entry->index());
-                        read_context_->AddReadIndex(entry->index(), commit_index, entry);
-                        //self is set active
-                        read_context_->SetVerifyResult(node_id_, entry->index(), true);
-                    }
-                }
-            } else {
-                //consensus read
-                if (replicas_.size() == 1) { //only one replicate
-                    if (commit_index == apply_index) {
-                        //commit_index is equal to apply_index, directly read and return client
-                        FLOG_DEBUG("node_id: {}, raft: {} commit_index equal apply_index", node_id_, id_);
-                        for (auto& entry: ents) {
-                            FLOG_DEBUG("node_id: {}, raft: {} precess uinque_seq: {}", node_id_, id_, entry->index());
-                            auto s = ReadProcess(entry, chubaodb::raft::READ_SUCCESS);
-                            if (!s.ok()) {
-                                //todo implements
-                                throw RaftException(std::string("statemachine read entry[") +
-                                                    std::to_string(entry->index()) + "] error: " + s.ToString());
-                            }
-                        }
-                    } else {
-                        //commit_index gt apply_index, wait apply to commit index, then return client
-                        FLOG_DEBUG("node_id: {}, raft: {} commit_index greater than apply_index", node_id_, id_);
-                        for (auto& entry: ents) {
-                            FLOG_DEBUG("node_id: {}, raft: {} precess uinque_seq: {}", node_id_, id_, entry->index());
-                            read_context_->AddReadIndex(entry->index(), commit_index, entry);
-                            //self is set active
-                            read_context_->SetVerifyResult(node_id_, entry->index(), true);
-                        }
-                    }
-                } else {
-                    for (auto& entry: ents) {
-                        FLOG_DEBUG("node_id: {}, raft: {} precess uinque_seq: {}", node_id_, id_, entry->index());
-                        read_context_->AddReadIndex(entry->index(), commit_index, entry);
-                        //self is set active
-                        read_context_->SetVerifyResult(node_id_, entry->index(), true);
-                    }
-                    FLOG_DEBUG("node_id: {}, raft: {} consensus read and replicate more than 1, so broadcast to follower", node_id_, id_);
-                    //broadcast read request to follower
-                    bcastReadAppend();
-                }
-            }
-        }
+    if (msg->type() == pb::LOCAL_MSG_READ_INDEX) {
+        stepReadIndex(msg);
         return;
     }
 

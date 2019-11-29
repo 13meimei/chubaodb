@@ -42,7 +42,7 @@ protected:
 
     void TearDown() override {
         if (storage_) {
-            auto s = storage_->Destroy();
+            auto s = storage_->Destroy(false);
             ASSERT_TRUE(s.ok()) << s.ToString();
             storage_.reset();
         }
@@ -91,17 +91,17 @@ TEST_F(RaftLogTest, Truncate) {
     RandomEntries(lo, hi, 256, &wents3);
     uint64_t new_index = 0;
     ASSERT_TRUE(raft_log_->maybeAppend(49, wents1[48]->term(), 50, wents3, &new_index));
-    ASSERT_EQ(new_index, 60);
+    ASSERT_EQ(new_index, 60U);
 
     pents.clear();
     raft_log_->unstableEntries(&pents);
     s = storage_->StoreEntries(pents);
     ASSERT_TRUE(s.ok());
 
-    ASSERT_EQ(raft_log_->lastIndex(), 60);
+    ASSERT_EQ(raft_log_->lastIndex(), 60U);
     uint64_t index = 0;
     s = storage_->LastIndex(&index);
     ASSERT_TRUE(s.ok()) << s.ToString();
-    ASSERT_EQ(index, 60);
+    ASSERT_EQ(index, 60U);
 }
 };

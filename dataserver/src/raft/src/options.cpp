@@ -1,4 +1,5 @@
-// Copyright 2019 The Chubao Authors.
+// Copyright 2015 The etcd Authors
+// Portions Copyright 2019 The Chubao Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -93,17 +94,6 @@ Status RaftServerOptions::Validate() const {
     if (consensus_queue_capacity <= 0) {
         return Status(Status::kInvalidArgument, "raft server options",
                       "consensus queue capacity");
-    }
-
-    if (!apply_in_place) {
-        if (apply_threads_num == 0) {
-            return Status(Status::kInvalidArgument, "raft server options",
-                          "apply threads num");
-        }
-        if (apply_queue_capacity <= 0) {
-            return Status(Status::kInvalidArgument, "raft server options",
-                          "apply queue capacity");
-        }
     }
 
     auto s = snapshot_options.Validate();

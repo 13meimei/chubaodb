@@ -18,45 +18,65 @@ _Pragma("once");
 
 namespace chubaodb {
 
+struct RocksDBCFConfig {
+    // table options
+    size_t block_cache_size = 1024UL * 1048576; // default: 1024MB
+    size_t block_size = 16U * 1024; // default: 16K
+    bool cache_index_and_filter_blocks = true;
+    bool pin_l0_filter_and_index_blocks_in_cache = true;
+
+    // write buffer options
+    size_t write_buffer_size = 128UL * 1048576; // default: 128MB
+    int max_write_buffer_number = 6;
+    int min_write_buffer_number_to_merge = 1;
+
+    // level options
+    size_t max_bytes_for_level_base = 256UL * 1048576;
+    int max_bytes_for_level_multiplier = 10;
+    size_t target_file_size_base = 64UL * 1048576;
+    int target_file_size_multiplier = 1;
+
+    int level0_file_num_compaction_trigger = 8;
+    int level0_slowdown_writes_trigger = 24;
+    int level0_stop_writes_trigger = 36;
+
+    bool disable_auto_compactions = false;
+    // TODO:
+    // int compression = 0;
+
+    static RocksDBCFConfig NewDefaultCFConfig();
+    static RocksDBCFConfig NewTxnCFConfig();
+    static RocksDBCFConfig NewMetaCFConfig();
+
+    bool Load(const INIReader& reader, const char* section);
+};
+
+
 struct RocksDBConfig {
     std::string path;
-    int storage_type = 0;
 
-    size_t block_cache_size; // default: 1024MB
-    size_t row_cache_size;
-    size_t block_size; // default: 16K
-    int max_open_files;
-    size_t bytes_per_sync;
-    size_t write_buffer_size;
-    int max_write_buffer_number;
-    int min_write_buffer_number_to_merge;
-    size_t max_bytes_for_level_base;
-    int max_bytes_for_level_multiplier;
-    size_t target_file_size_base;
-    int target_file_size_multiplier;
-    int max_background_flushes;
-    int max_background_compactions;
-    size_t background_rate_limit;
-    bool disable_auto_compactions = false;
+    bool enable_txn_cache = true;
+
+    // db options
+    size_t row_cache_size = 0;
+    int max_open_files = 1024;
+
+    size_t bytes_per_sync = 0;
     bool read_checksum = true;
-    int level0_file_num_compaction_trigger;
-    int level0_slowdown_writes_trigger;
-    int level0_stop_writes_trigger;
     bool disable_wal = false;
-    bool cache_index_and_filter_blocks;
-    int compression = 0;
-
-    int min_blob_size;
-    size_t blob_file_size;
-    bool enable_garbage_collection;
-    int blob_gc_percent;
-    int blob_compression = 0;
-    size_t blob_cache_size;
-    uint64_t blob_ttl_range; // in seconds
-
+    bool unordered_write = true;
     int ttl = 0;
+
+    int max_background_jobs = 8;
+    uint32_t max_subcompactions = 1;
+    size_t background_rate_limit = 0;
+
     bool enable_stats = true;
     bool enable_debug_log = false;
+
+    RocksDBCFConfig default_cf_config = RocksDBCFConfig::NewDefaultCFConfig();
+    RocksDBCFConfig txn_cf_config = RocksDBCFConfig::NewTxnCFConfig();
+    RocksDBCFConfig meta_cf_config = RocksDBCFConfig::NewMetaCFConfig();
 
     bool Load(const INIReader& reader, const std::string& base_data_path);
     void Print() const;

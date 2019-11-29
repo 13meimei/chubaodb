@@ -18,14 +18,15 @@ _Pragma("once");
 #include "transport/transport.h"
 #include "work_thread.h"
 #include "mutable_options.h"
+#include "server_impl.h"
 
 namespace chubaodb {
 namespace raft {
 namespace impl {
 
 struct RaftContext {
+    RaftServerImpl *server_ = nullptr;
     WorkThread *consensus_thread = nullptr;
-    WorkThread *apply_thread = nullptr;
     SnapshotManager *snapshot_manager = nullptr;
     transport::Transport *msg_sender = nullptr;
     ServerMutableOptions *mutable_options = nullptr;

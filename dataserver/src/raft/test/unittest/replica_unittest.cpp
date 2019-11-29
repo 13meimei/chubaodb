@@ -85,22 +85,22 @@ TEST(Replica, SetGet) {
 TEST(Replica, Update) {
     Replica r(testutil::RandomPeer(), 100);
     r.update(100);
-    ASSERT_EQ(r.next(), 101);
+    ASSERT_EQ(r.next(), 101U);
 
     r.pause();
     ASSERT_TRUE(r.maybeUpdate(200, 100));
-    ASSERT_EQ(r.match(), 200);
-    ASSERT_EQ(r.next(), 201);
+    ASSERT_EQ(r.match(), 200U);
+    ASSERT_EQ(r.next(), 201U);
     ASSERT_FALSE(r.isPaused());
-    ASSERT_EQ(r.committed(), 100);
+    ASSERT_EQ(r.committed(), 100U);
 
     ASSERT_FALSE(r.maybeUpdate(200, 101));
-    ASSERT_EQ(r.committed(), 101);
+    ASSERT_EQ(r.committed(), 101U);
 
     r.becomeReplicate();
     ASSERT_TRUE(r.maybeDecrTo(201, 201, 102));
-    ASSERT_EQ(r.next(), 201);
-    ASSERT_EQ(r.committed(), 102);
+    ASSERT_EQ(r.next(), 201U);
+    ASSERT_EQ(r.committed(), 102U);
 }
 
 TEST(Replica, Inflight) {

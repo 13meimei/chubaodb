@@ -33,7 +33,7 @@ namespace server {
 // RunStatus server run status, such as Statistics, db usage
 class RunStatus : public range::RangeStats {
 public:
-    explicit RunStatus(bool run_on_docker = false);
+    RunStatus() = default;
     virtual ~RunStatus() = default;
 
     RunStatus(const RunStatus &) = delete;
@@ -57,9 +57,6 @@ public:
     void PrintStatistics();
 
 private:
-    // system info api
-    std::unique_ptr<SystemInfo> system_info_;
-
     // server method performance
     Statistics statistics_;
 

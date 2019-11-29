@@ -16,8 +16,8 @@
 
 #include <stdio.h>
 #include <chrono>
-#include <proto/gen/dspb/function.pb.h>
 
+#include "dspb/function.pb.h"
 #include "base/util.h"
 #include "common/logger.h"
 

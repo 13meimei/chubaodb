@@ -15,8 +15,8 @@
 #include <gtest/gtest.h>
 
 #include "base/status.h"
-#include "base/util.h"
 #include "common/server_config.h"
+#include "common/ds_encoding.h"
 #include "base/fs_util.h"
 #include "server/run_status.h"
 #include "storage/store.h"
@@ -419,7 +419,7 @@ TEST_F(SelectFlowTest, SelectFlow_table_read) {
 
 
     { // begin create range
-        dspb::SchReuqest req;
+        dspb::SchRequest req;
         req.mutable_create_range()->set_allocated_range(getPrimaryKeyRange());
 
         // create range
@@ -664,7 +664,7 @@ TEST_F(SelectFlowTest, SelectFlow_limit_table_read)
 
 
     { // begin create range
-        dspb::SchReuqest req;
+        dspb::SchRequest req;
         req.mutable_create_range()->set_allocated_range(getPrimaryKeyRange());
 
         // create range
@@ -946,7 +946,7 @@ TEST_F(SelectFlowTest, SelectFlow_index_read_unique) {
 
 
     { // begin create range
-        dspb::SchReuqest req;
+        dspb::SchRequest req;
         req.mutable_create_range()->set_allocated_range(genIndexKeyRange(default_account_index_id1));
 
         // create range
@@ -1193,7 +1193,7 @@ TEST_F(SelectFlowTest, SelectFlow_index_read_non_unique) {
     }
 
     { // begin create range
-        dspb::SchReuqest req;
+        dspb::SchRequest req;
         req.mutable_create_range()->set_allocated_range(genIndexKeyRange(default_account_index_id2));
 
         // create range
@@ -1428,7 +1428,7 @@ TEST_F(SelectFlowTest, SelectFlow_limit_index_read_unique) {
 
 
     { // begin create range
-        dspb::SchReuqest req;
+        dspb::SchRequest req;
         req.mutable_create_range()->set_allocated_range(genIndexKeyRange(default_account_index_id1));
 
         // create range

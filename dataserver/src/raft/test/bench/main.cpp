@@ -12,18 +12,14 @@
 // implied. See the License for the specific language governing
 // permissions and limitations under the License.
 
-#include <assert.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include <getopt.h>
 #include <future>
 #include <iostream>
 #include <thread>
 #include <vector>
 #include <functional>
-
-#ifdef USE_GPERF
-#include <gperftools/profiler.h>
-#endif
 
 #include "address.h"
 #include "config.h"
@@ -42,7 +38,7 @@ struct BenchContext {
 void runBenchmark(BenchContext *ctx) {
     while (true) {
         std::vector<std::shared_future<bool>> futures;
-        for (size_t i = 0; i < bench_config.concurrency; ++i) {
+        for (size_t i = 0; i < bench_config.bench_concurrency; ++i) {
             auto num = ctx->counter.fetch_sub(1);
             if (num > 0) {
                 futures.push_back(
@@ -63,7 +59,47 @@ void runBenchmark(BenchContext *ctx) {
     }
 }
 
+void printUsage(char *name) {
+    std::cout << name << " Usage: " << std::endl;
+    std::cout << "\t--conf=<config file>: required, configure file" << std::endl;
+    std::cout << std::endl;
+}
+
 int main(int argc, char *argv[]) {
+    struct option longopts[] = {
+            { "conf",    required_argument,  NULL,   'c' },
+            { "help",    no_argument,        NULL,   'h' },
+            { NULL,      0,                  NULL,    0  }
+    };
+    int ch = 0;
+    std::string conf_file;
+    while ((ch = getopt_long(argc, argv, "c:h", longopts, NULL)) != -1) {
+        switch (ch) {
+            case 'c':
+                conf_file = optarg;
+                break;
+            default:
+                printUsage(argv[0]);
+                return 0;
+        }
+    }
+    if (conf_file.empty()) {
+        printUsage(argv[0]);
+        return -1;
+    }
+    if (!bench_config.LoadFromFile(conf_file)) {
+        std::cerr << "load configure file failed!" << std::endl;
+        ::exit(EXIT_FAILURE);
+    }
+    bench_config.Print();
+
+    // init logger
+    chubaodb::LoggerConfig logger_config;
+    logger_config.name = "raft-bench";
+    logger_config.path = bench_config.logger_config.path;
+    logger_config.level = bench_config.logger_config.level;
+    chubaodb::LoggerInit(logger_config);
+
     auto addr_mgr = std::make_shared<bench::NodeAddress>(3);
 
     std::vector<std::shared_ptr<bench::Node>> cluster;
@@ -74,7 +110,7 @@ int main(int argc, char *argv[]) {
     }
 
     BenchContext context;
-    context.counter = bench_config.request_num;
+    context.counter = bench_config.requets_num;
     context.leaders.resize(bench_config.range_num);
     for (uint64_t i = 1; i <= bench_config.range_num; ++i) {
         for (auto &n : cluster) {
@@ -86,15 +122,11 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    // start
-#ifdef USE_GPERF
-    ProfilerStart("./bench.prof");
-#endif
     struct timeval start, end, taken;
     gettimeofday(&start, NULL);
 
     std::vector<std::thread> threads;
-    for (size_t i = 0; i < bench_config.thread_num; ++i) {
+    for (size_t i = 0; i < bench_config.bench_threads; ++i) {
         threads.emplace_back(std::thread(std::bind(&runBenchmark, &context)));
     }
     for (auto &t : threads) {
@@ -104,17 +136,10 @@ int main(int argc, char *argv[]) {
     // end
     gettimeofday(&end, NULL);
     timersub(&end, &start, &taken);
-#ifdef USE_GPERF
-    ProfilerStop();
-#endif
-    FLOG_INFO("bench_config.request_num: {}, requests taken: {}s{}ms",bench_config.request_num, taken.tv_sec, taken.tv_usec/100);
-    //std::cout << bench_config.request_num << " requests taken " << taken.tv_sec << "s "
-    //          << taken.tv_usec / 1000 << "ms" << std::endl;
-    FLOG_INFO("ops: {}", (bench_config.request_num*100)/(taken.tv_sec*1000+taken.tv_usec/1000));
-    //std::cout << "ops: "
-    //          << (bench_config.request_num * 1000) /
-    //                 (taken.tv_sec * 1000 + taken.tv_usec / 1000)
-    //          << std::endl;
 
+    std::cout << std::string(50, '-') << std::endl;
+    std::cout << bench_config.requets_num << " requests taken " << taken.tv_sec << "s " << taken.tv_usec / 1000 << "ms" << std::endl;
+    std::cout << "ops: " << (bench_config.requets_num * 1000) / (taken.tv_sec * 1000 + taken.tv_usec / 1000) << std::endl;
+    std::cout << std::string(50, '-') << std::endl;
     return 0;
 }

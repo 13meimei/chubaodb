@@ -84,6 +84,18 @@ private:
     FieldValue* max_value_ = nullptr;
 };
 
+class FristCalculator : public AggreCalculator {
+public:
+    FristCalculator(const u_int64_t id);
+    ~FristCalculator();
+
+    void Add(const FieldValue* f) override;
+    std::unique_ptr<FieldValue> Result() override;
+
+private:
+    FieldValue* value_ = nullptr;
+};
+
 class SumCalculator : public AggreCalculator {
 public:
     SumCalculator(const u_int64_t id);

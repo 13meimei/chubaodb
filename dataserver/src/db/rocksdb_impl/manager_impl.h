@@ -16,15 +16,16 @@ _Pragma("once");
 
 #include <vector>
 #include <rocksdb/db.h>
-//#include <rocksdb/utilities/blob_db/blob_db.h>
+#include <rocksdb/perf_context.h>
 
-#include "base/system_info.h"
 #include "db/db_manager.h"
 #include "common/rocksdb_config.h"
 
 namespace chubaodb {
 namespace ds {
 namespace db {
+
+class MasstreeWrapper;
 
 class RocksDBManager: public DBManager {
 public:
@@ -39,29 +40,42 @@ public:
     Status CreateDB(uint64_t range_id, const std::string& start_key,
             const std::string& end_key, std::unique_ptr<DB>& db) override;
 
-    Status GetUsage(const SystemInfo& sys_info, DBUsage& usage) override;
+    Status GetUsage(DBUsage& usage) override;
 
     std::string MetricInfo(bool verbose) override;
 
     Status CreatSplit(uint64_t range_id, const std::string& start_key,
             const std::string& end_key, std::unique_ptr<DB>& db);
 
+    Status CompactRange(const rocksdb::CompactRangeOptions& ops,
+            rocksdb::Slice* start, rocksdb::Slice* end);
+
+    Status Flush(const rocksdb::FlushOptions& ops);
+
+    Status SetPerfLevel(rocksdb::PerfLevel level);
+
+    void RCUFree(bool wait);
+
 private:
+    void buildDBOptions(const RocksDBConfig& config, rocksdb::DBOptions& db_opt);
+    void buildCFOptions(const RocksDBCFConfig& config, rocksdb::ColumnFamilyOptions& cf_opt);
+
     Status createDB(uint64_t range_id, const std::string& start_key,
                     const std::string& end_key, bool from_split,
                     std::unique_ptr<DB>& db);
 
-    Status Open();
-    void buildDBOptions(const RocksDBConfig& config);
+    Status open();
+
 private:
-    bool disable_wal_;
     const std::string db_path_;
-    rocksdb::Options ops_;
+    RocksDBConfig config_;
 
     std::vector<rocksdb::ColumnFamilyHandle*> cf_handles_;
     rocksdb::DB* db_ = nullptr;
 
-    std::shared_ptr<rocksdb::Cache> block_cache_;   // rocksdb block cache
+    MasstreeWrapper *txn_cache_ = nullptr;
+
+    std::vector<std::shared_ptr<rocksdb::Cache>> block_caches_; // cf's block caches
     std::shared_ptr<rocksdb::Cache> row_cache_;     // rocksdb row cache
     std::shared_ptr<rocksdb::Statistics> db_stats_; // rocksdb stats
 };

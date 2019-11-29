@@ -73,7 +73,7 @@ public:
     }
 
 private:
-    void run(SnapResult *result) {
+    void run(SnapResult *result) override {
         std::unique_lock<std::mutex> lock(mu_);
         state_ = State::kRunning;
         cond_.notify_one();
@@ -148,7 +148,7 @@ TEST(Snapshot, WorkerPool) {
         t->WaitFinish();
     }
     usleep(1000 * 100); // wait free worker
-    ASSERT_EQ(pool.RunningsCount(), 0);
+    ASSERT_EQ(pool.RunningsCount(), 0U);
 }
 
 

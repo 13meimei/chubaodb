@@ -157,17 +157,20 @@ TEST_F(StoreTest, SelectFlows) {
         ASSERT_TRUE(s.ok()) << s.ToString();
     }
 
-    // select * from account
-    {
-        rows_tmp.reserve(rows_tmp.size());
-        auto s = testSelectFlow(
-                [](SelectFlowRequestBuilder& b) {
-                    b.SetSQL("select * from account");
-                },
-                rows_
-        );
-        ASSERT_TRUE(s.ok()) << s.ToString();
-    }
+    // select count(*) from account group by balance
+    // {
+    //     rows_tmp.clear();
+    //     for (int i = 0; i < 7; ++i) {
+    //         rows_tmp.push_back({std::to_string(i)});
+    //     }
+    //     auto s = testSelectFlow(
+    //             [](SelectFlowRequestBuilder& b) {
+    //                 b.SetSQL("select count(*) from account group by balance");
+    //             },
+    //             rows_tmp
+    //     );
+    //     ASSERT_TRUE(s.ok()) << s.ToString();
+    // }
 
     // select avg(id) from account
     {

@@ -18,29 +18,21 @@ _Pragma("once");
 #include <atomic>
 #include <string>
 
-#include "base/shared_mutex.h"
-#include "base/util.h"
-
-#include "common/logger.h"
-#include "common/ds_encoding.h"
 #include "common/rpc_request.h"
 
 #include "storage/store.h"
-#include "storage/meta_store.h"
 #include "raft/raft.h"
 #include "raft/statemachine.h"
 #include "raft/types.h"
-#include "server/context_server.h"
-#include "server/run_status.h"
 
 #include "mspb/mspb.pb.h"
 #include "dspb/raft_internal.pb.h"
 #include "dspb/schedule.pb.h"
 
-#include "meta_keeper.h"
+#include "options.h"
 #include "context.h"
+#include "meta_keeper.h"
 #include "submit.h"
-#include "range_logger.h"
 
 // for test friend class
 namespace chubaodb { namespace test { namespace helper { class RangeTestFixture; }}}
@@ -51,15 +43,14 @@ namespace range {
 
 class Range : public raft::StateMachine, public std::enable_shared_from_this<Range> {
 public:
-    Range(RangeContext* context, const basepb::Range &meta);
+    Range(const RangeOptions& opt, RangeContext* context, const basepb::Range &meta);
     ~Range();
 
     Range(const Range &) = delete;
     Range &operator=(const Range &) = delete;
 
     // if db == nullptr will create one by default
-    Status Initialize(std::unique_ptr<db::DB> db = nullptr,
-            uint64_t leader = 0, uint64_t log_start_index = 0);
+    Status Initialize(std::unique_ptr<db::DB> db = nullptr, uint64_t leader = 0);
 
     Status Shutdown();
 
@@ -72,7 +63,7 @@ public:
     // from raft::StateMachine
     Status Apply(const std::string &cmd, uint64_t index) override;
     Status ApplyMemberChange(const raft::ConfChange &cc, uint64_t index) override;
-    Status Read(const std::string& cmd, uint16_t verify_result) override;
+    Status ApplyReadIndex(const std::string& cmd, uint16_t verify_result) override;
     uint64_t PersistApplied() override;
     void OnReplicateError(const std::string &cmd, const Status &status) override;
     void OnLeaderChange(uint64_t leader, uint64_t term) override;
@@ -108,16 +99,13 @@ public:
             std::shared_ptr<Range>& new_range);
 
     Status ForceSplit(uint64_t version, std::string* split_key);
-    // Admin
-
-    void Heartbeat();
 
     bool VerifyEpoch(const basepb::RangeEpoch& epoch, ErrorPtr& err);
 
-    void TEST_SetIsLeader(bool flag) { is_leader_ = flag; }
-
 private:
-    Status startRaft(uint64_t leader = 0, uint64_t log_start_index = 0);
+    static std::string raftLogPath(uint64_t table_id, uint64_t range_id);
+
+    Status startRaft(uint64_t leader = 0);
 
     // kv funcs
     void kvGet(RPCRequestPtr rpc_request, dspb::RangeRequest& req);
@@ -189,9 +177,8 @@ private:
 private:
     friend class ::chubaodb::test::helper::RangeTestFixture;
 
-    static const int kTimeTakeWarnThresoldUSec = 500000;
-
-    RangeContext* context_ = nullptr;
+    RangeOptions opt_;
+    RangeContext* const context_ = nullptr;
     const uint64_t node_id_ = 0;
     const uint64_t id_ = 0;
     // cache range's start key

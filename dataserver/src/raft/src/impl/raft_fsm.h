@@ -1,4 +1,5 @@
-// Copyright 2019 The Chubao Authors.
+// Copyright 2015 The etcd Authors
+// Portions Copyright 2019 The Chubao Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -103,6 +104,7 @@ private:
 
 private:
     void becomeLeader();
+    void stepReadIndex(MessagePtr& msg);
     void stepLeader(MessagePtr& msg);
     void tickHeartbeat();
     bool maybeCommit();
@@ -172,6 +174,7 @@ private:
     std::shared_ptr<ApplySnapTask> applying_snap_;
     pb::SnapshotMeta applying_meta_;
 
+    uint64_t read_index_seq_ = 0;
     std::unique_ptr<ReadIndexContext> read_context_; //pending read request
 
     std::deque<EntryPtr> pending_entries_; // pending entries submitted by user on leader

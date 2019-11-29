@@ -1,4 +1,5 @@
-// Copyright 2019 The Chubao Authors.
+// Copyright 2015 The etcd Authors
+// Portions Copyright 2019 The Chubao Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -89,12 +90,10 @@ struct RaftServerOptions {
 
     uint64_t max_size_per_msg = 1024 * 1024;
 
+    int entry_batch_size = 64;
+
     uint8_t consensus_threads_num = 4;
     size_t consensus_queue_capacity = 100000;
-
-    bool apply_in_place = true;
-    uint8_t apply_threads_num = 4;
-    size_t apply_queue_capacity = 100000;
 
     TransportOptions transport_options;
     SnapshotOptions snapshot_options;
@@ -116,10 +115,8 @@ struct RaftOptions {
     size_t log_file_size = 1024 * 1024 * 16;
     size_t max_log_files = 5;
     bool allow_log_corrupt = false;
-    uint64_t initial_first_index = 0;
 
     uint64_t applied = 0;
-    bool has_campaign = true;
     uint64_t leader = 0;
     uint64_t term = 0;
 

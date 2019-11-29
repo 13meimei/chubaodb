@@ -15,6 +15,7 @@
 #include "admin_server.h"
 
 #include "jemalloc/jemalloc.h"
+#include "db/rocksdb_impl/manager_impl.h"
 
 #include "base/util.h"
 
@@ -47,6 +48,29 @@ Status AdminServer::profile(const ProfileRequest& req, ProfileResponse *resp) {
         return Status(Status::kNotSupported, "profile", "cpu");
     case ProfileRequest_ProfileType_HEAP:
         return profileHeap(req);
+    case ProfileRequest_ProfileType_ROCKSDB: {
+        if (ds_config.engine_type != EngineType::kRocksdb) {
+            return Status(Status::kNotSupported,
+                          "compaction engine", EngineTypeName(ds_config.engine_type));
+        }
+        // engine type is rocksdb now
+        auto db = dynamic_cast<db::RocksDBManager*>(context_->db_manager);
+        if (db == nullptr) {
+            return Status(Status::kNotSupported,
+                          "unknown db instance", typeid(context_->db_manager).name());
+        }
+        switch (req.op()) {
+            case dspb::ProfileRequest_ProfileOp_PROFILE_START:
+                return db->SetPerfLevel(rocksdb::PerfLevel::kEnableTimeExceptForMutex);
+                break;
+            case dspb::ProfileRequest_ProfileOp_PROFILE_STOP:
+                return db->SetPerfLevel(rocksdb::PerfLevel::kDisable);
+                break;
+            default:
+                return Status(Status::kInvalidArgument, "profile op type", std::to_string(req.op()));
+        }
+        break;
+    }
     default:
         return Status(Status::kNotSupported, "profile",
                 ProfileRequest_ProfileType_Name(req.ptype()));

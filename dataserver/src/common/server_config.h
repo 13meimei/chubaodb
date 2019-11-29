@@ -30,6 +30,8 @@ enum class EngineType {
     kRocksdb = 2,
 };
 
+std::string EngineTypeName(EngineType et);
+
 struct ServerConfig {
     // write pid and lock file for exclusively running
     std::string pid_file;
@@ -84,16 +86,18 @@ struct ServerConfig {
     struct {
         size_t fast_worker_num = 4;  // fast worker thread num; eg. put/get command
         size_t slow_worker_num = 4;  // fast worker thread num; eg. put/get command
-        bool task_in_place = false; // handle task in rpc io thread, do not push to worker thread
+        bool task_in_place = true; // handle task in rpc io thread, do not push to worker thread
         size_t task_timeout_ms = 10000; // default 10s
     } worker_config;
 
     struct {
         bool recover_skip_fail = true;
         size_t recover_concurrency = 4;
+        bool enable_split = true;
         uint64_t check_size = 32UL * 1024 * 1024;
         uint64_t split_size = 64UL * 1024 * 1024;;
         uint64_t max_size = 128UL * 1024 * 1024;
+        size_t index_split_ratio = 10; // index range's split_size = {split_size} / index_split_ratio
         int worker_threads = 1;
     } range_config;
 
@@ -109,8 +113,6 @@ struct ServerConfig {
         bool allow_log_corrupt = true;
         size_t consensus_threads = 4;
         size_t consensus_queue = 10000;
-        size_t apply_threads = 4;
-        size_t apply_queue = 10000;
         size_t transport_send_threads = 4;
         size_t transport_recv_threads = 4;
         size_t connection_pool_size = 4;

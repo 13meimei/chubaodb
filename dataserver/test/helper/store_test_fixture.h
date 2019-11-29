@@ -21,13 +21,11 @@ _Pragma("once");
 #include "storage/store.h"
 #include "db/db_manager.h"
 #include "request_builder.h"
-#include "range/split_policy.h"
 
 namespace chubaodb {
 namespace test {
 namespace helper {
 
-using namespace ::chubaodb::ds::range;
 using namespace ::chubaodb::ds::db;
 using namespace ::chubaodb::ds::storage;
 

@@ -19,6 +19,7 @@
 #include <thread>
 
 #include <google/protobuf/io/zero_copy_stream_impl_lite.h>
+#include <common/server_config.h>
 
 #include "base/fs_util.h"
 
@@ -40,6 +41,21 @@ namespace ds {
 namespace server {
 
 using namespace chubaodb::ds::range;
+
+static RangeOptions makeRangeOptions(basepb::RangeType range_type) {
+    RangeOptions opt;
+    opt.enable_split = ds_config.range_config.enable_split;
+    opt.check_size = ds_config.range_config.check_size;
+    opt.split_size = ds_config.range_config.split_size;
+    opt.max_size = ds_config.range_config.max_size;
+    opt.heartbeat_interval_msec = ds_config.cluster_config.range_interval_secs * 1000;
+    if (range_type == basepb::RNG_Index) {
+        opt.check_size /= ds_config.range_config.index_split_ratio;
+        opt.split_size /= ds_config.range_config.index_split_ratio;
+        opt.max_size /= ds_config.range_config.index_split_ratio;
+    }
+    return opt;
+}
 
 int RangeServer::Init(ContextServer *context) {
     FLOG_INFO("RangeServer Init begin ...");
@@ -297,7 +313,7 @@ Status RangeServer::SplitRange(uint64_t old_range_id, const dspb::SplitCommand& 
 }
 
 Status RangeServer::recover(const basepb::Range &meta) {
-    auto rng = std::make_shared<range::Range>(range_context_.get(), meta);
+    auto rng = std::make_shared<range::Range>(makeRangeOptions(meta.range_type()), range_context_.get(), meta);
     auto s = rng->Initialize();
     if (!s.ok()) {
         return s;
@@ -358,7 +374,9 @@ int RangeServer::recover(const std::vector<basepb::Range> &metas) {
                 }
             }
             // free all rcu items during recover
-            if (ds_config.engine_type == EngineType::kMassTree) {
+            if (ds_config.engine_type == EngineType::kMassTree ||
+                (ds_config.engine_type == EngineType::kRocksdb &&
+                    ds_config.rocksdb_config.enable_txn_cache)) {
                 RunRCUFree(true);
             }
             return s;
@@ -478,7 +496,7 @@ static ErrorPtr newRangeNotFoundErr(uint64_t range_id) {
 }
 
 void RangeServer::dispatchSchedule(RPCRequestPtr& rpc) {
-    dspb::SchReuqest request;
+    dspb::SchRequest request;
     if (!rpc->ParseTo(request)) {
         FLOG_ERROR("deserialize {} request failed, from {}, msg id={}",
                    rpc->FuncName(), rpc->ctx.remote_addr, rpc->MsgID());
@@ -502,25 +520,25 @@ void RangeServer::dispatchSchedule(RPCRequestPtr& rpc) {
 
     ErrorPtr err;
     switch (request.req_case()) {
-        case dspb::SchReuqest::kCreateRange:
+        case dspb::SchRequest::kCreateRange:
             err = createRange(request.create_range(), response.mutable_create_range());
             break;
-        case dspb::SchReuqest::kDeleteRange:
+        case dspb::SchRequest::kDeleteRange:
             err = deleteRange(request.delete_range(), response.mutable_delete_range());
             break;
-        case dspb::SchReuqest::kTransferRangeLeader:
+        case dspb::SchRequest::kTransferRangeLeader:
             err = transferLeader(request.transfer_range_leader(), response.mutable_transfer_range_leader());
             break;
-        case dspb::SchReuqest::kGetPeerInfo:
+        case dspb::SchRequest::kGetPeerInfo:
             err = getPeerInfo(request.get_peer_info(), response.mutable_get_peer_info());
             break;
-        case dspb::SchReuqest::kIsAlive:
+        case dspb::SchRequest::kIsAlive:
             err = isAlive(request.is_alive(), response.mutable_is_alive());
             break;
-        case dspb::SchReuqest::kNodeInfo:
+        case dspb::SchRequest::kNodeInfo:
             err = nodeInfo(request.node_info(), response.mutable_node_info());
             break;
-        case dspb::SchReuqest::kChangeRaftMember:
+        case dspb::SchRequest::kChangeRaftMember:
             err = changeRaftMember(request.change_raft_member(), response.mutable_change_raft_member());
             break;
         default:
@@ -548,7 +566,7 @@ Status RangeServer::createRange(const basepb::Range &range, uint64_t leader,
         if (!s.ok()) {
             return s;
         }
-        new_rng = std::make_shared<range::Range>(range_context_.get(), range);
+        new_rng = std::make_shared<range::Range>(makeRangeOptions(range.range_type()), range_context_.get(), range);
         s = new_rng->Initialize(nullptr, leader);
         if (!s.ok()) {
             meta_store_->DelRange(range.id());

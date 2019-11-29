@@ -40,16 +40,16 @@ public:
 
     virtual Status RemoveRaft(uint64_t id) = 0;
 
-    virtual Status DestroyRaft(uint64_t id, bool backup = false) = 0;
+    virtual Status DestroyRaft(uint64_t id, bool backup) = 0;
 
     virtual std::shared_ptr<Raft> FindRaft(uint64_t id) const = 0;
 
     virtual void GetStatus(ServerStatus* status) const = 0;
 
+    virtual Status SetOptions(const std::map<std::string, std::string>& options) = 0;
+
     // Post a task to all apply threads to run, task should never throw an exception
     virtual void PostToAllApplyThreads(const std::function<void()>& task) = 0;
-
-    virtual Status SetOptions(const std::map<std::string, std::string>& options) = 0;
 };
 
 std::unique_ptr<RaftServer> CreateRaftServer(const RaftServerOptions& ops);

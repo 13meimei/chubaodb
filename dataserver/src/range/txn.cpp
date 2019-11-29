@@ -14,6 +14,9 @@
 
 #include "range.h"
 
+#include "base/util.h"
+#include "range_logger.h"
+
 namespace chubaodb {
 namespace ds {
 namespace range {
@@ -132,7 +135,7 @@ void Range::txnDecide(RPCRequestPtr rpc, RangeRequest& req) {
 }
 
 Status Range::applyTxnDecide(const dspb::Command &cmd, uint64_t raft_index) {
-    RLOG_DEBUG("ApplyTxnDecide begin, cmd: {}", cmd.DebugString());
+    RLOG_DEBUG("ApplyTxnDecide begin at {}, cmd: {}", raft_index, cmd.DebugString());
 
     Status ret;
     auto &req = cmd.txn_decide_req();
@@ -174,7 +177,7 @@ Status Range::applyTxnDecide(const dspb::Command &cmd, uint64_t raft_index) {
 }
 
 void Range::txnClearup(RPCRequestPtr rpc, RangeRequest& req) {
-    RLOG_DEBUG("TxnClearup  begin, req: {}", req.clear_up().DebugString());
+    RLOG_DEBUG("TxnClearup begin, req: {}", req.clear_up().DebugString());
 
     ErrorPtr err;
     auto msg_id = rpc->MsgID();
@@ -202,6 +205,8 @@ void Range::txnClearup(RPCRequestPtr rpc, RangeRequest& req) {
 }
 
 Status Range::applyTxnClearup(const dspb::Command &cmd, uint64_t raft_index) {
+    RLOG_DEBUG("ApplyTxnClearup begin at {}, cmd: {}", raft_index, cmd.DebugString());
+
     Status ret;
     auto &req = cmd.txn_clearup_req();
     auto btime = NowMicros();

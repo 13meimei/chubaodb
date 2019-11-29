@@ -1,4 +1,5 @@
-// Copyright 2019 The Chubao Authors.
+// Copyright 2015 The etcd Authors
+// Portions Copyright 2019 The Chubao Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -50,6 +51,11 @@ public:
     Status Close() override;
 
     Status Destroy(bool backup) override;
+
+    std::unique_ptr<LogReader> NewReader(uint64_t start_index) override;
+
+    Status InheritLog(const std::string& dest_dir, uint64_t last_index, bool only_index) override;
+    uint64_t InheritIndex() override { return 0; }
 
 private:
     uint64_t lastIndex() const;

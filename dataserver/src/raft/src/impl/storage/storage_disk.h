@@ -30,8 +30,8 @@ public:
     struct Options {
         size_t log_file_size = 1024 * 1024 * 16;
         size_t max_log_files = std::numeric_limits<size_t>::max();
+        size_t log_ttl_seconds = 0;
         bool allow_corrupt_startup = false;
-        uint64_t initial_first_index = 0;
         bool always_sync = false;
         bool readonly = false;
     };
@@ -63,6 +63,12 @@ public:
 
     size_t FilesCount() const { return log_files_.size(); }
 
+    std::unique_ptr<LogReader> NewReader(uint64_t start_index) override;
+
+    Status InheritLog(const std::string& dest_dir, uint64_t last_index, bool only_index) override;
+
+    uint64_t InheritIndex() override { return inherit_index_; }
+
 // for tests
 #ifndef NDEBUG
     void TEST_Add_Corruption1();
@@ -71,8 +77,6 @@ public:
 #endif
 
 private:
-    static Status checkLogsValidate(const std::map<uint64_t, uint64_t>& logs);
-
     Status initDir();
     Status initMeta();
     Status listLogs(std::map<uint64_t, uint64_t>* logs);
@@ -85,7 +89,8 @@ private:
     Status truncateNew(uint64_t index);
     Status truncateAll();
 
-    Status tryRotate();
+    Status rotate();
+    Status checkRotate();
     Status save(const EntryPtr& e);
 
 private:
@@ -96,6 +101,7 @@ private:
     MetaFile meta_file_;
     pb::HardState hard_state_;
     pb::TruncateMeta trunc_meta_;
+    uint64_t inherit_index_ = 0;
 
     std::vector<LogFile*> log_files_;
     uint64_t last_index_ = 0;

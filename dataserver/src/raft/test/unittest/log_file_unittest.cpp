@@ -74,8 +74,8 @@ TEST(LogFormat, FileName) {
     ASSERT_EQ(filename, "0000000000000009-0000000000000012.log");
     uint64_t seq = 0, index = 0;
     ASSERT_TRUE(parseLogFileName(filename, seq, index));
-    ASSERT_EQ(seq, 9);
-    ASSERT_EQ(index, 18);
+    ASSERT_EQ(seq, 9UL);
+    ASSERT_EQ(index, 18UL);
 
     filename = makeLogFileName(std::numeric_limits<uint64_t>::max(),
                                std::numeric_limits<uint64_t>::max());
@@ -105,10 +105,10 @@ TEST_F(LogFileTest, AppendAndGet) {
     auto s = log_file_->Flush();
     ASSERT_TRUE(s.ok()) << s.ToString();
 
-    ASSERT_EQ(log_file_->Seq(), 1);
+    ASSERT_EQ(log_file_->Seq(), 1UL);
     ASSERT_EQ(log_file_->LogSize(), 10);
-    ASSERT_EQ(log_file_->Index(), 1);
-    ASSERT_EQ(log_file_->LastIndex(), 10);
+    ASSERT_EQ(log_file_->Index(), 1UL);
+    ASSERT_EQ(log_file_->LastIndex(), 10UL);
 
     for (uint64_t i = 1; i <= 10; ++i) {
         EntryPtr e;
@@ -145,7 +145,7 @@ TEST_F(LogFileTest, AppendConflict) {
     ASSERT_TRUE(s.ok()) << s.ToString();
 
     ASSERT_EQ(log_file_->LogSize(), 5);
-    ASSERT_EQ(log_file_->LastIndex(), 5);
+    ASSERT_EQ(log_file_->LastIndex(), 5UL);
 
     for (uint64_t i = 1; i <= 5; ++i) {
         EntryPtr e;
@@ -183,6 +183,62 @@ TEST_F(LogFileTest, Recover) {
         ASSERT_TRUE(s.ok()) << s.ToString();
         s = Equal(e, entries[i - 1]);
         ASSERT_TRUE(s.ok()) << s.ToString();
+    }
+}
+
+TEST_F(LogFileTest, Clone) {
+    std::vector<EntryPtr> entries;
+    for (uint64_t i = 1; i <= 10; ++i) {
+        auto e = RandomEntry(i);
+        entries.push_back(e);
+        auto s = log_file_->Append(e);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+    }
+    auto s = log_file_->Flush();
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+    ASSERT_EQ(log_file_->Seq(), 1UL);
+    ASSERT_EQ(log_file_->LogSize(), 10);
+    ASSERT_EQ(log_file_->Index(), 1UL);
+    ASSERT_EQ(log_file_->LastIndex(), 10UL);
+
+    for (uint64_t i = 1; i <= 10; ++i) {
+        EntryPtr e;
+        auto s = log_file_->Get(i, &e);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+        s = Equal(e, entries[i - 1]);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+    }
+
+    for (uint64_t i = 1; i <= 10; ++i) {
+        uint64_t term = 0;
+        auto s = log_file_->Term(i, &term);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+        ASSERT_EQ(term, entries[i - 1]->term());
+    }
+
+    LogFilePtr cloned_file;
+    s = log_file_->CloneForRead(cloned_file);
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+    ASSERT_EQ(cloned_file->Seq(), 1UL);
+    ASSERT_EQ(cloned_file->LogSize(), 10);
+    ASSERT_EQ(cloned_file->Index(), 1UL);
+    ASSERT_EQ(cloned_file->LastIndex(), 10UL);
+
+    for (uint64_t i = 1; i <= 10; ++i) {
+        EntryPtr e;
+        auto s = cloned_file->Get(i, &e);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+        s = Equal(e, entries[i - 1]);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+    }
+
+    for (uint64_t i = 1; i <= 10; ++i) {
+        uint64_t term = 0;
+        auto s = cloned_file->Term(i, &term);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+        ASSERT_EQ(term, entries[i - 1]->term());
     }
 }
 

@@ -21,6 +21,7 @@ _Pragma("once");
 #include "masstree-beta/masstree.hh"
 #include "masstree-beta/timestamp.hh"
 
+#include "base/util.h"
 #include "base/status.h"
 #include "iterator_impl.h"
 
@@ -61,6 +62,7 @@ public:
 
     std::string CollectTreeCouter();
     std::string TreeStat();
+    Status Dump(const std::string& file);
 
 private:
     class StringValuePrinter {
@@ -68,8 +70,9 @@ private:
         static void print(std::string *value, FILE* f, const char* prefix,
                           int indent, Masstree::Str key, kvtimestamp_t,
                           char* suffix) {
-            fprintf(f, "%s%*s%.*s = %s%s\n",
-                    prefix, indent, "", key.len, key.s, (value ? value->c_str() : ""), suffix);
+            fprintf(f, "%s%*s %s = v@%lu\n", 
+                    prefix, indent, "  ", EncodeToHex(std::string(key.s, key.len)).c_str(), 
+                    (value ? value->size() : 0) + (suffix == NULL ? 0 : strlen(suffix)));
         }
     };
 

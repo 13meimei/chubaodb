@@ -23,6 +23,10 @@ LogIndex::LogIndex() {}
 
 LogIndex::~LogIndex() {}
 
+void LogIndex::CopyFrom(const LogIndex& from) {
+    items_ = from.items_;
+}
+
 Status LogIndex::ParseFrom(const Record& rec, const std::vector<char>& payload) {
     if (rec.type != RecordType::kIndex) {
         return Status(Status::kCorruption, "invalid log index record type",

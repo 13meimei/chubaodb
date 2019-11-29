@@ -29,18 +29,14 @@ namespace chubaodb {
 namespace ds {
 namespace server {
 
-RunStatus::RunStatus(bool run_on_docker) :
-    system_info_(SystemInfo::New(run_on_docker)) {
-}
-
 Status RunStatus::GetDBUsage(db::DBManager* db, db::DBUsage& db_usage) {
-    return db->GetUsage(*system_info_, db_usage);
+    return db->GetUsage(db_usage);
 }
 
 void RunStatus::UpdateDBUsage(db::DBManager* db) {
     if (db) {
         db::DBUsage usage;
-        auto s = db->GetUsage(*system_info_, usage);
+        auto s = db->GetUsage(usage);
         if (s.ok()) {
             db_usage_percent_ = usage.used_size * 100/ usage.total_size;
         } else {

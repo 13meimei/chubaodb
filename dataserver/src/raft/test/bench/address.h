@@ -24,7 +24,7 @@ namespace bench {
 
 class NodeAddress : public NodeResolver {
 public:
-    NodeAddress(int n);
+    explicit NodeAddress(int n);
     ~NodeAddress();
 
     std::string GetNodeAddress(uint64_t node_id) override;

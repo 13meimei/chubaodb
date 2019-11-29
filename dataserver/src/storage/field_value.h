@@ -17,6 +17,9 @@ _Pragma("once");
 #include <stdint.h>
 #include <string>
 #include <vector>
+#include <common/data_type/my_decimal.h>
+#include <common/data_type/my_timestamp.h>
+#include <common/data_type/my_time.h>
 
 #include "dspb/expr.pb.h"
 
@@ -29,6 +32,9 @@ enum class FieldType : char {
     kUInt,
     kDouble,
     kBytes,
+    kDecimal,
+    kDate,
+    kTime,
 };
 
 class FieldValue {
@@ -52,8 +58,40 @@ public:
         value_.sval = new std::string(std::move(val));
     }
 
+    explicit FieldValue( datatype::MyDecimal* dec ) : type_(FieldType::kDecimal) {
+        value_.decval = dec;
+    }
+
+    explicit FieldValue( const datatype::MyDecimal& dec ) : type_(FieldType::kDecimal) {
+        value_.decval = new datatype::MyDecimal(dec);
+    }
+
+    explicit FieldValue( datatype::MyDateTime* val ) : type_(FieldType::kDate) {
+        value_.dateval= val;
+    }
+
+    explicit FieldValue( const datatype::MyDateTime& val) : type_(FieldType::kDate) {
+        value_.dateval = new datatype::MyDateTime(val);
+    }
+
+    explicit FieldValue( datatype::MyTime* val ) : type_(FieldType::kTime) {
+        value_.timeval= val;
+    }
+
+    explicit FieldValue( const datatype::MyTime& val) : type_(FieldType::kTime) {
+        value_.timeval = new datatype::MyTime(val);
+    }
+
     ~FieldValue() {
-        if (FieldType::kBytes == type_) delete value_.sval;
+        if ( FieldType::kBytes == type_ ) {
+            delete value_.sval;
+        } else if (FieldType::kDecimal == type_ ) {
+            delete value_.decval;
+        } else if (FieldType::kDate == type_) {
+            delete value_.dateval;
+        } else if (FieldType::kTime == type_) {
+            delete value_.timeval;
+        }
     }
 
     FieldValue(const FieldValue&) = delete;
@@ -78,6 +116,18 @@ public:
             }
             case FieldType::kBytes: {
                 str = "kBytes";
+                break;
+            }
+            case FieldType::kDecimal: {
+                str = "kDecimal";
+                break;
+            }
+            case FieldType::kDate: {
+                str = "kDate";
+                break;
+            }
+            case FieldType::kTime: {
+                str = "kTime";
                 break;
             }
             default: {
@@ -109,6 +159,24 @@ public:
         return *value_.sval;
     }
 
+    const datatype::MyDecimal& Decimal() const {
+        if (type_ != FieldType::kDecimal|| value_.decval == nullptr)
+            return kDefaultDecimal;
+        return *value_.decval;
+    }
+
+    const datatype::MyDateTime& Date() const {
+        if (type_ != FieldType::kDate || value_.dateval == nullptr)
+            return kDefaultDateTime;
+        return *value_.dateval;
+    }
+
+    const datatype::MyTime& Time() const {
+        if (type_ != FieldType::kTime || value_.dateval == nullptr)
+            return kDefaultTime;
+        return *value_.timeval;
+    }
+
     std::string ToString() const {
         if (type_ == FieldType::kInt) {
             return std::to_string(value_.ival);
@@ -118,6 +186,12 @@ public:
             return std::to_string(value_.fval);
         } else if (type_ == FieldType::kBytes) {
             return *value_.sval;
+        }else if (type_ == FieldType::kDecimal) {
+            return value_.decval->ToString();
+        }else if (type_ == FieldType::kDate) {
+            return value_.dateval->ToString();
+        }else if (type_ == FieldType::kTime) {
+            return value_.timeval->ToString();
         } else {
             return "Unknown field value";
         }
@@ -125,6 +199,9 @@ public:
 
 private:
     static const std::string kDefaultBytes;
+    static const datatype::MyDecimal kDefaultDecimal;
+    static const datatype::MyDateTime kDefaultDateTime;
+    static const datatype::MyTime kDefaultTime;
 
     FieldType type_;
     union {
@@ -132,6 +209,9 @@ private:
         uint64_t uval;
         double fval;
         std::string* sval;
+        datatype::MyDecimal* decval;
+        datatype::MyDateTime* dateval;
+        datatype::MyTime* timeval;
     } value_;
 };
 

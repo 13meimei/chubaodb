@@ -32,18 +32,20 @@ namespace storage {
 class IndexRead : public Processor {
 
 public:
-    IndexRead( const dspb::IndexRead & index_read, const dspb::KeyRange & range_default, Store & s );
+    IndexRead( const dspb::IndexRead & index_read, const dspb::KeyRange & range_default, Store & s , bool gather_trace);
     ~IndexRead();
 
     IndexRead() = delete;
     IndexRead(const IndexRead & ) = delete;
     IndexRead& operator = (const IndexRead & ) = delete;
 
-    virtual Status next( RowResult & row);
+    virtual Status next( RowResult & row) override;
 
-    virtual const std::string get_last_key();
+    virtual const std::string get_last_key() override;
 
-    virtual const std::vector<uint64_t> get_col_ids();
+    virtual const std::vector<uint64_t> get_col_ids() override;
+
+    virtual void get_stats(std::vector<ProcessorStat> &stats) override;
 
 private:
     std::string str_last_key_;

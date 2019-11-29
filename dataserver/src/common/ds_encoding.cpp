@@ -13,7 +13,7 @@
 // permissions and limitations under the License. See the AUTHORS file
 // for names of contributors.
 //
-// Copyright 2019 The Chubao Authors.
+// Portions Copyright 2019 The Chubao Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -276,6 +276,40 @@ void EncodeBytesValue(std::string *buf, uint32_t col_id, const char *value, size
     buf->append(value, value_size);
 }
 
+void EncodeDecimalValue(std::string* buf, uint32_t col_id, const datatype::MyDecimal* d)
+{
+    assert(buf != nullptr);
+    encodeValueTag(buf, col_id, EncodeType::Decimal);
+
+    int8_t intg = d->GetDigitsInt();
+    int8_t frac = d->GetDigitsFrac();
+
+    int8_t precision = intg + frac;
+    std::string bin;
+    int32_t error = 0;
+    d->ToBin( precision, frac, bin, error);
+
+    buf->push_back(precision);
+    buf->push_back(frac);
+    buf->append(bin);
+}
+
+void EncodeDateValue(std::string* buf, uint32_t col_id, const datatype::MyDateTime* dt)
+{
+    assert(buf != nullptr);
+    encodeValueTag(buf, col_id, EncodeType::Date);
+    uint64_t dt_long = dt->ToPackInt64();
+    EncodeNonSortingUvarint(buf, dt_long);
+}
+
+void EncodeTimeValue(std::string* buf, uint32_t col_id, const datatype::MyTime* t)
+{
+    assert(buf != nullptr);
+    encodeValueTag(buf, col_id, EncodeType::Time);
+    int64_t t_long = t->ToPackInt64();
+    EncodeNonSortingVarint(buf, t_long);
+}
+
 void EncodeNullValue(std::string *buf, uint32_t col_id) {
     encodeValueTag(buf, col_id, EncodeType::Null);
 }
@@ -349,6 +383,83 @@ bool DecodeBytesValue(const std::string &data, size_t &offset, std::string *valu
     return true;
 }
 
+bool DecodeDecimalValue(const std::string& data, size_t& offset, datatype::MyDecimal* d)
+{
+    assert(d!= nullptr);
+    if (!decodeValueTypeAssert(data, offset, EncodeType::Decimal)) {
+        return false;
+    }
+
+    if ( data.size() <= offset ) {
+        return false;
+    }
+
+    int32_t error = 0;
+    int32_t bin_size = 0;
+    std::string str = data.substr(offset);
+
+    error = datatype::DecimalPeak( str, bin_size);
+    if ( error != datatype::E_DEC_OK) {
+        return false;
+    }
+
+    if ( str.size() < static_cast<uint32_t>(bin_size)) {
+        return false;
+    }
+
+    int8_t precision = str[0];
+    int8_t frac = str[1];
+    int8_t intg = precision - frac;
+    std::string str_bin = str.substr(2);
+    int32_t bin_size2 = 0;
+
+    d->FromBin( str_bin, precision, frac, bin_size2, error);
+
+    if (error != datatype::E_DEC_OK || bin_size != (bin_size2+2)) {
+        return false;
+    } else {
+        offset += 2;
+        offset +=  bin_size2;
+        return true;
+    }
+
+    return false;
+}
+
+bool DecodeDateValue(const std::string& data, size_t& offset, datatype::MyDateTime* t)
+{
+    assert(t!= nullptr);
+    if (!decodeValueTypeAssert(data, offset, EncodeType::Date)) {
+        return false;
+    }
+
+    uint64_t t_long = 0;
+    if ( !DecodeNonSortingUvarint(data, offset, &t_long) ) {
+        return false;
+    }
+
+    t->FromPackInt64(static_cast<int64_t>(t_long));
+
+    return true;
+}
+
+bool DecodeTimeValue(const std::string& data, size_t& offset, datatype::MyTime* t)
+{
+    assert(t!= nullptr);
+    if (!decodeValueTypeAssert(data, offset, EncodeType::Time)) {
+        return false;
+    }
+
+    int64_t dt_long = 0;
+    if ( !DecodeNonSortingVarint(data, offset, &dt_long) ) {
+        return false;
+    }
+
+    t->FromPackInt64(dt_long);
+
+    return true;
+}
+
 bool SkipValue(const std::string &data, size_t &offset) {
     uint32_t col_id = 0;
     EncodeType type;
@@ -371,6 +482,36 @@ bool SkipValue(const std::string &data, size_t &offset) {
             }
             offset += len;
             return offset <= data.size();
+        }
+        case EncodeType::Decimal: {
+
+            if ( data.size() <= offset) {
+                return false;
+            }
+
+            int32_t error = 0;
+            int32_t bin_size = 0;
+            std::string str = data.substr(offset);
+
+            error = datatype::DecimalPeak( str, bin_size);
+            if ( error != datatype::E_DEC_OK) {
+                return false;
+            }
+
+            if ( str.size() < static_cast<uint32_t>(bin_size)) {
+                return false;
+            }
+
+            offset += bin_size;
+            return true;
+        }
+        case EncodeType::Date: {
+            uint64_t value;
+            return DecodeNonSortingUvarint(data, offset, &value);
+        }
+        case EncodeType::Time: {
+            int64_t value;
+            return DecodeNonSortingVarint(data, offset, &value);
         }
         default:
             return false;
@@ -593,12 +734,13 @@ void EncodeFloatAscending(std::string *buf, double value) {
 }
 
 static const uint8_t kBytesMarker = 0x12;
+static const uint8_t kBytesDescMarker = kBytesMarker + 1;
 static const uint8_t kEscape = 0x00;
 static const uint8_t kEscapedTerm = 0x01;
 static const uint8_t kEscaped00 = 0xff;
 static const uint8_t kEscapedFF = 0x00;
 
-void EncodeBytesAscending(std::string *buf, const char *value, size_t value_size) {
+void EncodeBytesAscending(std::string *buf, const char *value, const size_t value_size) {
     buf->push_back(static_cast<char>(kBytesMarker));
     for (size_t i = 0; i < value_size; i++) {
         buf->push_back(value[i]);
@@ -608,6 +750,45 @@ void EncodeBytesAscending(std::string *buf, const char *value, size_t value_size
     }
     buf->push_back(kEscape);
     buf->push_back(kEscapedTerm);
+}
+
+static const uint8_t kDateMarker = kBytesDescMarker + 1;
+static const uint8_t kTimeMarker = kDateMarker + 1;
+static const uint8_t kDecimalMarker = kTimeMarker + 1;
+void EncodeDecimalAscending(std::string* buf, const datatype::MyDecimal* d)
+{
+
+    buf->push_back(static_cast<char>(kDecimalMarker));
+
+    int8_t intg = d->GetDigitsInt();
+    int8_t frac = d->GetDigitsFrac();
+
+    int8_t precision = intg + frac;
+    std::string bin;
+    int32_t error = 0;
+    d->ToBin( precision, frac, bin, error);
+
+    buf->push_back(precision);
+    buf->push_back(frac);
+    buf->append(bin);
+}
+
+void EncodeDateAscending(std::string* buf, const datatype::MyDateTime* dt)
+{
+    buf->push_back(static_cast<char>(kDateMarker));
+
+    int64_t dt_tmp = dt->ToPackInt64();
+    uint64_t dt_long = static_cast<uint64_t>(dt_tmp);
+    EncodeUvarintAscending(buf, dt_long);
+}
+
+void EncodeTimeAscending(std::string* buf, const datatype::MyTime* t)
+{
+
+    buf->push_back(static_cast<char>(kTimeMarker));
+
+    int64_t t_long = t->ToPackInt64();
+    EncodeVarintAscending(buf,t_long);
 }
 
 bool DecodeUvarintAscending(const std::string& buf, size_t& pos, uint64_t* out) {
@@ -682,6 +863,80 @@ bool DecodeBytesAscending(const std::string& buf, size_t& pos, std::string* out)
         pos = escapePos + 2;
     }
     return false;
+}
+
+bool DecodeDecimalAscending(const std::string& buf, size_t& pos, datatype::MyDecimal* d)
+{
+    if ( buf.size() <= pos || buf[pos] != kDecimalMarker ) {
+        return false;
+    }
+
+    int32_t error = 0;
+    int32_t bin_size = 0;
+    std::string str = buf.substr(++pos);
+
+    error = datatype::DecimalPeak( str, bin_size);
+    if ( error != datatype::E_DEC_OK) {
+        return false;
+    }
+
+    if ( str.size() < static_cast<uint32_t>(bin_size)) {
+        return false;
+    }
+
+    int8_t precision = str[0];
+    int8_t frac = str[1];
+    int8_t intg = precision - frac;
+    std::string str_bin = str.substr(2);
+    int32_t bin_size2 = 0;
+
+    d->FromBin( str_bin, precision, frac, bin_size2, error);
+
+    if (error != datatype::E_DEC_OK || bin_size != (bin_size2+2)) {
+        return false;
+    } else {
+        pos += 2;
+        pos +=  bin_size2;
+        return true;
+    }
+
+    return false;
+}
+
+bool DecodeDateAscending(const std::string& buf, size_t& pos, datatype::MyDateTime* dt)
+{
+    if ( buf.size() <= pos || buf[pos] != kDateMarker ) {
+        return false;
+    }
+
+    ++pos;
+    uint64_t dt_long = 0;
+    if (!DecodeUvarintAscending(buf, pos, &dt_long)) {
+        return false;
+    }
+
+    int64_t dt_tmp = static_cast<int64_t>(dt_long);
+
+    dt->FromPackInt64(dt_tmp);
+
+    return true;
+}
+
+bool DecodeTimeAscending(const std::string& buf, size_t& pos, datatype::MyTime* t)
+{
+    if ( buf.size() <= pos || buf[pos] != kTimeMarker ) {
+        return false;
+    }
+
+    ++pos;
+    int64_t t_long = 0;
+    if (!DecodeVarintAscending(buf, pos, &t_long)) {
+        return false;
+    }
+
+    t->FromPackInt64(t_long);
+
+    return true;
 }
 
 std::string EncodeToHexString(const std::string &str) {

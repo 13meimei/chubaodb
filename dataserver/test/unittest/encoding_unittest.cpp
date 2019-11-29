@@ -17,6 +17,8 @@
 #include <iomanip>
 #include <iostream>
 #include <limits>
+#include <random>
+#include <cmath>
 
 #include "base/util.h"
 #include "common/ds_encoding.h"
@@ -35,7 +37,7 @@ std::string toHex(const std::string& str) {
     std::string result;
     char buf[3];
     for (std::string::size_type i = 0; i < str.size(); ++i) {
-        snprintf(buf, 3, "%02x", static_cast<unsigned char>(str[i]));
+        snprintf(buf, sizeof(buf), "%02x", static_cast<unsigned char>(str[i]));
         result.append(buf, 2);
     }
     return result;
@@ -193,6 +195,200 @@ TEST(Encoding, BytesValue) {
     ASSERT_EQ(actual_col_id, 123U);
 }
 
+TEST(Encoding, DecimalValue) {
+    for (auto i = 0; i < 100000; i++ ) {
+        std::string buf;
+        datatype::MyDecimal dec_src;
+        dec_src.FromInt(i);
+        EncodeDecimalValue(&buf, i, &dec_src);
+
+        toHex(buf);
+
+        size_t offset = 0;
+
+        datatype::MyDecimal dec_dst;
+        offset = 0;
+        ASSERT_TRUE(DecodeDecimalValue(buf, offset, &dec_dst));
+        ASSERT_EQ(offset, buf.size());
+        ASSERT_TRUE(dec_src.Compare(dec_dst) == 0 );
+
+        EncodeType type;
+        offset = 0;
+        uint32_t actual_col_id = 0;
+        ASSERT_TRUE(DecodeValueTag(buf, offset, &actual_col_id, &type));
+        ASSERT_LE(offset, buf.size());
+        ASSERT_EQ(type, EncodeType::Decimal);
+        ASSERT_EQ(actual_col_id, i);
+    }
+}
+
+TEST(Encoding, DateValue) {
+        auto func_data = [](const int32_t begin, const int32_t end) -> int32_t  {
+            std::random_device r;
+            std::default_random_engine e1(r());
+            std::uniform_int_distribution<int32_t> uniform_dist(begin, end);
+            int mean = uniform_dist(e1);
+            return mean;
+        };
+
+        for (auto i = 0; i < 100000; i++) {
+            std::string buf;
+            datatype::MyDateTime dt_src;
+            dt_src.SetYear(func_data(1000, 9999));
+            dt_src.SetMonth(func_data(1,12));
+            dt_src.SetDay(func_data(1, 28));
+            dt_src.SetHour(func_data(0, 23));
+            dt_src.SetMinute(func_data(0, 59));
+            dt_src.SetSecond(func_data(0, 59));
+            dt_src.SetMicroSecond(func_data(0, 999999));
+
+            EncodeDateValue(&buf, i, &dt_src);
+
+            toHex(buf);
+
+            size_t offset = 0;
+            datatype::MyDateTime dt_dst;
+            offset = 0;
+            ASSERT_TRUE(DecodeDateValue(buf, offset, &dt_dst))
+                << "buf:" << EncodeToHexString(buf)
+                << ", offset:" << offset
+                << ", Time->src.ToInt:" << dt_src.ToPackInt64()
+                << ", i:" << i
+                << ", Time->src: " << dt_src ;
+
+            ASSERT_EQ(offset, buf.size())
+                << "buf:" << EncodeToHexString(buf)
+                << ", Time->src.ToInt:" << dt_src.ToPackInt64()
+                << ", Time->dst.ToInt:" << dt_dst.ToPackInt64()
+                << ", offset:" << offset
+                << ", buf.size():" << buf.size()
+                << ", i:" << i
+                << ", Time->src: " << dt_src
+                << ", Time->dst: " << dt_dst;
+
+            ASSERT_TRUE(dt_src == dt_dst)
+                << "buf:" << EncodeToHexString(buf)
+                << ", Time->src.ToInt:" << dt_src.ToPackInt64()
+                << ", Time->dst.ToInt:" << dt_dst.ToPackInt64()
+                << ", i:" << i
+                << ", Time->src: " << dt_src
+                << ", Time->dst: " << dt_dst;
+
+            EncodeType type;
+            offset = 0;
+            uint32_t actual_col_id = 0;
+            ASSERT_TRUE(DecodeValueTag(buf, offset, &actual_col_id, &type))
+                << "buf:" << EncodeToHexString(buf)
+                << ", offset:" << offset
+                << ", i:" << i
+                <<  ", actual_col_id:" << actual_col_id
+                << ", type:" << static_cast<int>(type)
+                << ", Time->src: " << dt_src;
+
+            ASSERT_LE(offset, buf.size())
+                << "buf:" << EncodeToHexString(buf)
+                << ", Time->src.ToInt:" << dt_src.ToPackInt64()
+                << ", offset:" << offset
+                << ", buf.size():" << buf.size()
+                << ", i:" << i
+                << ", Time->src: " << dt_src;
+            ASSERT_EQ(type, EncodeType::Date)
+                << "buf:" << EncodeToHexString(buf)
+                << ", Time->src.ToInt:" << dt_src.ToPackInt64()
+                << ", type:" << static_cast<int>(type)
+                << ", i:" << i
+                << ", Time->src: " << dt_src;
+            ASSERT_EQ(actual_col_id, i)
+                << "buf:" << EncodeToHexString(buf)
+                << ", Time->src.ToInt:" << dt_src.ToPackInt64()
+                << ", actual_col_id:" << actual_col_id
+                << ", i:" << i
+                << ", Time->src: " << dt_src;
+        }
+}
+
+TEST(Encoding, TimeValue) {
+    auto func_data = [](const int32_t begin, const int32_t end) -> int32_t  {
+        std::random_device r;
+        std::default_random_engine e1(r());
+        std::uniform_int_distribution<int32_t> uniform_dist(begin, end);
+        int mean = uniform_dist(e1);
+        return mean;
+    };
+
+    for (auto i = 0; i < 100000; i++) {
+        std::string buf;
+        datatype::MyTime dt_src;
+        dt_src.SetHour(func_data(0, 838));
+        dt_src.SetMinute(func_data(0, 59));
+        dt_src.SetSecond(func_data(0, 59));
+        dt_src.SetMicroSecond(func_data(0, 999999));
+        dt_src.SetNeg(func_data(1,10000)%2 == 0);
+
+        EncodeTimeValue(&buf, i, &dt_src);
+
+        toHex(buf);
+
+        size_t offset = 0;
+        datatype::MyTime dt_dst;
+        offset = 0;
+        ASSERT_TRUE(DecodeTimeValue(buf, offset, &dt_dst))
+            << "buf:" << EncodeToHexString(buf)
+            << ", offset:" << offset
+            << ", Time->src.ToInt:" << dt_src.ToPackInt64()
+            << ", i:" << i
+            << ", Time->src: " << dt_src ;
+        ASSERT_EQ(offset, buf.size())
+            << "buf:" << EncodeToHexString(buf)
+            << ", Time->src.ToInt:" << dt_src.ToPackInt64()
+            << ", Time->dst.ToInt:" << dt_dst.ToPackInt64()
+            << ", offset:" << offset
+            << ", buf.size():" << buf.size()
+            << ", i:" << i
+            << ", Time->src: " << dt_src
+            << ", Time->dst: " << dt_dst;
+        ASSERT_TRUE(dt_src == dt_dst)
+            << "buf:" << EncodeToHexString(buf)
+            << ", Time->src.ToInt:" << dt_src.ToPackInt64()
+            << ", Time->dst.ToInt:" << dt_dst.ToPackInt64()
+            << ", i:" << i
+            << ", Time->src: " << dt_src
+            << ", Time->dst: " << dt_dst;
+
+        EncodeType type;
+        offset = 0;
+        uint32_t actual_col_id = 0;
+        ASSERT_TRUE(DecodeValueTag(buf, offset, &actual_col_id, &type))
+            << "buf:" << EncodeToHexString(buf)
+            << ", offset:" << offset
+            << ", i:" << i
+            <<  ", actual_col_id:" << actual_col_id
+            << ", type:" << static_cast<int>(type)
+            << ", Time->src: " << dt_src;
+
+        ASSERT_LE(offset, buf.size())
+            << "buf:" << EncodeToHexString(buf)
+            << ", Time->src.ToInt:" << dt_src.ToPackInt64()
+            << ", offset:" << offset
+            << ", buf.size():" << buf.size()
+            << ", i:" << i
+            << ", Time->src: " << dt_src;
+
+        ASSERT_EQ(type, EncodeType::Time)
+            << "buf:" << EncodeToHexString(buf)
+            << ", Time->src.ToInt:" << dt_src.ToPackInt64()
+            << ", type:" << static_cast<int>(type)
+            << ", i:" << i
+            << ", Time->src: " << dt_src;
+        ASSERT_EQ(actual_col_id, i)
+            << "buf:" << EncodeToHexString(buf)
+            << ", Time->src.ToInt:" << dt_src.ToPackInt64()
+            << ", actual_col_id:" << actual_col_id
+            << ", i:" << i
+            << ", Time->src: " << dt_src;
+    }
+}
+
 TEST(Encoding, AscInt) {
     std::string buf;
     EncodeVarintAscending(&buf, 0);
@@ -253,7 +449,7 @@ TEST(Encoding, DescUvarint) {
     testFunc(std::numeric_limits<uint64_t>::max(), "800000000000000000"); // 8
 }
 
-TEST(Enconding, BytesAscending) {
+TEST(Encoding, BytesAscending) {
     for (int i = 0; i < 1000; ++i) {
         auto raw = randomString(1, 100);
         std::string buf;
@@ -265,5 +461,172 @@ TEST(Enconding, BytesAscending) {
     }
 }
 
+TEST(Encoding, DecimalAscending) {
+    for (auto i = 0; i < 100000; i++ ) {
+        std::string buf;
+        datatype::MyDecimal dec_src;
+        dec_src.FromInt(i);
+        EncodeDecimalAscending(&buf, &dec_src);
+
+        toHex(buf);
+
+        size_t offset = 0;
+
+        datatype::MyDecimal dec_dst;
+        offset = 0;
+        ASSERT_TRUE(DecodeDecimalAscending(buf, offset, &dec_dst));
+        ASSERT_EQ(offset, buf.size());
+        ASSERT_TRUE(dec_src.Compare(dec_dst) == 0 );
+    }
+}
+
+TEST(Encoding, DateAscending) {
+    auto func_data = [](const int32_t begin, const int32_t end) -> int32_t  {
+        std::random_device r;
+        std::default_random_engine e1(r());
+        std::uniform_int_distribution<int32_t> uniform_dist(begin, end);
+        int mean = uniform_dist(e1);
+        return mean;
+    };
+
+    for (auto i = 0; i < 100000; i++) {
+        std::string buf;
+        datatype::MyDateTime dt_src;
+        dt_src.SetYear(func_data(1000, 9999));
+        dt_src.SetMonth(func_data(1,12));
+        dt_src.SetDay(func_data(1, 28));
+        dt_src.SetHour(func_data(0, 23));
+        dt_src.SetMinute(func_data(0, 59));
+        dt_src.SetSecond(func_data(0, 59));
+        dt_src.SetMicroSecond(func_data(0, 999999));
+        dt_src.SetNeg(func_data(1,10000)%2 == 0);
+
+        EncodeDateAscending(&buf, &dt_src);
+
+        toHex(buf);
+
+        size_t offset = 0;
+        datatype::MyDateTime dt_dst;
+        offset = 0;
+
+        ASSERT_TRUE(DecodeDateAscending(buf, offset, &dt_dst))
+            << "buf:" << EncodeToHexString(buf)
+            << ", offset:" << offset
+            << ", Time->src.ToInt:" << dt_src.ToPackInt64()
+            << ", i:" << i
+            << ", Time->src: " << dt_src ;
+
+        ASSERT_EQ(offset, buf.size())
+            << "buf:" << EncodeToHexString(buf)
+            << ", Time->src.ToInt:" << dt_src.ToPackInt64()
+            << ", Time->dst.ToInt:" << dt_dst.ToPackInt64()
+            << ", offset:" << offset
+            << ", buf.size():" << buf.size()
+            << ", i:" << i
+            << ", Time->src: " << dt_src
+            << ", Time->dst: " << dt_dst;
+
+        ASSERT_TRUE(dt_src == dt_dst)
+            << "buf:" << EncodeToHexString(buf)
+            << ", Time->src.ToInt:" << dt_src.ToPackInt64()
+            << ", Time->dst.ToInt:" << dt_dst.ToPackInt64()
+            << ", i:" << i
+            << ", Time->src: " << dt_src
+            << ", Time->dst: " << dt_dst;
+    }
+}
+
+TEST(Encoding, TimeAscending) {
+    auto func_data = [](const int32_t begin, const int32_t end) -> int32_t  {
+        std::random_device r;
+        std::default_random_engine e1(r());
+        std::uniform_int_distribution<int32_t> uniform_dist(begin, end);
+        int mean = uniform_dist(e1);
+        return mean;
+    };
+
+    for (auto i = 0; i < 100000; i++) {
+        std::string buf;
+        datatype::MyTime dt_src;
+        dt_src.SetHour(func_data(0, 838));
+        dt_src.SetMinute(func_data(0, 59));
+        dt_src.SetSecond(func_data(0, 59));
+        dt_src.SetMicroSecond(func_data(0, 999999));
+        dt_src.SetNeg(func_data(1,10000)%2 == 0);
+
+        EncodeTimeAscending(&buf, &dt_src);
+
+        toHex(buf);
+
+        size_t offset = 0;
+        datatype::MyTime dt_dst;
+        offset = 0;
+
+        ASSERT_TRUE(DecodeTimeAscending(buf, offset, &dt_dst))
+            << "buf:" << EncodeToHexString(buf)
+            << ", offset:" << offset
+            << ", Time->src.ToInt:" << dt_src.ToPackInt64()
+            << ", i:" << i
+            << ", Time->src: " << dt_src ;
+
+        ASSERT_EQ(offset, buf.size())
+            << "buf:" << EncodeToHexString(buf)
+            << ", Time->src.ToInt:" << dt_src.ToPackInt64()
+            << ", Time->dst.ToInt:" << dt_dst.ToPackInt64()
+            << ", offset:" << offset
+            << ", buf.size():" << buf.size()
+            << ", i:" << i
+            << ", Time->src: " << dt_src
+            << ", Time->dst: " << dt_dst;
+
+        ASSERT_TRUE(dt_src == dt_dst)
+            << "buf:" << EncodeToHexString(buf)
+            << ", Time->src.ToInt:" << dt_src.ToPackInt64()
+            << ", Time->dst.ToInt:" << dt_dst.ToPackInt64()
+            << ", i:" << i
+            << ", Time->src: " << dt_src
+            << ", Time->dst: " << dt_dst;
+    }
+}
+
+//TEST(Encoding, DecimalValue2222) {
+//        std::string buf;
+//        datatype::MyDecimal dec_src;
+//        //"12.34"
+//        //Decimal(4,2) = 12.34
+//
+//        int32_t err_t = dec_src.FromString("12.34");
+//        std::cerr << err_t << std::endl;
+//        if ( err_t == 0 ) {
+//            std::cerr << "GetDigitsInt:" << static_cast<int32_t>(dec_src.GetDigitsInt()) << std::endl
+//                    << "GetDigitsFrac:" << static_cast<int32_t>(dec_src.GetDigitsFrac()) << std::endl
+//                    << "GetResultFrac:" << static_cast<int32_t>(dec_src.GetResultFrac()) << std::endl
+//                    << "GetNegative:" << dec_src.GetNegative() << std::endl
+//                    << "ToString:" << dec_src.ToString() << std::endl
+//                    << "String:" << dec_src.String() << std::endl ;
+//
+//        }
+//        EncodeDecimalValue(&buf, 10000, &dec_src);
+//
+//        std::cerr << "hex buf:" << toHex(buf) << std::endl;
+//
+//        size_t offset = 0;
+//
+//        datatype::MyDecimal dec_dst;
+//        offset = 0;
+//        ASSERT_TRUE(DecodeDecimalValue(buf, offset, &dec_dst));
+//        ASSERT_EQ(offset, buf.size());
+//        ASSERT_TRUE(dec_src.Compare(dec_dst) == 0 );
+//
+//        EncodeType type;
+//        offset = 0;
+//        uint32_t actual_col_id = 0;
+//        ASSERT_TRUE(DecodeValueTag(buf, offset, &actual_col_id, &type));
+//        ASSERT_LE(offset, buf.size());
+//        ASSERT_EQ(type, EncodeType::Decimal);
+//        ASSERT_EQ(actual_col_id, 10000);
+//}
+
 // end namespace
 }
+

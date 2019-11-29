@@ -15,7 +15,7 @@
 #include "range.h"
 
 #include "storage/meta_store.h"
-#include "dspb/raft_internal.pb.h"
+#include "base/util.h"
 
 #include "range_logger.h"
 

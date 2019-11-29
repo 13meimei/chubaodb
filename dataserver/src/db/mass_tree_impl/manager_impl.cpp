@@ -82,10 +82,10 @@ Status MasstreeDBManager::CreatSplit(uint64_t range_id, const std::string& start
     return createDB(range_id, start_key, end_key, true, db);
 }
 
-Status MasstreeDBManager::GetUsage(const SystemInfo& sys_info, DBUsage& usage) {
+Status MasstreeDBManager::GetUsage(DBUsage& usage) {
     // TODO: collect disk usage
     uint64_t total = 0, available = 0;
-    auto ret = sys_info.GetMemoryUsage(&total, &available);
+    auto ret = GetMemoryUsage(&total, &available);
     if (!ret) {
         return Status(Status::kIOError, "collect memory usage", strErrno(errno));
     }
@@ -127,6 +127,22 @@ std::string MasstreeDBManager::GetDBPath(uint64_t range_id) const {
 
 void MasstreeDBManager::RCUFree(bool wait) {
     RunRCUFree(wait);
+}
+
+Status MasstreeDBManager::DumpTree(const std::string& dest_dir) {
+    auto subdir = JoinFilePath({dest_dir, "masstree-dump." + std::to_string(time(NULL))});
+    if (!MakeDirAll(subdir, 0755)) {
+        return Status(Status::kIOError, "create dump dir", strErrno(errno));
+    }
+
+    auto default_file = JoinFilePath({subdir, "default"});
+    auto s = default_tree_->Dump(default_file);
+    if (!s.ok()) {
+        return s;
+    }
+
+    auto txn_file = JoinFilePath({subdir, "txn"});
+    return txn_tree_->Dump(txn_file);
 }
 
 } // namespace db

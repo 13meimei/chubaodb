@@ -55,8 +55,6 @@ static const ConfigGeterMap cfg_getters = {
         ADD_CFG_GETTER(raft, allow_log_corrupt),
         ADD_CFG_GETTER(raft, consensus_threads),
         ADD_CFG_GETTER(raft, consensus_queue),
-        ADD_CFG_GETTER(raft, apply_threads),
-        ADD_CFG_GETTER(raft, apply_queue),
         ADD_CFG_GETTER(raft, transport_send_threads),
         ADD_CFG_GETTER(raft, transport_recv_threads),
         ADD_CFG_GETTER(raft, tick_interval_ms),

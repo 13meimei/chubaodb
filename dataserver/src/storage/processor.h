@@ -24,6 +24,15 @@ namespace storage {
 
 class RowResult;
 
+struct ProcessorStat {
+    uint64_t count_ = 0;
+    uint64_t time_ns_ = 0;
+    ProcessorStat(uint64_t count, uint64_t time) {
+        count_ = count;
+        time_ns_ = time;
+    }
+};
+
 class Processor {
 
 public:
@@ -35,12 +44,19 @@ public:
 
     Processor &operator=(const Processor &) = delete;
 
-    virtual Status next(RowResult &row);
+    virtual Status next(RowResult &row) {return Status::OK();};
 
-    virtual const std::string get_last_key();
+    virtual const std::string get_last_key() {return "";};
 
-    virtual const std::vector<uint64_t> get_col_ids();
+    virtual const std::vector<uint64_t> get_col_ids() {return {};};
 
+    virtual void get_stats(std::vector<ProcessorStat> &stats) {}
+
+protected:
+    uint64_t rows_count_ = 0;
+    uint64_t time_processed_ns_ = 0;
+
+    bool gather_trace_ = false;
 private:
     ;
 };

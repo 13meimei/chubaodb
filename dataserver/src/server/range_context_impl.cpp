@@ -20,31 +20,9 @@ namespace chubaodb {
 namespace ds {
 namespace server {
 
-class DefaultSplitPolicy : public range::SplitPolicy {
-public:
-    bool IsEnabled() const override { return true; }
-
-    std::string Description() const override {
-        return std::string("Default");
-    }
-
-    uint64_t CheckSize() const override {
-        return ds_config.range_config.check_size;
-    }
-
-    uint64_t SplitSize() const override {
-        return ds_config.range_config.split_size;
-    }
-
-    uint64_t MaxSize() const override {
-        return ds_config.range_config.max_size;
-    }
-};
-
 RangeContextImpl::RangeContextImpl(ContextServer *s, TimerQueue* timer_queue) :
     server_(s),
-    timer_queue_(timer_queue),
-    split_policy_(new DefaultSplitPolicy) {
+    timer_queue_(timer_queue) {
 }
 
 uint64_t RangeContextImpl::GetDBUsagePercent() const {

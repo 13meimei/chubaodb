@@ -124,6 +124,10 @@ public:
         return Status::OK();
     }
 
+    Status ApplyReadIndex(const std::string& cmd, uint16_t verify_result) override {
+        return Status(Status::kNotSupported);
+    }
+
 private:
     class Snapshot : public raft::Snapshot {
     public:

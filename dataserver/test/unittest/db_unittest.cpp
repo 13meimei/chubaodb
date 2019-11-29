@@ -17,9 +17,8 @@
 #include "base/fs_util.h"
 #include "../helper/helper_util.h"
 
-#include "db/db.h"
-#include "db/mass_tree_impl/manager_impl.h"
 #include "db/mass_tree_impl/db_impl.h"
+#include "db/db.h"
 
 int main(int argc, char* argv[]) {
     testing::InitGoogleTest(&argc, argv);
@@ -32,8 +31,8 @@ namespace chubaodb {
 namespace ds {
 namespace storage {
 
-static void CheckDB(MasstreeDBImpl* db, const std::map<std::string, std::string>& def_kvs,
-             const std::map<std::string, std::string>& txn_kvs) {
+static void CheckDB(DB* db, const std::string& start_key, const std::string& end_key,
+        const std::map<std::string, std::string>& def_kvs, const std::map<std::string, std::string>& txn_kvs) {
     // test get
     for (const auto& kv : def_kvs) {
         std::string value;
@@ -49,7 +48,7 @@ static void CheckDB(MasstreeDBImpl* db, const std::map<std::string, std::string>
     }
 
     // test iterator
-    auto iter = db->NewIterator(db->GetStartKey(), db->GetEndKey());
+    auto iter = db->NewIterator(start_key, end_key);
     for (const auto& kv : def_kvs) {
         ASSERT_TRUE(iter->Valid());
         ASSERT_TRUE(iter->status().ok()) << iter->status().ToString();
@@ -63,7 +62,7 @@ static void CheckDB(MasstreeDBImpl* db, const std::map<std::string, std::string>
     ASSERT_TRUE(iter->status().ok()) << iter->status().ToString();
 
     std::unique_ptr<Iterator> default_iter, txn_iter;
-    auto s = db->NewIterators(db->GetStartKey(), db->GetEndKey(), default_iter, txn_iter);
+    auto s = db->NewIterators(start_key, end_key, default_iter, txn_iter);
     ASSERT_TRUE(s.ok()) << s.ToString();
     for (const auto& kv : def_kvs) {
         ASSERT_TRUE(default_iter->Valid());
@@ -91,20 +90,7 @@ static void CheckDB(MasstreeDBImpl* db, const std::map<std::string, std::string>
 
 class DBTest: public ::testing::Test {
 protected:
-    static const size_t kCheckpointThresold = 4096;
-    static const size_t kCheckpointMaxHistory = 2;
-
     DBTest() = default;
-
-    void makeTestOptions(MasstreeOptions& ops) {
-        ops.data_path = data_path_;
-        ops.rcu_interval_ms = 1000;
-        ops.checkpoint_opt.disabled = false;
-        ops.checkpoint_opt.checksum = true;
-        ops.checkpoint_opt.work_threads = 1;
-        ops.checkpoint_opt.threshold_bytes = kCheckpointThresold;
-        ops.checkpoint_opt.max_history = kCheckpointMaxHistory;
-    }
 
     void SetUp() override {
         char path[] = "/tmp/chubaodb_ds_db_test_XXXXXX";
@@ -112,40 +98,32 @@ protected:
         ASSERT_TRUE(tmp != NULL);
         data_path_ = tmp;
 
-        MasstreeOptions ops;
-        makeTestOptions(ops);
-        manager_ = new MasstreeDBManager(ops);
-        auto s = manager_->Init();
+        auto s = chubaodb::test::helper::NewDBManager(data_path_, manager_);
         ASSERT_TRUE(s.ok()) << s.ToString();
 
         OpenDB();
     }
 
     void TearDown() override {
-        delete db_;
-        delete manager_;
+        db_.reset();
+        manager_.reset();
         if (!data_path_.empty()) {
             chubaodb::RemoveDirAll(data_path_.c_str());
         }
     }
 
     void OpenDB() {
-        std::unique_ptr<DB> db;
-        auto s = manager_->CreateDB(range_id_, start_key_, end_key_, db);
+        auto s = manager_->CreateDB(range_id_, start_key_, end_key_, db_);
         ASSERT_TRUE(s.ok()) << s.ToString();
-        db_ = dynamic_cast<MasstreeDBImpl*>(db.release());
     }
 
     void ReOpenDB() {
         auto s = db_->Close();
         ASSERT_TRUE(s.ok()) << s.ToString();
-        delete db_;
+        db_.reset();
+        manager_.reset();
 
-        delete manager_;
-        MasstreeOptions ops;
-        makeTestOptions(ops);
-        manager_ = new MasstreeDBManager(ops);
-        s = manager_->Init();
+        s = chubaodb::test::helper::NewDBManager(data_path_, manager_);
         ASSERT_TRUE(s.ok()) << s.ToString();
 
         OpenDB();
@@ -153,17 +131,33 @@ protected:
 
     void Check(const std::map<std::string, std::string>& def_kvs,
                  const std::map<std::string, std::string>& txn_kvs) {
-        CheckDB(db_, def_kvs, txn_kvs);
+        CheckDB(db_.get(), start_key_, end_key_, def_kvs, txn_kvs);
+    }
+
+    void DisableCheckpoint() {
+        auto p = dynamic_cast<MasstreeDBImpl*>(db_.get());
+        if (p) {
+            p->TEST_Disable_Checkpoint();
+        }
+    }
+
+    Status RunCheckpoint() {
+        auto p = dynamic_cast<MasstreeDBImpl*>(db_.get());
+        if (p) {
+            return p->TEST_Run_Checkpoint();
+        } else {
+            return Status::OK();
+        }
     }
 
 protected:
     const uint64_t range_id_ = 1;
-    const std::string start_key_ = "\x00";
+    const std::string start_key_ = std::string("\x00", 1);
     const std::string end_key_ = "\xff ";
 
     std::string data_path_;
-    MasstreeDBManager* manager_ = nullptr;
-    MasstreeDBImpl* db_ = nullptr;
+    std::unique_ptr<DBManager> manager_ = nullptr;
+    std::unique_ptr<DB> db_ = nullptr;
     uint64_t index_ = 0;
 };
 
@@ -194,7 +188,7 @@ TEST_F(DBTest, InitalState) {
 }
 
 TEST_F(DBTest, PutGetDelete) {
-    db_->TEST_Disable_Checkpoint();
+    DisableCheckpoint();
 
     // with cf
     for (int i = 0; i < 10; ++i) {
@@ -204,6 +198,7 @@ TEST_F(DBTest, PutGetDelete) {
             std::string value = chubaodb::randomString(64);
             auto s = db_->Put(cf, key, value, ++index_);
             ASSERT_TRUE(s.ok()) << s.ToString();
+            ASSERT_EQ(db_->PersistApplied(), index_);
 
             std::string actual_value;
             s = db_->Get(cf, key, actual_value);
@@ -212,6 +207,7 @@ TEST_F(DBTest, PutGetDelete) {
 
             s = db_->Delete(cf, key, ++index_);
             ASSERT_TRUE(s.ok()) << s.ToString();
+            ASSERT_EQ(db_->PersistApplied(), index_);
             s = db_->Get(cf, key, actual_value);
             ASSERT_EQ(s.code(), Status::kNotFound);
         }
@@ -223,6 +219,7 @@ TEST_F(DBTest, PutGetDelete) {
         std::string value = chubaodb::randomString(64);
         auto s = db_->DB::Put(key, value, ++index_);
         ASSERT_TRUE(s.ok()) << s.ToString();
+        ASSERT_EQ(db_->PersistApplied(), index_);
 
         std::string actual_value;
         s = db_->DB::Get(key, actual_value);
@@ -231,13 +228,53 @@ TEST_F(DBTest, PutGetDelete) {
 
         s = db_->DB::Delete(key, ++index_);
         ASSERT_TRUE(s.ok()) << s.ToString();
+        ASSERT_EQ(db_->PersistApplied(), index_);
         s = db_->DB::Get(key, actual_value);
         ASSERT_EQ(s.code(), Status::kNotFound);
     }
+
+    ReOpenDB();
+    ASSERT_EQ(db_->PersistApplied(), index_);
+    Check({}, {});
+}
+
+TEST_F(DBTest, ReopenDestroy) {
+    DisableCheckpoint();
+
+    std::map<std::string, std::string> def_kvs;
+    std::map<std::string, std::string> txn_kvs;
+    std::map<std::string, std::string> *kvs = nullptr;
+    for (int j = 0; j < 5000; ++j) {
+        auto cf = randomInt() % 2 == 0 ? CFType::kData : CFType::kTxn;
+        kvs = cf == CFType::kData ? &def_kvs : &txn_kvs;
+        std::string key = chubaodb::randomString(32, 1024);
+        std::string value = chubaodb::randomString(64);
+        auto s = db_->Put(cf, key, value, ++index_);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+        ASSERT_EQ(index_, db_->PersistApplied());
+        kvs->emplace(key, value);
+        if (j % 1000 == 500) {
+            auto s = RunCheckpoint();
+            ASSERT_TRUE(s.ok()) << s.ToString();
+            ASSERT_EQ(db_->PersistApplied(), index_);
+        }
+    }
+    Check(def_kvs, txn_kvs);
+
+    ReOpenDB();
+    ASSERT_EQ(db_->PersistApplied(), index_);
+    Check(def_kvs, txn_kvs);
+
+    auto s = db_->Destroy();
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+    ReOpenDB();
+    ASSERT_EQ(db_->PersistApplied(), 0U);
+    Check({}, {});
 }
 
 TEST_F(DBTest, WriteBatch) {
-    db_->TEST_Disable_Checkpoint();
+    DisableCheckpoint();
 
     std::map<std::string, std::string> def_kvs;
     std::map<std::string, std::string> txn_kvs;
@@ -271,7 +308,7 @@ TEST_F(DBTest, WriteBatch) {
 }
 
 TEST_F(DBTest, Checkpoint) {
-    db_->TEST_Disable_Checkpoint();
+    DisableCheckpoint();
 
     std::map<std::string, std::string> def_kvs;
     std::map<std::string, std::string> txn_kvs;
@@ -281,20 +318,18 @@ TEST_F(DBTest, Checkpoint) {
         kvs = cf == CFType::kData ? &def_kvs : &txn_kvs;
         std::string key = chubaodb::randomString(32, 1024);
         std::string value = chubaodb::randomString(64);
-//        std::string key = std::string("key-") + std::to_string(j);
-//        std::string value = std::string("value-") + std::to_string(j);
         auto s = db_->Put(cf, key, value, ++index_);
         ASSERT_TRUE(s.ok()) << s.ToString();
         kvs->emplace(key, value);
         if (j % 1000 == 500) {
-            auto s = db_->TEST_Run_Checkpoint();
+            auto s = RunCheckpoint();
             ASSERT_TRUE(s.ok()) << s.ToString();
             ASSERT_EQ(db_->PersistApplied(), index_);
         }
     }
     Check(def_kvs, txn_kvs);
 
-    auto s = db_->TEST_Run_Checkpoint();
+    auto s = RunCheckpoint();
     ASSERT_TRUE(s.ok()) << s.ToString();
     ASSERT_EQ(db_->PersistApplied(), index_);
 
@@ -378,7 +413,7 @@ TEST_F(DBTest, Split) {
     auto s = db_->SplitDB(2, split_key, split_index, split_db);
     ASSERT_TRUE(s.ok()) << s.ToString();
     ASSERT_EQ(split_db->PersistApplied(), split_index);
-    CheckDB(dynamic_cast<MasstreeDBImpl*>(split_db.get()), def_kvs, txn_kvs);
+    CheckDB(split_db.get(), split_key, end_key_, def_kvs, txn_kvs);
 
     // close and reopen split db
     s = split_db->Close();
@@ -387,7 +422,7 @@ TEST_F(DBTest, Split) {
     s = manager_->CreateDB(2, split_key, end_key_, split_db);
     ASSERT_TRUE(s.ok()) << s.ToString();
     ASSERT_EQ(split_db->PersistApplied(), split_index);
-    CheckDB(dynamic_cast<MasstreeDBImpl*>(split_db.get()), def_kvs, txn_kvs);
+    CheckDB(split_db.get(), split_key, end_key_, def_kvs, txn_kvs);
 }
 
 }

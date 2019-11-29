@@ -1,4 +1,5 @@
-// Copyright 2019 The Chubao Authors.
+// Copyright 2015 The etcd Authors
+// Portions Copyright 2019 The Chubao Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -56,7 +57,7 @@ void RaftFsm::stepCandidate(MessagePtr& msg) {
             FLOG_DEBUG("node_id: {} raft[{}] no leader at term {}; dropping proposal.", node_id_, id_, term_);
             return;
 
-        case pb::LOCAL_MSG_READ:
+        case pb::LOCAL_MSG_READ_INDEX:
             FLOG_DEBUG("node_id: {} raft[{}] no leader at term {}; dropping read request.", node_id_, id_, term_);
             return;
 

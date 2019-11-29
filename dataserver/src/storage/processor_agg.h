@@ -22,7 +22,7 @@ _Pragma("once");
 #include "row_fetcher.h"
 #include "aggregate_calc.h"
 
-#include <map>
+#include <unordered_map>
 #include <string>
 #include <vector>
 
@@ -33,12 +33,14 @@ namespace storage {
 class Aggregation : public Processor {
 
 public:
-    Aggregation(const dspb::Aggregation &agg, std::unique_ptr<Processor> processor);
+    Aggregation(const dspb::Aggregation &agg, std::unique_ptr<Processor> processor, bool gather_trace);
     ~Aggregation();
 
     Aggregation() = delete;
     Aggregation(const Aggregation &) = delete;
     Aggregation &operator=(const Aggregation &) = delete;
+
+    static Status check(const dspb::Aggregation &agg);
 
     virtual Status next(RowResult &row) override;
 
@@ -49,12 +51,18 @@ public:
     virtual const std::vector<uint64_t> get_col_ids() override {
         return processor_->get_col_ids();
     }
+private:
+    void FetchRow(const dspb::Aggregation &agg);
+
+    virtual void get_stats(std::vector<ProcessorStat> &stats) override;
 
 private:
-    std::vector<std::unique_ptr<AggreCalculator>> aggre_cals_;
-    std::vector<std::unique_ptr<AggreCalculator>> aggre_group_by_;  //todo
 
     std::unique_ptr<Processor> processor_;
+    typedef std::unordered_map<RowResult, std::vector<std::unique_ptr<AggreCalculator>>> res_map;
+    res_map unordered_map_res;
+    res_map::const_iterator unordered_map_it_;
+    std::vector<RowColumnInfo> agg_group_by_columns_;
 };
 
 } /* namespace storage */

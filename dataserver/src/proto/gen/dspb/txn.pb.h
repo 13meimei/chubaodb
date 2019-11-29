@@ -4278,6 +4278,12 @@ class ScanRequest : public ::google::protobuf::Message /* @@protoc_insertion_poi
   ::google::protobuf::int64 max_count() const;
   void set_max_count(::google::protobuf::int64 value);
 
+  // bool only_one = 4;
+  void clear_only_one();
+  static const int kOnlyOneFieldNumber = 4;
+  bool only_one() const;
+  void set_only_one(bool value);
+
   // @@protoc_insertion_point(class_scope:dspb.ScanRequest)
  private:
 
@@ -4285,6 +4291,7 @@ class ScanRequest : public ::google::protobuf::Message /* @@protoc_insertion_poi
   ::google::protobuf::internal::ArenaStringPtr start_key_;
   ::google::protobuf::internal::ArenaStringPtr end_key_;
   ::google::protobuf::int64 max_count_;
+  bool only_one_;
   mutable int _cached_size_;
   friend struct protobuf_dspb_2ftxn_2eproto::TableStruct;
 };
@@ -8309,6 +8316,20 @@ inline void ScanRequest::set_max_count(::google::protobuf::int64 value) {
   
   max_count_ = value;
   // @@protoc_insertion_point(field_set:dspb.ScanRequest.max_count)
+}
+
+// bool only_one = 4;
+inline void ScanRequest::clear_only_one() {
+  only_one_ = false;
+}
+inline bool ScanRequest::only_one() const {
+  // @@protoc_insertion_point(field_get:dspb.ScanRequest.only_one)
+  return only_one_;
+}
+inline void ScanRequest::set_only_one(bool value) {
+  
+  only_one_ = value;
+  // @@protoc_insertion_point(field_set:dspb.ScanRequest.only_one)
 }
 
 // -------------------------------------------------------------------

@@ -64,7 +64,6 @@ bool LoggerInit(const LoggerConfig& config) {
     std::string log_file = JoinFilePath({config.path, config.name});
     log_file += ".log";
 
-    std::cout << config.max_files;
     auto logger = spdlog::rotating_logger_mt(config.name, log_file,
             config.max_size, config.max_files);
 

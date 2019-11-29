@@ -16,6 +16,100 @@
 
 namespace chubaodb {
 
+static const char *kDefaultCFSection = "rocksdbcf.default";
+static const char *kTxnCFSection = "rocksdbcf.txn";
+static const char *kMetaCFSection = "rocksdbcf.meta";
+
+RocksDBCFConfig RocksDBCFConfig::NewDefaultCFConfig() {
+    RocksDBCFConfig cfg;
+    return cfg;
+}
+
+RocksDBCFConfig RocksDBCFConfig::NewTxnCFConfig() {
+    RocksDBCFConfig cfg;
+    cfg.cache_index_and_filter_blocks = false;
+    cfg.pin_l0_filter_and_index_blocks_in_cache = false;
+    cfg.block_cache_size = 0;
+    return cfg;
+}
+
+RocksDBCFConfig RocksDBCFConfig::NewMetaCFConfig() {
+    RocksDBCFConfig cfg;
+    // disable cache
+    cfg.cache_index_and_filter_blocks = false;
+    cfg.pin_l0_filter_and_index_blocks_in_cache = false;
+    cfg.block_cache_size = 0;
+
+    // small write buffer
+    cfg.max_write_buffer_number = 2;
+    cfg.write_buffer_size = 4UL * 1048576; // default: 128MB
+    cfg.target_file_size_base = 4UL * 1048576;
+
+    cfg.level0_file_num_compaction_trigger = 4;
+    return cfg;
+}
+
+bool RocksDBCFConfig::Load(const INIReader& reader, const char* section) {
+    bool ret = true;
+
+    std::tie(block_cache_size, ret) =
+            loadNeBytesValue(reader, section, "block_cache_size", block_cache_size);
+    if (!ret) return false;
+
+    std::tie(block_size, ret)  = loadNeBytesValue(reader, section, "block_size", block_size);
+    if (!ret) return false;
+
+    cache_index_and_filter_blocks =
+            reader.GetBoolean(section, "cache_index_and_filter_blocks", cache_index_and_filter_blocks);
+
+    pin_l0_filter_and_index_blocks_in_cache =
+            reader.GetBoolean(section, "pin_l0_filter_and_index_blocks_in_cache", pin_l0_filter_and_index_blocks_in_cache);
+
+    std::tie(write_buffer_size, ret) =
+            loadNeBytesValue(reader, section, "write_buffer_size", write_buffer_size);
+    if (!ret) return false;
+
+    std::tie(max_write_buffer_number, ret)  =
+            loadIntegerAtLeast(reader, section, "max_write_buffer_number", max_write_buffer_number, 2);
+    if (!ret) return false;
+
+    std::tie(min_write_buffer_number_to_merge, ret)  =
+            loadIntegerAtLeast(reader, section, "min_write_buffer_number_to_merge", min_write_buffer_number_to_merge, 1);
+    if (!ret) return false;
+
+    std::tie(max_bytes_for_level_base, ret) =
+            loadNeBytesValue(reader, section, "max_bytes_for_level_base", max_bytes_for_level_base);
+    if (!ret) return false;
+
+    std::tie(max_bytes_for_level_multiplier, ret) =
+            loadIntegerAtLeast(reader, section, "max_bytes_for_level_multiplier", max_bytes_for_level_multiplier, 3);
+    if (!ret) return false;
+
+    std::tie(target_file_size_base, ret) =
+            loadNeBytesValue(reader, section, "target_file_size_base", target_file_size_base);
+    if (!ret) return false;
+    std::tie(target_file_size_multiplier, ret) =
+            loadIntegerAtLeast(reader, section, "target_file_size_multiplier", target_file_size_multiplier, 1);
+    if (!ret) return false;
+
+    std::tie(level0_file_num_compaction_trigger, ret) =
+            loadIntegerAtLeast(reader, section, "level0_file_num_compaction_trigger", level0_file_num_compaction_trigger, 1);
+    if (!ret) return false;
+
+    std::tie(level0_slowdown_writes_trigger, ret) =
+            loadIntegerAtLeast(reader, section, "level0_slowdown_writes_trigger", level0_slowdown_writes_trigger, 1);
+    if (!ret) return false;
+
+    std::tie(level0_stop_writes_trigger, ret) =
+            loadIntegerAtLeast(reader, section, "level0_stop_writes_trigger", level0_stop_writes_trigger, 1);
+    if (!ret) return false;
+
+    disable_auto_compactions = reader.GetBoolean(section, "disable_auto_compactions", false);
+
+    return ret;
+}
+
+
 bool RocksDBConfig::Load(const INIReader& reader, const std::string& base_data_path) {
     const char *section = "rocksdb";
 
@@ -24,205 +118,62 @@ bool RocksDBConfig::Load(const INIReader& reader, const std::string& base_data_p
         return false;
     }
 
-    storage_type = reader.GetInteger(section, "storage_type", 0);
+    enable_txn_cache = reader.GetBoolean(section, "enable_txn_cache", true);
+    if (!enable_txn_cache) {
+        txn_cf_config.block_cache_size = 1024UL * 1048576;
+        txn_cf_config.pin_l0_filter_and_index_blocks_in_cache = true;
+        txn_cf_config.cache_index_and_filter_blocks = true;
+    }
 
     bool ret = false;
-    std::tie(block_cache_size, ret) =
-            loadNeBytesValue(reader, section, "block_cache_size", 1024 * 1024 * 1024);
-    if (!ret) return false;
-
     std::tie(row_cache_size, ret) =
-            loadNeBytesValue(reader, section, "row_cache_size", 0);
-    if (!ret) return false;
-
-    std::tie(block_size, ret)  =
-            loadNeBytesValue(reader, section, "block_size", 16 * 1024);
+            loadNeBytesValue(reader, section, "row_cache_size", row_cache_size);
     if (!ret) return false;
 
     std::tie(max_open_files, ret) =
-            loadIntegerAtLeast(reader, section, "max_open_files", 1024, 100);
+            loadIntegerAtLeast(reader, section, "max_open_files", max_open_files, 100);
     if (!ret) return false;
 
     std::tie(bytes_per_sync, ret) =
-            loadNeBytesValue(reader, section, "bytes_per_sync", 0);
+            loadNeBytesValue(reader, section, "bytes_per_sync", bytes_per_sync);
     if (!ret) return false;
 
-    std::tie(write_buffer_size, ret) =
-            loadNeBytesValue(reader, section, "write_buffer_size", 128UL * 1024 * 1024);
+
+    std::tie(max_background_jobs, ret) =
+            loadIntegerAtLeast(reader, section, "max_background_jobs", max_background_jobs, 1);
     if (!ret) return false;
 
-    std::tie(max_write_buffer_number, ret)  =
-            loadIntegerAtLeast(reader, section, "max_write_buffer_number", 8, 2);
-    if (!ret) return false;
-
-    std::tie(min_write_buffer_number_to_merge, ret)  =
-            loadIntegerAtLeast(reader, section, "min_write_buffer_number_to_merge", 1, 1);
-    if (!ret) return false;
-
-    std::tie(max_bytes_for_level_base, ret) =
-            loadNeBytesValue(reader, section, "max_bytes_for_level_base", 512UL * 1024 * 1024);
-    if (!ret) return false;
-
-    std::tie(max_bytes_for_level_multiplier, ret) =
-            loadIntegerAtLeast(reader, section, "max_bytes_for_level_multiplier", 10, 1);
-    if (!ret) return false;
-
-    std::tie(target_file_size_base, ret) =
-            loadNeBytesValue(reader, section, "target_file_size_base", 128UL * 1024 * 1024);
-    if (!ret) return false;
-    std::tie(target_file_size_multiplier, ret) =
-            loadIntegerAtLeast(reader, section, "target_file_size_multiplier", 1, 1);
-    if (!ret) return false;
-
-    std::tie(max_background_flushes, ret) =
-            loadIntegerAtLeast(reader, section, "max_background_flushes", 2, 1);
-    if (!ret) return false;
-
-    std::tie(max_background_compactions, ret) =
-            loadIntegerAtLeast(reader, section, "max_background_compactions", 4, 1);
+    std::tie(max_subcompactions, ret) =
+            loadIntegerAtLeast(reader, section, "max_subcompactions", 1, 1);
     if (!ret) return false;
 
     std::tie(background_rate_limit, ret) =
             loadNeBytesValue(reader, section, "background_rate_limit", 0);
     if (!ret) return false;
 
-    disable_auto_compactions = reader.GetBoolean(section, "disable_auto_compactions", false);
-
     read_checksum = reader.GetBoolean(section, "read_checksum", true);
-
-    std::tie(level0_file_num_compaction_trigger, ret) =
-            loadIntegerAtLeast(reader, section, "level0_file_num_compaction_trigger", 8, 1);
-    if (!ret) return false;
-
-    std::tie(level0_slowdown_writes_trigger, ret) =
-            loadIntegerAtLeast(reader, section, "level0_slowdown_writes_trigger", 40, 1);
-    if (!ret) return false;
-
-    std::tie(level0_stop_writes_trigger, ret) =
-            loadIntegerAtLeast(reader, section, "level0_stop_writes_trigger", 46, 1);
-    if (!ret) return false;
-
     disable_wal = reader.GetBoolean(section, "disable_wal", false);
-
-    cache_index_and_filter_blocks =
-            reader.GetBoolean(section, "cache_index_and_filter_blocks", false);
-
-    compression = reader.GetInteger(section, "compression", 0);
-
-
-    std::tie(min_blob_size, ret) = loadIntegerAtLeast(reader, section, "min_blob_size", 0, 0);
-    if (!ret) return false;
-
-    std::tie(blob_file_size, ret) = loadNeBytesValue(reader, section, "blob_file_size", 256 * 1024 * 1024UL);
-    if (!ret) return false;
-
-    enable_garbage_collection = reader.GetBoolean(section, "enable_garbage_collection", true);
-
-    std::tie(blob_gc_percent, ret) = loadIntegerAtLeast(reader, section, "blob_gc_percent", 75, 10);
-    if (!ret) return false;
-    if (blob_gc_percent > 100) {
-        FLOG_CRIT("[Config] invalid rocksdb.blob_gc_percent config: {}", blob_gc_percent);
-        return false;
-    }
-    std::tie(blob_compression, ret) = loadIntegerAtLeast(reader, section, "blob_compression", 0, 0);
-    if (!ret) return false;
-
-    std::tie(blob_cache_size, ret) = loadNeBytesValue(reader, section, "blob_cache_size", 0);
-    if (!ret) return false;
-
-    std::tie(blob_ttl_range, ret) = loadIntegerAtLeast(reader, section, "blob_ttl_range", 3600, 60);
-    if (!ret) return false;
+    unordered_write = reader.GetBoolean(section, "unordered_write", true);
 
     std::tie(ttl, ret) = loadIntegerAtLeast(reader, section, "ttl", 0, 0);
     if (!ret) return false;
+    if (ttl > 0) {
+        FLOG_WARN("rocksdb ttl enabled. ttl={}", ttl);
+    }
 
     enable_stats = reader.GetBoolean(section, "enable_stats", true);
     enable_debug_log = reader.GetBoolean(section, "enable_debug_log", false);
 
-    return true;
+    if (!default_cf_config.Load(reader, kDefaultCFSection)) {
+        return false;
+    }
+    if (!txn_cf_config.Load(reader, kTxnCFSection)) {
+        return false;
+    }
+    return meta_cf_config.Load(reader, kMetaCFSection);
 }
 
 void RocksDBConfig::Print() const {
-    FLOG_INFO("rockdb_configs: "
-              "\n\tpath: {}"
-              "\n\tblock_cache_size: {}"
-              "\n\trow_cache_size: {}"
-              "\n\tblock_size: {}"
-              "\n\tmax_open_files: {}"
-              "\n\tbytes_per_sync: {}"
-              "\n\twrite_buffer_size: {}"
-              "\n\tmax_write_buffer_number: {}"
-              "\n\tmin_write_buffer_number_to_merge: {}"
-              "\n\tmax_bytes_for_level_base: {}"
-              "\n\tmax_bytes_for_level_multiplier: {}"
-              "\n\ttarget_file_size_base: {}"
-              "\n\ttarget_file_size_multiplier: {}"
-              "\n\tmax_background_flushes: {}"
-              "\n\tmax_background_compactions: {}"
-              "\n\tbackground_rate_limit: {}"
-              "\n\tdisable_auto_compactions: {}"
-              "\n\tread_checksum: {}"
-              "\n\tlevel0_file_num_compaction_trigger: {}"
-              "\n\tlevel0_slowdown_writes_trigger: {}"
-              "\n\tlevel0_stop_writes_trigger: {}"
-              "\n\tdisable_wal: {}"
-              "\n\tcache_index_and_filter_blocks: {}"
-              "\n\tcompression: {}"
-              "\n\tstorage_type: {}"
-              "\n\tmin_blob_size: {}"
-              "\n\tblob_file_size: {}"
-              "\n\tenable_garbage_collection: {}"
-              "\n\tblob_gc_percent: {}"
-              "\n\tblob_compression: {}"
-              "\n\tblob_cache_size: {}"
-              "\n\tblob_ttl_range: {}"
-              "\n\tttl: {}"
-              "\n\tenable_stats: {}"
-              "\n\tenable_debug_log: {}"
-              ,
-              path,
-              block_cache_size,
-              row_cache_size,
-              block_size,
-              max_open_files,
-              bytes_per_sync,
-              write_buffer_size,
-              max_write_buffer_number,
-              min_write_buffer_number_to_merge,
-              max_bytes_for_level_base,
-              max_bytes_for_level_multiplier,
-              target_file_size_base,
-              target_file_size_multiplier,
-              max_background_flushes,
-              max_background_compactions,
-              background_rate_limit,
-              disable_auto_compactions,
-              read_checksum,
-              level0_file_num_compaction_trigger,
-              level0_slowdown_writes_trigger,
-              level0_stop_writes_trigger,
-              disable_wal,
-              cache_index_and_filter_blocks,
-              compression,
-              storage_type,
-              min_blob_size,
-              blob_file_size,
-              enable_garbage_collection,
-              blob_gc_percent,
-              blob_compression,
-              blob_cache_size,
-              blob_ttl_range,
-              ttl,
-              enable_stats,
-              enable_debug_log
-    );
-
-    if (ttl > 0) {
-        FLOG_WARN("rocksdb ttl enabled. ttl={}", ttl);
-    }
-    if (disable_auto_compactions) {
-        FLOG_WARN("rocksdb auto compactions is disabled.");
-    }
 }
 
 } // namespace chubaodb

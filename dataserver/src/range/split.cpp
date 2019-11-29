@@ -28,21 +28,14 @@ namespace range {
 void Range::checkSplit(uint64_t size) {
     statis_size_ += size;
 
-    // split disabled
-    if (!context_->GetSplitPolicy()->IsEnabled()) {
-        return;
-    }
-
-    auto check_size = context_->GetSplitPolicy()->CheckSize();
-    if (!statis_flag_ && statis_size_ > check_size) {
+    if (!statis_flag_ && statis_size_ > opt_.check_size) {
         statis_flag_ = true;
         context_->ScheduleCheckSize(id_);
     }
 }
 
 void Range::ResetStatisSize() {
-    auto policy = context_->GetSplitPolicy();
-    ResetStatisSize(policy->SplitSize(), policy->MaxSize());
+    ResetStatisSize(opt_.split_size, opt_.max_size);
 }
 
 void Range::ResetStatisSize(uint64_t split_size, uint64_t max_size) {
@@ -88,7 +81,7 @@ void Range::ResetStatisSize(uint64_t split_size, uint64_t max_size) {
     }
 
     // when real size >= max size, we need split with split size
-    if (real_size_ >= max_size) {
+    if (opt_.enable_split && real_size_ >= max_size) {
         return askSplit(std::move(split_key), std::move(meta));
     }
 }
@@ -98,9 +91,7 @@ void Range::askSplit(std::string &&key, basepb::Range&& meta, bool force) {
     assert(key >= meta.start_key());
     assert(key < meta.end_key());
 
-    RLOG_INFO("AskSplit, version: {}, key: {}, policy: {}",
-            meta.range_epoch().version(), EncodeToHex(key),
-            context_->GetSplitPolicy()->Description());
+    RLOG_INFO("AskSplit, version: {}, key: {}", meta.range_epoch().version(), EncodeToHex(key));
 
     mspb::AskSplitRequest ask;
     ask.set_allocated_range(new basepb::Range(std::move(meta)));
@@ -156,6 +147,8 @@ void Range::startSplit(mspb::AskSplitResponse &resp) {
 
     // set verify epoch
     cmd.set_allocated_verify_epoch(new basepb::RangeEpoch(*epoch));
+    // force rotate
+    cmd.set_cmd_flags(raft::EntryFlags::kForceRotate);
 
     // set leader
     split_req->set_leader(node_id_);
@@ -199,15 +192,21 @@ void Range::startSplit(mspb::AskSplitResponse &resp) {
 
 Status Range::Split(const dspb::SplitCommand& req, uint64_t raft_index,
         std::shared_ptr<Range>& split_range) {
-    split_range = std::make_shared<Range>(context_, req.new_range());
+    auto split_range_id = req.new_range().id();
+    auto split_raft_path = raftLogPath(meta_.GetTableID(), split_range_id);
+    auto s = raft_->InheritLog(split_raft_path, raft_index, true);
+    if (!s.ok()) {
+        RLOG_ERROR("Split(new range: {}) clone raft logs failed: {}", req.new_range().id(), s.ToString());
+        return s;
+    }
+    split_range = std::make_shared<Range>(opt_, context_, req.new_range());
     std::unique_ptr<db::DB> split_db;
     auto ret = store_->Split(req.new_range().id(), req.split_key(), raft_index, split_db);
     if (!ret.ok()) {
-        RLOG_ERROR("Split(new range: {}) split new db failed: {}",
-                req.new_range().id(), ret.ToString());
+        RLOG_ERROR("Split(new range: {}) split new db failed: {}", req.new_range().id(), ret.ToString());
         return ret;
     }
-    return split_range->Initialize(std::move(split_db), req.leader(), raft_index + 1);
+    return split_range->Initialize(std::move(split_db), req.leader());
 }
 
 Status Range::applySplit(const dspb::Command &cmd, uint64_t index) {
@@ -251,7 +250,7 @@ Status Range::applySplit(const dspb::Command &cmd, uint64_t index) {
         // new range report heartbeat
         split_range_id_ = req.new_range().id();
 
-        uint64_t rsize = context_->GetSplitPolicy()->SplitSize() / 2;
+        uint64_t rsize = opt_.split_size / 2;
         auto rng = context_->FindRange(split_range_id_);
         if (rng != nullptr) {
             rng->scheduleHeartbeat(false);

@@ -14,18 +14,19 @@
 // permissions and limitations under the License.
 
 #include "processor_data_sample.h"
+#include <chrono>
 
 namespace chubaodb {
 namespace ds {
 namespace storage {
 
-DataSample::DataSample(const dspb::DataSample & data_sample, const dspb::KeyRange & range_default, Store & s )
+DataSample::DataSample(const dspb::DataSample & data_sample, const dspb::KeyRange & range_default, Store & s, bool gather_trace )
     : str_last_key_(""),
     over_(false),
     range_default_(range_default),
     primary_keys_( s.GetPrimaryKeys()),
-    row_fetcher_(new RowFetcher( s, data_sample, range_default.start_key(), range_default.end_key()))
-{
+    row_fetcher_(new RowFetcher( s, data_sample, range_default.start_key(), range_default.end_key())) {
+    gather_trace_ = gather_trace;
     for (const auto & col : data_sample.columns()) {
         col_ids.push_back(col.id());
     }
@@ -53,6 +54,10 @@ Status DataSample::next( RowResult & row)
             );
     }
 
+    std::chrono::system_clock::time_point time_begin;
+    if (gather_trace_) {
+        time_begin = std::chrono::system_clock::now();
+    }
     s = row_fetcher_->Next( row, over_);
 
     if (s.ok()) {
@@ -64,6 +69,10 @@ Status DataSample::next( RowResult & row)
         s = Status( Status::kNoMoreData, " last key: ", EncodeToHexString(get_last_key()) );
     }
 
+    if (gather_trace_) {
+        ++rows_count_;
+        time_processed_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now() - time_begin).count();
+    }
     return s;
 
 }
@@ -73,7 +82,9 @@ const std::vector<uint64_t> DataSample::get_col_ids()
     return col_ids;
 }
 
-
+void DataSample::get_stats(std::vector<ProcessorStat> &stats) {
+    stats.emplace_back(rows_count_, time_processed_ns_);
+}
 
 } /* namespace storage */
 } /* namespace ds */

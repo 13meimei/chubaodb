@@ -39,27 +39,32 @@ public:
     bool IsLeader() const { return leader_ == node_id_; }
     void SyncRequest();
     std::shared_future<bool> AsyncRequest();
+    void Destroy();
 
 public:
     Status Apply(const std::string& cmd, uint64_t index) override;
 
-    void OnLeaderChange(uint64_t leader, uint64_t term) { leader_ = leader; }
-    void OnReplicateError(const std::string& cmd, const Status& status) {}
-    Status ApplyMemberChange(const ConfChange&, uint64_t) {
+    void OnLeaderChange(uint64_t leader, uint64_t term) override { leader_ = leader; }
+    void OnReplicateError(const std::string& cmd, const Status& status) override {}
+    Status ApplyMemberChange(const ConfChange&, uint64_t) override {
         return Status::OK();
     }
-    std::shared_ptr<raft::Snapshot> GetSnapshot() { return nullptr; }
-    Status ApplySnapshotStart(const std::string&, uint64_t index) {
+    std::shared_ptr<raft::Snapshot> GetSnapshot() override { return nullptr; }
+    Status ApplySnapshotStart(const std::string&, uint64_t index) override {
         return Status(Status::kNotSupported);
     }
-    Status ApplySnapshotData(const std::vector<std::string>&) {
+    Status ApplySnapshotData(const std::vector<std::string>&) override {
         return Status(Status::kNotSupported);
     }
-    Status ApplySnapshotFinish(uint64_t) {
+    Status ApplySnapshotFinish(uint64_t) override {
         return Status(Status::kNotSupported);
     }
 
-    uint64_t PersistApplied() { return 0; }
+    uint64_t PersistApplied() override { return 0; }
+
+    Status ApplyReadIndex(const std::string& cmd, uint16_t verify_result) override {
+        return Status(Status::kNotSupported);
+    }
 
 private:
     class RequestQueue {

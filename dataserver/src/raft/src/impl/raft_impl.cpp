@@ -1,4 +1,5 @@
-// Copyright 2019 The Chubao Authors.
+// Copyright 2015 The etcd Authors
+// Portions Copyright 2019 The Chubao Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,7 +15,7 @@
 
 #include "raft_impl.h"
 
-#include <sstream>
+#include <future>
 
 #include "common/logger.h"
 #include "raft_exception.h"
@@ -60,35 +61,123 @@ Status RaftImpl::TryToLeader() {
     return Status::OK();
 }
 
+Work RaftImpl::wrapWork(const std::function<void()>& f) {
+    auto self = shared_from_this();
+    return [self, f]() {
+        if (self->IsStopped()) {
+            return;
+        }
+        try {
+            f();
+        } catch (RaftException& e) {
+            FLOG_ERROR("raft[{}] throw an exception: {}. removed.", self->ops_.id, e.what());
+            self->ctx_.server_->RemoveRaft(self->ops_.id);
+        }
+    };
+}
+
 void RaftImpl::post(const std::function<void()>& f) {
-    Work w;
-    w.owner = ops_.id;
-    w.stopped = &stopped_;
-    w.f0 = f;
-    ctx_.consensus_thread->post(w);
+    ctx_.consensus_thread->post(wrapWork(f));
 }
 
 bool RaftImpl::tryPost(const std::function<void()>& f) {
-    Work w;
-    w.owner = ops_.id;
-    w.stopped = &stopped_;
-    w.f0 = f;
-    return ctx_.consensus_thread->tryPost(w);
+    return ctx_.consensus_thread->tryPost(wrapWork(f));
 }
 
-Status RaftImpl::Submit(std::string& cmd, uint64_t unique_seq, uint16_t rw_flag) {
+Status RaftImpl::Propose(std::string& entry_data, uint32_t entry_flags) {
+    // check service availability
     if (stopped_) {
         return Status(Status::kShutdownInProgress, "raft is removed",
-                std::to_string(ops_.id));
+                      std::to_string(ops_.id));
     }
-
-    if (ctx_.consensus_thread->submit(ops_.id, &stopped_, unique_seq, rw_flag,
-            std::bind(&RaftImpl::Step, shared_from_this(), std::placeholders::_1), cmd))
-    {
-        return Status::OK();
-    } else {
+    if (ctx_.consensus_thread->isFull()) {
         return Status(Status::kBusy);
     }
+
+    // create entry
+    pb::Entry entry;
+    entry.mutable_data()->swap(entry_data);
+    entry.set_type(pb::ENTRY_NORMAL);
+    if (entry_flags != 0) {
+        entry.set_flags(entry_flags);
+    }
+
+    // push to queue, merge entry for the purpose of batch if possible
+    bool can_merge = false;
+    {
+        std::lock_guard<std::mutex> lock(propose_lock_);
+        can_merge = !propose_que_.empty() && propose_que_.back()->entries_size() < sops_.entry_batch_size;
+        if (!can_merge) {
+            MessagePtr msg(new pb::Message);
+            msg->set_type(pb::LOCAL_MSG_PROP);
+            propose_que_.push_back(std::move(msg));
+        }
+        propose_que_.back()->add_entries()->Swap(&entry);
+    }
+
+    // if can not merge to a exist work, schedule to run a new work to handle the newcome entry
+    if (!can_merge) {
+        post([this] {
+            MessagePtr msg;
+            {
+                std::lock_guard<std::mutex> lock(propose_lock_);
+                if (!propose_que_.empty()) {
+                    msg = propose_que_.front();
+                    propose_que_.pop_front();
+                }
+            }
+            if (msg) {
+                Step(msg);
+            }
+        });
+    }
+    return Status::OK();
+}
+
+Status RaftImpl::ReadIndex(std::string& ctx) {
+    // check service availability
+    if (stopped_) {
+        return Status(Status::kShutdownInProgress, "raft is removed",
+                      std::to_string(ops_.id));
+    }
+    if (ctx_.consensus_thread->isFull()) {
+        return Status(Status::kBusy);
+    }
+
+    // create entry
+    pb::Entry entry;
+    entry.mutable_data()->swap(ctx);
+
+    // push to queue, merge entry for the purpose of batch if possible
+    bool can_merge = false;
+    {
+        std::lock_guard<std::mutex> lock(read_index_lock_);
+        can_merge = !read_index_que_.empty() && read_index_que_.back()->entries_size() < sops_.entry_batch_size;
+        if (!can_merge) {
+            MessagePtr msg(new pb::Message);
+            msg->set_type(pb::LOCAL_MSG_READ_INDEX);
+            read_index_que_.push_back(std::move(msg));
+        }
+        read_index_que_.back()->add_entries()->Swap(&entry);
+    }
+
+    // if can not merge to a exist work, schedule to run a new work to handle the newcome requests
+    if (!can_merge) {
+        post([this] {
+            MessagePtr msg;
+            {
+                std::lock_guard<std::mutex> lock(read_index_lock_);
+                if (!read_index_que_.empty()) {
+                    msg = read_index_que_.front();
+                    read_index_que_.pop_front();
+                }
+            }
+            if (msg) {
+                Step(msg);
+            }
+        });
+    }
+    return Status::OK();
 }
 
 Status RaftImpl::ChangeMemeber(const ConfChange& conf) {
@@ -105,19 +194,18 @@ Status RaftImpl::ChangeMemeber(const ConfChange& conf) {
     msg->set_type(pb::LOCAL_MSG_PROP);
     auto entry = msg->add_entries();
     entry->set_type(pb::ENTRY_CONF_CHANGE);
-    entry->mutable_data()->swap(str);
+    entry->set_data(std::move(str));
 
-    if (tryPost(std::bind(&RaftImpl::Step, shared_from_this(), msg))) {
+    if (tryPost(std::bind(&RaftImpl::Step, this, msg))) {
         return Status::OK();
     } else {
         return Status(Status::kBusy);
     }
-
-    return Status::OK();
 }
 
 void RaftImpl::Truncate(uint64_t index) {
-    post(std::bind(&RaftImpl::truncate, shared_from_this(), index));
+    FLOG_DEBUG("node_id: {} raft[{}] truncate {}", sops_.node_id, ops_.id, index);
+    post([=] { fsm_->TruncateLog(index); });
 }
 
 void RaftImpl::RecvMsg(MessagePtr msg) {
@@ -133,7 +221,7 @@ void RaftImpl::RecvMsg(MessagePtr msg) {
 #endif
     if (stopped_) return;
 
-    if (!tryPost(std::bind(&RaftImpl::Step, shared_from_this(), msg))) {
+    if (!tryPost(std::bind(&RaftImpl::Step, this, msg))) {
         FLOG_WARN("node_id: {} raft[{}] discard a msg. type: {} from {}, term: {}",
                   sops_.node_id, ops_.id, pb::MessageType_Name(msg->type()), msg->from(), msg->term());
     }
@@ -160,11 +248,11 @@ void RaftImpl::Step(MessagePtr msg) {
 
     if (ready_.apply_snap) applySnapshot();
 
+    persist();
+
     apply();
 
     publish();
-
-    persist();
 }
 
 void RaftImpl::sendMessages() {
@@ -232,16 +320,7 @@ void RaftImpl::apply() {
             }
             conf_changed_ = true;
         }
-        if (sops_.apply_in_place) {
-            smApply(e);
-        } else {
-            assert(ctx_.apply_thread != nullptr);
-            Work w;
-            w.owner = ops_.id;
-            w.stopped = &stopped_;
-            w.f0 = std::bind(&RaftImpl::smApply, shared_from_this(), e);
-            ctx_.apply_thread->waitPost(w);
-        }
+        smApply(e);
     }
     if (!ents.empty()) {
         fsm_->appliedTo(ents[ents.size()-1]->index());
@@ -293,6 +372,8 @@ void RaftImpl::ReportSnapSendResult(const SnapContext& ctx, const SnapResult& re
                    result.blocks_count, result.bytes_count);
     }
 
+    if (IsStopped()) return;
+
     MessagePtr resp(new pb::Message);
     resp->set_type(pb::LOCAL_SNAPSHOT_STATUS);
     resp->set_to(ctx.from);
@@ -301,7 +382,7 @@ void RaftImpl::ReportSnapSendResult(const SnapContext& ctx, const SnapResult& re
     resp->set_reject(!result.status.ok());
     resp->mutable_snapshot()->set_uuid(ctx.uuid);
 
-    post(std::bind(&RaftImpl::Step, shared_from_this(), resp));
+    post(std::bind(&RaftImpl::Step, this, resp));
 }
 
 void RaftImpl::ReportSnapApplyResult(const SnapContext& ctx, const SnapResult& result) {
@@ -314,6 +395,8 @@ void RaftImpl::ReportSnapApplyResult(const SnapContext& ctx, const SnapResult& r
                    result.blocks_count, result.bytes_count);
     }
 
+    if (IsStopped()) return;
+
     MessagePtr resp(new pb::Message);
     resp->set_type(pb::LOCAL_SNAPSHOT_STATUS);
     resp->set_to(sops_.node_id);
@@ -322,7 +405,7 @@ void RaftImpl::ReportSnapApplyResult(const SnapContext& ctx, const SnapResult& r
     resp->set_reject(!result.status.ok());
     resp->mutable_snapshot()->set_uuid(ctx.uuid);
 
-    post(std::bind(&RaftImpl::Step, shared_from_this(), resp));
+    post(std::bind(&RaftImpl::Step, this, resp));
 }
 
 void RaftImpl::smApply(const EntryPtr& e) {
@@ -333,17 +416,63 @@ void RaftImpl::smApply(const EntryPtr& e) {
     }
 }
 
-void RaftImpl::Stop() { stopped_ = true; }
-
-void RaftImpl::truncate(uint64_t index) {
-    FLOG_DEBUG("node_id: {} raft[{}] truncate {}", sops_.node_id, ops_.id, index);
-    fsm_->TruncateLog(index);
+void RaftImpl::Stop() {
+    stopped_ = true;
 }
 
 Status RaftImpl::Destroy(bool backup) {
     FLOG_WARN("node_id: {} raft[{}] destroy log storage", sops_.node_id, ops_.id);
 
     return fsm_->DestroyLog(backup);
+}
+
+std::unique_ptr<LogReader> RaftImpl::ReadLog(uint64_t start_index) {
+    if (IsStopped()) {
+        return nullptr;
+    }
+
+    if (ctx_.consensus_thread->inCurrentThread()) {
+        return fsm_->storage_->NewReader(start_index);
+    }
+
+    auto p = new std::promise<std::unique_ptr<LogReader>>();
+    auto f = p->get_future();
+    auto self = shared_from_this();
+    ctx_.consensus_thread->post([=]() {
+        p->set_value(self->IsStopped() ? nullptr : self->fsm_->storage_->NewReader(start_index));
+        delete p;
+    });
+    auto ws = f.wait_for(std::chrono::seconds(5));
+    if (ws == std::future_status::ready) {
+        return f.get();
+    } else {
+        return nullptr;
+    }
+}
+
+Status RaftImpl::InheritLog(const std::string& dir, uint64_t last_index, bool only_index) {
+    if (IsStopped()) {
+        return Status(Status::kShutdownInProgress);
+    }
+
+    if (ctx_.consensus_thread->inCurrentThread()) {
+        return fsm_->storage_->InheritLog(dir, last_index, only_index);
+    }
+
+    auto p = new std::promise<Status>();
+    auto f = p->get_future();
+    auto self = shared_from_this();
+    ctx_.consensus_thread->post([=]() {
+        p->set_value(self->IsStopped() ? Status(Status::kShutdownInProgress) :
+                     self->fsm_->storage_->InheritLog(dir, last_index, only_index));
+        delete p;
+    });
+    auto ws = f.wait_for(std::chrono::seconds(5));
+    if (ws == std::future_status::ready) {
+        return f.get();
+    } else {
+        return Status(Status::kTimedOut);
+    }
 }
 
 }  // namespace impl

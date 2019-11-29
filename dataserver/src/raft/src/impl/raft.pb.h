@@ -174,7 +174,7 @@ enum MessageType {
   PRE_VOTE_REQUEST = 13,
   PRE_VOTE_RESPONSE = 14,
   LOCAL_SNAPSHOT_STATUS = 15,
-  LOCAL_MSG_READ = 16,
+  LOCAL_MSG_READ_INDEX = 16,
   READ_INDEX_REQUEST = 17,
   READ_INDEX_RESPONSE = 18,
   MessageType_INT_MIN_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32min,
@@ -543,6 +543,12 @@ class Entry : public ::google::protobuf::Message /* @@protoc_insertion_point(cla
   ::chubaodb::raft::impl::pb::EntryType type() const;
   void set_type(::chubaodb::raft::impl::pb::EntryType value);
 
+  // uint32 flags = 5;
+  void clear_flags();
+  static const int kFlagsFieldNumber = 5;
+  ::google::protobuf::uint32 flags() const;
+  void set_flags(::google::protobuf::uint32 value);
+
   // @@protoc_insertion_point(class_scope:chubaodb.raft.impl.pb.Entry)
  private:
 
@@ -551,6 +557,7 @@ class Entry : public ::google::protobuf::Message /* @@protoc_insertion_point(cla
   ::google::protobuf::uint64 index_;
   ::google::protobuf::uint64 term_;
   int type_;
+  ::google::protobuf::uint32 flags_;
   mutable int _cached_size_;
   friend struct protobuf_raft_2eproto::TableStruct;
 };
@@ -1825,6 +1832,20 @@ inline void Entry::set_allocated_data(::std::string* data) {
   }
   data_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), data);
   // @@protoc_insertion_point(field_set_allocated:chubaodb.raft.impl.pb.Entry.data)
+}
+
+// uint32 flags = 5;
+inline void Entry::clear_flags() {
+  flags_ = 0u;
+}
+inline ::google::protobuf::uint32 Entry::flags() const {
+  // @@protoc_insertion_point(field_get:chubaodb.raft.impl.pb.Entry.flags)
+  return flags_;
+}
+inline void Entry::set_flags(::google::protobuf::uint32 value) {
+  
+  flags_ = value;
+  // @@protoc_insertion_point(field_set:chubaodb.raft.impl.pb.Entry.flags)
 }
 
 // -------------------------------------------------------------------

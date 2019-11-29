@@ -17,7 +17,6 @@ _Pragma("once");
 #include <mutex>
 
 #include "metric.h"
-#include "range/split_policy.h"
 #include "dspb/api.pb.h"
 #include "field_value.h"
 #include "db/db.h"
@@ -49,6 +48,8 @@ public:
 
     uint64_t GetTableID() const {  return table_id_; }
     uint64_t GetRangeID() const {  return range_id_; }
+
+    std::string GetStartKey() const;
 
     void SetEndKey(std::string end_key);
     std::string GetEndKey() const;

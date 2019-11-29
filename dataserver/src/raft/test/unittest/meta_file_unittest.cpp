@@ -62,13 +62,15 @@ protected:
 TEST_F(MetaTest, Empty) {
     pb::HardState hs;
     pb::TruncateMeta tm;
-    auto s = meta_file_->Load(&hs, &tm);
+    uint64_t index = 0;
+    auto s = meta_file_->Load(&hs, &tm, &index);
     ASSERT_TRUE(s.ok()) << s.ToString();
-    ASSERT_EQ(hs.term(), 0);
-    ASSERT_EQ(hs.vote(), 0);
-    ASSERT_EQ(hs.commit(), 0);
-    ASSERT_EQ(tm.index(), 0);
-    ASSERT_EQ(tm.term(), 0);
+    ASSERT_EQ(hs.term(), 0U);
+    ASSERT_EQ(hs.vote(), 0U);
+    ASSERT_EQ(hs.commit(), 0U);
+    ASSERT_EQ(tm.index(), 0U);
+    ASSERT_EQ(tm.term(), 0U);
+    ASSERT_EQ(index, 0U);
 }
 
 TEST_F(MetaTest, SaveLoad) {
@@ -81,21 +83,27 @@ TEST_F(MetaTest, SaveLoad) {
     tm.set_index(randomInt());
     tm.set_term(randomInt());
 
+    uint64_t inherit_index = 0;
+
     // save
     auto s = meta_file_->SaveHardState(hs);
     ASSERT_TRUE(s.ok()) << s.ToString();
     s = meta_file_->SaveTruncMeta(tm);
     ASSERT_TRUE(s.ok()) << s.ToString();
+    s = meta_file_->SaveInheritIndex(inherit_index);
+    ASSERT_TRUE(s.ok()) << s.ToString();
 
     // load
     pb::HardState load_hs;
     pb::TruncateMeta load_tm;
-    s = meta_file_->Load(&load_hs, &load_tm);
+    uint64_t load_inherit = 0;
+    s = meta_file_->Load(&load_hs, &load_tm, &load_inherit);
     ASSERT_TRUE(s.ok()) << s.ToString();
     s = Equal(load_hs, hs);
     ASSERT_TRUE(s.ok()) << s.ToString();
     s = Equal(load_tm, tm);
     ASSERT_TRUE(s.ok()) << s.ToString();
+    ASSERT_EQ(load_inherit, inherit_index);
 }
 
 TEST_F(MetaTest, SaveLoad2) {
@@ -112,12 +120,14 @@ TEST_F(MetaTest, SaveLoad2) {
     // load
     pb::HardState load_hs;
     pb::TruncateMeta load_tm;
-    s = meta_file_->Load(&load_hs, &load_tm);
+    uint64_t inherit_index = 0;
+    s = meta_file_->Load(&load_hs, &load_tm, &inherit_index);
     ASSERT_TRUE(s.ok()) << s.ToString();
     s = Equal(load_hs, hs);
     ASSERT_TRUE(s.ok()) << s.ToString();
     s = Equal(load_tm, tm);
     ASSERT_TRUE(s.ok()) << s.ToString();
+    ASSERT_EQ(inherit_index, 0U);
 }
 
 }  // namespace

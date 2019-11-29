@@ -69,10 +69,12 @@ asio::io_context& IOContextPool::GetIOContext() {
 void IOContextPool::runLoop(const std::shared_ptr<asio::io_context>& ctx, int i) {
     FLOG_INFO("[Net] {} context pool loop-{} start.", pool_name_, i);
 
-    try {
-        ctx->run();
-    } catch (std::exception& e) {
-        FLOG_ERROR("[Net] {} context pool loop-{} run error: {}.", pool_name_, i, e.what());
+    while (!stopped_) {
+        try {
+            ctx->run();
+        } catch (std::exception& e) {
+            FLOG_ERROR("[Net] {} context pool loop-{} run error: {}.", pool_name_, i, e.what());
+        }
     }
 
     FLOG_INFO("[Net] {} context pool loop-{} exit.", pool_name_, i);

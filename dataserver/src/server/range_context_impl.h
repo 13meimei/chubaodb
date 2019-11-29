@@ -29,16 +29,12 @@ public:
 
     uint64_t GetNodeID() const override { return server_->node_id; }
 
-    range::SplitPolicy* GetSplitPolicy() override { return split_policy_.get(); }
-
     db::DBManager* DBManager() override { return server_->db_manager; }
     master::MasterClient* MasterClient() override  { return server_->master_client; }
     raft::RaftServer* RaftServer() override { return server_->raft_server; }
     storage::MetaStore* MetaStore() override { return server_->meta_store; }
     range::RangeStats* Statistics() override { return server_->run_status; }
     TimerQueue* GetTimerQueue() override { return timer_queue_; }
-
-    int HeartbeatIntervalMS() override { return ds_config.cluster_config.range_interval_secs * 1000; }
 
     uint64_t GetDBUsagePercent() const override;
 
@@ -53,7 +49,6 @@ public:
 private:
     ContextServer* server_ = nullptr;
     TimerQueue* timer_queue_ = nullptr;
-    std::unique_ptr<range::SplitPolicy> split_policy_;
 };
 
 }  // namespace server

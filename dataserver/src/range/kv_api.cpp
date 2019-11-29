@@ -13,6 +13,8 @@
 // permissions and limitations under the License.
 
 #include "range.h"
+
+#include "base/util.h"
 #include "range_logger.h"
 
 namespace chubaodb {

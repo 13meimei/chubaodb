@@ -32,19 +32,20 @@ namespace storage {
 class DataSample : public Processor {
 
 public:
-    DataSample( const dspb::DataSample & table_read, const dspb::KeyRange & range_default, Store & s );
+    DataSample( const dspb::DataSample & table_read, const dspb::KeyRange & range_default, Store & s , bool gather_trace);
     ~DataSample();
 
     DataSample() = delete;
     DataSample(const DataSample & ) = delete;
     DataSample& operator = (const DataSample & ) = delete;
 
-    virtual Status next( RowResult & row);
+    virtual Status next( RowResult & row) override;
 
-    virtual const std::string get_last_key();
+    virtual const std::string get_last_key() override;
 
-    virtual const std::vector<uint64_t> get_col_ids();
+    virtual const std::vector<uint64_t> get_col_ids() override;
 
+    virtual void get_stats(std::vector<ProcessorStat> &stats) override;
 private:
     std::string str_last_key_;
     bool over_;

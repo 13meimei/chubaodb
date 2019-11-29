@@ -51,7 +51,7 @@ public:
 
     Status CreateRaft(const RaftOptions&, std::shared_ptr<Raft>* raft) override;
     Status RemoveRaft(uint64_t id) override;
-    Status DestroyRaft(uint64_t id, bool backup = false) override;
+    Status DestroyRaft(uint64_t id, bool backup) override;
     std::shared_ptr<Raft> FindRaft(uint64_t id) const override;
 
     void GetStatus(ServerStatus* status) const override;
@@ -89,7 +89,6 @@ private:
     std::unique_ptr<SnapshotManager> snapshot_manager_;
 
     std::vector<WorkThread*> consensus_threads_;
-    std::vector<WorkThread*> apply_threads_;
 
     MessagePtr tick_msg_;
     // TODO: more tick threads or put ticks into consensus_threads

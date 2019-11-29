@@ -15,14 +15,15 @@
 #include "server.h"
 
 #include <iostream>
-#include <common/server_config.h>
 
 #include "common/server_config.h"
 
 #include "admin/admin_server.h"
 #include "master/client_impl.h"
 #include "common/masstree_env.h"
+
 #include "db/mass_tree_impl/manager_impl.h"
+#include "db/rocksdb_impl/manager_impl.h"
 
 #include "node_address.h"
 #include "range_server.h"
@@ -45,7 +46,7 @@ DataServer::DataServer() {
     StartRCUThread(ds_config.masstree_config.rcu_interval_ms);
 
     context_ = new ContextServer;
-    context_->run_status = new RunStatus(ds_config.docker);
+    context_->run_status = new RunStatus();
 
     context_->worker = new Worker();
 
@@ -78,8 +79,6 @@ bool DataServer::startRaftServer() {
     ops.node_id = context_->node_id;
     ops.consensus_threads_num = static_cast<uint8_t>(raft_config.consensus_threads);
     ops.consensus_queue_capacity = raft_config.consensus_queue;
-    ops.apply_threads_num = static_cast<uint8_t>(raft_config.apply_threads);
-    ops.apply_queue_capacity = raft_config.apply_queue;
     ops.read_option = raft_config.read_option;
     ops.tick_interval = std::chrono::milliseconds(raft_config.tick_interval_ms);
     ops.max_size_per_msg = raft_config.max_msg_size;
@@ -89,17 +88,18 @@ bool DataServer::startRaftServer() {
     ops.transport_options.send_io_threads = raft_config.transport_send_threads;
     ops.transport_options.recv_io_threads = raft_config.transport_recv_threads;
     ops.transport_options.connection_pool_size = raft_config.connection_pool_size;
-    ops.transport_options.resolver = std::make_shared<NodeAddress>(context_->master_client);
+    // setup resolver
+    auto resolver = std::make_shared<NodeAddress>(context_->master_client);
+    if (ds_config.b_test) {
+        for (const auto& p : ds_config.test_config.nodes) {
+            resolver->AddNodeAddress(p.first, p.second);
+        }
+    }
+    ops.transport_options.resolver = resolver;
 
     ops.snapshot_options.ack_timeout_seconds = raft_config.snapshot_wait_ack_timeout;
     ops.snapshot_options.max_send_concurrency = raft_config.snapshot_send_concurrency;
     ops.snapshot_options.max_apply_concurrency = raft_config.snapshot_apply_concurrency;
-
-    if (ds_config.b_test) {
-        for (auto it = ds_config.test_config.nodes.begin(); it != ds_config.test_config.nodes.end(); it++) {
-            ops.transport_options.resolver->AddNodeAddress(it->first, it->second);
-        }
-    }
 
     auto rs = raft::CreateRaftServer(ops);
     context_->raft_server = rs.release();
@@ -154,7 +154,7 @@ void DataServer::registerToMaster() {
     }
 }
 
-int DataServer::Start() {
+bool DataServer::Start() {
     if (!ds_config.b_test) {
         registerToMaster();
     } else {
@@ -162,11 +162,11 @@ int DataServer::Start() {
     }
 
     if (!startRaftServer()) {
-        return -1;
+        return false;
     }
 
     if (context_->range_server->Init(context_) != 0) {
-        return -1;
+        return false;
     }
 
     // start worker
@@ -174,7 +174,7 @@ int DataServer::Start() {
             ds_config.worker_config.slow_worker_num, context_->range_server);
     if (!ret.ok()) {
         FLOG_ERROR("start worker failed: {}", ret.ToString());
-        return -1;
+        return false;
     }
 
     // start rpc server
@@ -182,7 +182,7 @@ int DataServer::Start() {
     ret = context_->rpc_server->Start(rpc_config.ip_address, rpc_config.port, context_->worker);
     if (!ret.ok()) {
         FLOG_ERROR("start rpc server failed: {}", ret.ToString());
-        return -1;
+        return false;
     }
 
     // start admin server
@@ -190,21 +190,25 @@ int DataServer::Start() {
     ret = admin_server_->Start(static_cast<uint16_t>(ds_config.manager_config.port));
     if (!ret.ok()) {
         FLOG_ERROR("start admin server failed: {}", ret.ToString());
-        return -1;
-    }
-
-    if (context_->range_server->Start() != 0) {
-        return -1;
-    }
-
-    // server is ready, raft can be electable
-    ret = context_->raft_server->SetOptions({{"electable", "1"}});
-    if (!ret.ok()) {
-        FLOG_ERROR("RaftServer enable electable failed: {}", ret.ToString());
         return false;
     }
 
-    return 0;
+    if (context_->range_server->Start() != 0) {
+        return false;
+    }
+
+    if (ds_config.b_test && !ds_config.test_config.is_leader) {
+        // in test mode, current node is not leader, disable electable
+    } else {
+        // server is ready, raft can be electable
+        ret = context_->raft_server->SetOptions({{"electable", "1"}});
+        if (!ret.ok()) {
+            FLOG_ERROR("RaftServer enable electable failed: {}", ret.ToString());
+            return false;
+        }
+    }
+
+    return true;
 }
 
 void DataServer::Stop() {
@@ -260,6 +264,14 @@ void DataServer::triggerRCU() {
     if (ds_config.engine_type == EngineType::kMassTree) {
         context_->raft_server->PostToAllApplyThreads([this] {
             auto db = dynamic_cast<db::MasstreeDBManager*>(context_->db_manager);
+            if (db != nullptr) {
+                db->RCUFree(false);
+            }
+        });
+    } else if (ds_config.engine_type == EngineType::kRocksdb &&
+        ds_config.rocksdb_config.enable_txn_cache) {
+        context_->raft_server->PostToAllApplyThreads([this] {
+            auto db = dynamic_cast<db::RocksDBManager*>(context_->db_manager);
             if (db != nullptr) {
                 db->RCUFree(false);
             }

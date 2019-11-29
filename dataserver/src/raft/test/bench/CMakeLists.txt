@@ -12,7 +12,3 @@ foreach(f IN LISTS raft_bench_SOURCES)
 endforeach() 
 add_executable(raft-bench ${raft_bench_SOURCES})
 target_link_libraries(raft-bench ${raft_test_Deps})
-
-if(ENABLE_GPERF)
-    list(APPEND raft_test_Deps profiler)
-endif()

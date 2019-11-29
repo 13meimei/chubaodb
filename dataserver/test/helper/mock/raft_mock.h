@@ -44,18 +44,25 @@ public:
 
     Status TryToLeader() override { return Status::OK(); }
 
-    Status Submit(std::string& cmd, uint64_t unique_seq, uint16_t rw_flag) override {
-        if (rw_flag == chubaodb::raft::WRITE_FLAG) {
-            ops_.statemachine->Apply(cmd, 1);
-        } else {
-            ops_.statemachine->Read(cmd, chubaodb::raft::READ_SUCCESS);
-        }
+    Status Propose(std::string& entry_data, uint32_t entry_flags) override {
+        ops_.statemachine->Apply(entry_data, 1);
+        return Status::OK();
+    }
+
+    Status ReadIndex(std::string& ctx) override {
+        ops_.statemachine->ApplyReadIndex(ctx, chubaodb::raft::READ_SUCCESS);
         return Status::OK();
     }
 
     Status ChangeMemeber(const ConfChange& conf) override { return Status::OK(); }
     void GetStatus(RaftStatus* status) const override {}
     void Truncate(uint64_t index) override {}
+
+    std::unique_ptr<LogReader> ReadLog(uint64_t start_index) override { return nullptr; }
+
+    Status InheritLog(const std::string& dest_dir, uint64_t last_index, bool only_index) override {
+        return Status(Status::kNotSupported);
+    }
 
 private:
     RaftOptions ops_;
@@ -85,9 +92,11 @@ public:
 
     void GetStatus(ServerStatus* status) const override {}
 
-    void PostToAllApplyThreads(const std::function<void()>&) override {}
+    void PostToAllApplyThreads(const std::function<void()>& task) override {}
 
-    Status SetOptions(const std::map<std::string, std::string>& options) override { return Status(Status::kNotSupported); }
+    Status SetOptions(const std::map<std::string, std::string>& options) override {
+        return Status(Status::kNotSupported);
+    }
 
 private:
     RaftServerOptions rop_;

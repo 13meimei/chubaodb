@@ -37,13 +37,16 @@ public:
     Status Sync();
     Status Destroy();
 
+    Status Load(pb::HardState* hs, pb::TruncateMeta* tm, uint64_t *inherit_index);
     Status Load(pb::HardState* hs, pb::TruncateMeta* tm);
     Status SaveHardState(const pb::HardState& hs);
     Status SaveTruncMeta(const pb::TruncateMeta& tm);
+    Status SaveInheritIndex(uint64_t index);
 
 private:
     constexpr static size_t kHardStateSize = 8 * 3;     // term(8) + commit(8) + vote(8)
     constexpr static size_t kTruncateMetaSize = 8 * 2;  // index(8) + term(8)
+    constexpr static size_t kInheritIndexSize = 8;  // index(8)
 
 private:
     const std::string path_;

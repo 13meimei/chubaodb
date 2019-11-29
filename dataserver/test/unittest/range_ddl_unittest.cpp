@@ -80,7 +80,7 @@ protected:
     }
 
     void TestCreate(basepb::Range&& meta, dspb::SchResponse& resp) {
-        dspb::SchReuqest req;
+        dspb::SchRequest req;
         req.mutable_create_range()->set_allocated_range(new basepb::Range(std::move(meta)));
         auto rpc = NewMockRPCRequest(req, dspb::kFuncSchedule);
         range_server_->dispatchSchedule(rpc.first);
@@ -89,7 +89,7 @@ protected:
     }
 
     void TestDelete(uint64_t range_id, dspb::SchResponse& resp) {
-        dspb::SchReuqest req;
+        dspb::SchRequest req;
         req.mutable_delete_range()->set_range_id(range_id);
         auto rpc = NewMockRPCRequest(req, dspb::kFuncSchedule);
         range_server_->dispatchSchedule(rpc.first);

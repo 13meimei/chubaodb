@@ -47,7 +47,7 @@ public:
     virtual Status CreateDB(uint64_t range_id, const std::string& start_key,
             const std::string& end_key, std::unique_ptr<DB>& db) = 0;
 
-    virtual Status GetUsage(const SystemInfo& sys_info, DBUsage& usage) = 0;
+    virtual Status GetUsage(DBUsage& usage) = 0;
 
     virtual std::string MetricInfo(bool verbose) = 0;
 };

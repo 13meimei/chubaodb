@@ -1,4 +1,5 @@
-// Copyright 2019 The Chubao Authors.
+// Copyright 2015 The etcd Authors
+// Portions Copyright 2019 The Chubao Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -169,6 +170,16 @@ Status MemoryStorage::Close() { return Status::OK(); }
 
 Status MemoryStorage::Destroy(bool backup) { return Status::OK(); }
 
+std::unique_ptr<LogReader> MemoryStorage::NewReader(uint64_t start_index) {
+    // TODO:
+    return nullptr;
+}
+
+Status MemoryStorage::InheritLog(const std::string& dest_dir, uint64_t last_index, bool only_index) {
+    (void)last_index;
+    (void)only_index;
+    return Status(Status::kNotSupported);
+}
 
 } /* namespace storage */
 } /* namespace impl */

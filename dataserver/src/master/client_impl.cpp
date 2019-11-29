@@ -33,6 +33,7 @@ static const std::string kNodeHeartbeatURI = "/node/heartbeat";
 static const std::string kNodeGetURI = "/node/get";
 static const std::string kRangeHeartbeatURI = "/range/heartbeat";
 static const std::string kAskSplitURI = "/range/ask_split";
+static const size_t kMinRetryTimes = 3;
 static const cpr::Timeout kRequestTimeout{5000}; // in milliseconds
 
 MasterClientImpl::MasterClientImpl(uint64_t cluster_id, const std::vector<std::string> &ms_addrs) :
@@ -50,7 +51,8 @@ Status MasterClientImpl::post(const std::string &uri,
     auto index = ++rr_counter_;
     Status ret;
     // retry all master addrs if response not ok
-    for (size_t i = 0; i < ms_addrs_.size(); ++i) {
+    auto retry_times = std::max(kMinRetryTimes, ms_addrs_.size());
+    for (size_t i = 0; i < retry_times; ++i) {
         auto ms_addr = ms_addrs_[(index + i) % ms_addrs_.size()];
         std::string url = kProtocalSchema + ms_addr + uri;
         cpr::Url cpr_url{url};

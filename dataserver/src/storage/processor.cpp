@@ -18,20 +18,6 @@ namespace chubaodb {
 namespace ds {
 namespace storage {
 
-Status Processor::next(RowResult &row) {
-    return Status::OK();
-}
-
-
-const std::string Processor::get_last_key() {
-    return "";
-}
-
-const std::vector<uint64_t> Processor::get_col_ids() {
-    std::vector<uint64_t> a;
-    return a;
-}
-
 } /* namespace storage */
 } /* namespace ds */
 } /* namespace chubaodb */

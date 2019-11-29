@@ -472,36 +472,37 @@ void AddDescriptorsImpl() {
       "b.WatcherType\022%\n\nevent_type\030\002 \001(\0162\021.base"
       "pb.EventType\022\017\n\007node_id\030\003 \001(\004\022\r\n\005db_id\030\004"
       " \001(\004\022\020\n\010table_id\030\005 \001(\004\022\020\n\010range_id\030\006 \001(\004"
-      "\022\r\n\005value\030\007 \001(\014\022\017\n\007version\030\010 \001(\004*\213\002\n\010Dat"
-      "aType\022\013\n\007Invalid\020\000\022\013\n\007Tinyint\020\001\022\014\n\010Small"
-      "int\020\002\022\007\n\003Int\020\003\022\n\n\006BigInt\020\004\022\t\n\005Float\020\005\022\n\n"
-      "\006Double\020\006\022\013\n\007Varchar\020\007\022\n\n\006Binary\020\010\022\010\n\004Da"
-      "te\020\t\022\r\n\tTimeStamp\020\n\022\013\n\007Boolean\020\013\022\013\n\007Deci"
-      "mal\020\014\022\n\n\006Number\020\r\022\010\n\004Char\020\016\022\t\n\005NChar\020\017\022\010"
-      "\n\004Text\020\020\022\r\n\tVarBinary\020\021\022\010\n\004Time\020\022\022\007\n\003Xml"
-      "\020\023\022\010\n\004Json\020\024\022\010\n\004Null\020\036*L\n\tStoreType\022\021\n\rS"
-      "tore_Invalid\020\000\022\r\n\tStore_Hot\020\001\022\016\n\nStore_W"
-      "arm\020\002\022\r\n\tStore_Mix\020\003*9\n\tRangeType\022\017\n\013RNG"
-      "_Invalid\020\000\022\r\n\tRNG_Index\020\001\022\014\n\010RNG_Data\020\002*"
-      ",\n\nColumnType\022\016\n\nCOL_Common\020\000\022\016\n\nCOL_Sys"
-      "tem\020\001*X\n\tNodeState\022\r\n\tN_Invalid\020\000\022\014\n\010N_O"
-      "nline\020\001\022\r\n\tN_Offline\020\002\022\016\n\nN_Updating\020\003\022\017"
-      "\n\013N_Offlining\020\004*U\n\016RangePeerState\022\017\n\013RPS"
-      "_Invalid\020\000\022\020\n\014RPS_NoLeader\020\001\022\020\n\014RPS_Foll"
-      "ower\020\002\022\016\n\nRPS_Leader\020\003*K\n\010PeerType\022\024\n\020Pe"
-      "erType_Invalid\020\000\022\023\n\017PeerType_Normal\020\001\022\024\n"
-      "\020PeerType_Learner\020\002*1\n\013TableStatus\022\020\n\014Ta"
-      "bleInvalid\020\000\022\020\n\014TableRunning\020\001*3\n\tIndexT"
-      "ype\022\r\n\tI_Invalid\020\000\022\013\n\007I_Btree\020\001\022\n\n\006I_Has"
-      "h\020\002*N\n\tEventType\022\026\n\022Event_Type_Invalid\020\000"
-      "\022\022\n\016Event_Type_PUT\020\001\022\025\n\021Event_Type_DELET"
-      "E\020\002*\211\001\n\013WatcherType\022\030\n\024Watcher_Type_Inva"
-      "lid\020\000\022\025\n\021Watcher_Type_Node\020\001\022\031\n\025Watcher_"
-      "Type_Database\020\002\022\026\n\022Watcher_Type_Table\020\003\022"
-      "\026\n\022Watcher_Type_Range\020\004b\006proto3"
+      "\022\r\n\005value\030\007 \001(\014\022\017\n\007version\030\010 \001(\004*\231\002\n\010Dat"
+      "aType\022\013\n\007Invalid\020\000\022\013\n\007TinyInt\020\001\022\014\n\010Small"
+      "Int\020\002\022\r\n\tMediumInt\020\003\022\007\n\003Int\020\004\022\n\n\006BigInt\020"
+      "\005\022\007\n\003Bit\020\006\022\t\n\005Float\020\n\022\n\n\006Double\020\013\022\013\n\007Dec"
+      "imal\020\014\022\010\n\004Date\020\024\022\r\n\tTimeStamp\020\025\022\014\n\010DateT"
+      "ime\020\026\022\010\n\004Time\020\027\022\010\n\004Year\020\030\022\013\n\007Varchar\020\036\022\n"
+      "\n\006Binary\020\037\022\010\n\004Char\020 \022\t\n\005NChar\020!\022\010\n\004Text\020"
+      "\"\022\r\n\tVarBinary\020#\022\010\n\004Json\020(\022\010\n\004Null\0202*L\n\t"
+      "StoreType\022\021\n\rStore_Invalid\020\000\022\r\n\tStore_Ho"
+      "t\020\001\022\016\n\nStore_Warm\020\002\022\r\n\tStore_Mix\020\003*9\n\tRa"
+      "ngeType\022\017\n\013RNG_Invalid\020\000\022\r\n\tRNG_Index\020\001\022"
+      "\014\n\010RNG_Data\020\002*,\n\nColumnType\022\016\n\nCOL_Commo"
+      "n\020\000\022\016\n\nCOL_System\020\001*X\n\tNodeState\022\r\n\tN_In"
+      "valid\020\000\022\014\n\010N_Online\020\001\022\r\n\tN_Offline\020\002\022\016\n\n"
+      "N_Updating\020\003\022\017\n\013N_Offlining\020\004*U\n\016RangePe"
+      "erState\022\017\n\013RPS_Invalid\020\000\022\020\n\014RPS_NoLeader"
+      "\020\001\022\020\n\014RPS_Follower\020\002\022\016\n\nRPS_Leader\020\003*K\n\010"
+      "PeerType\022\024\n\020PeerType_Invalid\020\000\022\023\n\017PeerTy"
+      "pe_Normal\020\001\022\024\n\020PeerType_Learner\020\002*1\n\013Tab"
+      "leStatus\022\020\n\014TableInvalid\020\000\022\020\n\014TableRunni"
+      "ng\020\001*3\n\tIndexType\022\r\n\tI_Invalid\020\000\022\013\n\007I_Bt"
+      "ree\020\001\022\n\n\006I_Hash\020\002*N\n\tEventType\022\026\n\022Event_"
+      "Type_Invalid\020\000\022\022\n\016Event_Type_PUT\020\001\022\025\n\021Ev"
+      "ent_Type_DELETE\020\002*\211\001\n\013WatcherType\022\030\n\024Wat"
+      "cher_Type_Invalid\020\000\022\025\n\021Watcher_Type_Node"
+      "\020\001\022\031\n\025Watcher_Type_Database\020\002\022\026\n\022Watcher"
+      "_Type_Table\020\003\022\026\n\022Watcher_Type_Range\020\004b\006p"
+      "roto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 3311);
+      descriptor, 3325);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "basepb/basepb.proto", &protobuf_RegisterTypes);
 }
@@ -533,21 +534,22 @@ bool DataType_IsValid(int value) {
     case 4:
     case 5:
     case 6:
-    case 7:
-    case 8:
-    case 9:
     case 10:
     case 11:
     case 12:
-    case 13:
-    case 14:
-    case 15:
-    case 16:
-    case 17:
-    case 18:
-    case 19:
     case 20:
+    case 21:
+    case 22:
+    case 23:
+    case 24:
     case 30:
+    case 31:
+    case 32:
+    case 33:
+    case 34:
+    case 35:
+    case 40:
+    case 50:
       return true;
     default:
       return false;

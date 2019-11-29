@@ -19,6 +19,7 @@ foreach(f IN LISTS test_helper_SRCS)
 endforeach()
 
 add_library(chubaodb-test-helper SHARED ${test_helper_SRCS})
+target_include_directories(chubaodb-test-helper PUBLIC ${GTEST_INCLUDE_DIR} ${GMOCK_INCLUDE_DIR})
 if (APPLE)
     target_link_libraries(chubaodb-test-helper chubaodb-ds-shared sqlparser ${GTEST_LIBRARY})
 endif()
@@ -59,6 +60,12 @@ set(test_SRCS
     unittest/store_flow_unittest.cpp
     unittest/store_flow_double_unittest.cpp
     unittest/range_selectflow_datasample_unittest.cpp
+    unittest/datatype_decimal_unittest.cpp
+    unittest/range_selectflow_decimal_unittest.cpp
+    unittest/datatype_datetime_unittest.cpp
+    unittest/datatype_time_unittest.cpp
+    unittest/range_selectflow_datetime_unittest.cpp
+    unittest/range_selectflow_time_unittest.cpp
 )
 
 foreach(f IN LISTS test_SRCS)
@@ -72,7 +79,12 @@ foreach(testfile ${test_SRCS})
     get_filename_component(exename ${testfile} NAME_WE)
     add_executable(${exename} ${testfile})
     target_link_libraries(${exename} ${test_DEPEND_LIBS})
+    target_include_directories(${exename} PUBLIC ${GTEST_INCLUDE_DIR} ${GMOCK_INCLUDE_DIR})
     if("${exename}" MATCHES "unittest")
         add_test(NAME ${exename} COMMAND ${exename} ${TEST_RUN_ARGS})
     endif()
 endforeach(testfile ${TESTS})
+
+if (BUILD_BENCH)
+    add_subdirectory(bench)
+endif()

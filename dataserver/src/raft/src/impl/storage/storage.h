@@ -16,6 +16,7 @@ _Pragma("once");
 
 #include <vector>
 #include "base/status.h"
+#include "raft/log_reader.h"
 
 #include "../raft.pb.h"
 #include "../raft_types.h"
@@ -86,7 +87,13 @@ public:
     virtual Status Close() = 0;
 
     // Delete all data
-    virtual Status Destroy(bool backup = false) = 0;
+    virtual Status Destroy(bool backup) = 0;
+
+    virtual std::unique_ptr<LogReader> NewReader(uint64_t start_index) = 0;
+
+    virtual Status InheritLog(const std::string& dest_dir, uint64_t last_index, bool only_index) = 0;
+
+    virtual uint64_t InheritIndex() = 0;
 };
 
 } /* namespace storage */

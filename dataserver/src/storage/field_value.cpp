@@ -15,6 +15,7 @@
 #include "field_value.h"
 
 #include <assert.h>
+#include <math.h>
 #include "common/ds_encoding.h"
 
 namespace chubaodb {
@@ -22,6 +23,9 @@ namespace ds {
 namespace storage {
 
 const std::string FieldValue::kDefaultBytes;
+const datatype::MyDecimal FieldValue::kDefaultDecimal;
+const datatype::MyDateTime FieldValue::kDefaultDateTime;
+const datatype::MyTime FieldValue::kDefaultTime;
 
 bool compareInt(const FieldValue& lh, const FieldValue& rh, CompareOp op) {
     switch (op) {
@@ -75,6 +79,51 @@ bool compareBytes(const FieldValue& lh, const FieldValue& rh, CompareOp op) {
     }
 }
 
+bool compareDecimal(const FieldValue& lh, const FieldValue& rh, CompareOp op) {
+    switch (op) {
+        case CompareOp::kLess: {
+            int32_t cmp = lh.Decimal().Compare( rh.Decimal());
+            return cmp == -1;
+        }
+        case CompareOp::kEqual: {
+            int32_t cmp = lh.Decimal().Compare( rh.Decimal());
+            return cmp == 0;
+        }
+        case CompareOp::kGreater: {
+            int32_t cmp = lh.Decimal().Compare( rh.Decimal());
+            return cmp == 1;
+        }
+        default:
+            return false;
+    }
+}
+
+bool compareDate(const FieldValue& lh, const FieldValue& rh, CompareOp op) {
+    switch (op) {
+        case CompareOp::kLess:
+            return lh.Date() < rh.Date();
+        case CompareOp::kEqual:
+            return lh.Date() == rh.Date();
+        case CompareOp::kGreater:
+            return lh.Date() > rh.Date();
+        default:
+            return false;
+    }
+}
+
+bool compareTime(const FieldValue& lh, const FieldValue& rh, CompareOp op) {
+    switch (op) {
+        case CompareOp::kLess:
+            return lh.Time() < rh.Time();
+        case CompareOp::kEqual:
+            return lh.Time() == rh.Time();
+        case CompareOp::kGreater:
+            return lh.Time() > rh.Time();
+        default:
+            return false;
+    }
+}
+
 bool fcompare(const FieldValue& lh, const FieldValue& rh, CompareOp op) {
     if (lh.Type() != rh.Type()) {
         return false;
@@ -89,6 +138,12 @@ bool fcompare(const FieldValue& lh, const FieldValue& rh, CompareOp op) {
             return compareDouble(lh, rh, op);
         case FieldType::kBytes:
             return compareBytes(lh, rh, op);
+        case FieldType::kDecimal:
+            return compareDecimal(lh, rh, op);
+        case FieldType::kDate:
+            return compareDate(lh, rh, op);
+        case FieldType::kTime:
+            return compareTime(lh, rh, op);
         default:
             return false;
     }
@@ -104,6 +159,12 @@ FieldValue* CopyValue(const FieldValue& v) {
             return new FieldValue(v.Double());
         case FieldType::kBytes:
             return new FieldValue(v.Bytes());
+        case FieldType::kDecimal:
+            return new FieldValue(v.Decimal());
+        case FieldType::kDate:
+            return new FieldValue(v.Date());
+        case FieldType::kTime:
+            return new FieldValue(v.Time());
     }
     return nullptr;
 }
@@ -127,6 +188,15 @@ void EncodeFieldValue(std::string* buf, FieldValue* v) {
         case FieldType::kBytes:
             EncodeBytesValue(buf, kNoColumnID, v->Bytes().c_str(), v->Bytes().size());
             break;
+        case FieldType::kDecimal:
+            EncodeDecimalValue(buf, kNoColumnID, &(v->Decimal()));
+            break;
+        case FieldType::kDate:
+            EncodeDateValue(buf, kNoColumnID, &(v->Date()));
+            break;
+        case FieldType::kTime:
+            EncodeTimeValue(buf, kNoColumnID, &(v->Time()));
+            break;
     }
 }
 
@@ -149,6 +219,15 @@ void EncodeFieldValue(std::string* buf, FieldValue* v, uint32_t col_id) {
         case FieldType::kBytes:
             EncodeBytesValue(buf, col_id, v->Bytes().c_str(), v->Bytes().size());
             break;
+        case FieldType::kDecimal:
+            EncodeDecimalValue(buf, col_id, &(v->Decimal()));
+            break;
+        case FieldType::kDate:
+            EncodeDateValue(buf, col_id, &(v->Date()));
+            break;
+        case FieldType::kTime:
+            EncodeTimeValue(buf, col_id, &(v->Time()));
+            break;
     }
 }
 
@@ -162,6 +241,7 @@ std::unique_ptr<FieldValue> arithCalc(const FieldValue* l, const FieldValue* r, 
     case dspb::Plus:
     case dspb::PlusInt:
     case dspb::PlusReal:
+    case dspb::PlusDecimal:
         switch (l->Type()) {
         case FieldType::kInt:
             result.reset(new FieldValue(l->Int() + r->Int()));
@@ -176,6 +256,20 @@ std::unique_ptr<FieldValue> arithCalc(const FieldValue* l, const FieldValue* r, 
                 result.reset(new FieldValue(l->Double() + r->Double()));
             }
             break;
+        case FieldType::kDecimal:{
+
+            datatype::MyDecimal ret;
+            int32_t error = 0;
+
+            error = datatype::DecimalAdd(&ret, &(l->Decimal()), &(r->Decimal()));
+            if ( error == datatype::E_DEC_OK || error == datatype::E_DEC_OVERFLOW) {
+                result.reset( new FieldValue(ret));
+            } else {
+                result.reset(nullptr);
+            }
+
+            break;
+        }
         default:
             break;
         }
@@ -183,6 +277,7 @@ std::unique_ptr<FieldValue> arithCalc(const FieldValue* l, const FieldValue* r, 
     case dspb::Minus:
     case dspb::MinusInt:
     case dspb::MinusReal:
+    case dspb::MinusDecimal:
         switch (l->Type()) {
         case FieldType::kInt:
             result.reset(new FieldValue(l->Int() - r->Int()));
@@ -197,6 +292,21 @@ std::unique_ptr<FieldValue> arithCalc(const FieldValue* l, const FieldValue* r, 
                 result.reset(new FieldValue(l->Double() - r->Double()));
             }
             break;
+        case FieldType::kDecimal:{
+
+            datatype::MyDecimal ret;
+            int32_t error = 0;
+
+            error = datatype::DecimalSub(&ret, &(l->Decimal()), &(r->Decimal()));
+
+            if ( error == datatype::E_DEC_OK || error == datatype::E_DEC_OVERFLOW) {
+                result.reset( new FieldValue(ret));
+            } else {
+                result.reset(nullptr);
+            }
+
+            break;
+        }
         default:
             break;
         }
@@ -204,6 +314,7 @@ std::unique_ptr<FieldValue> arithCalc(const FieldValue* l, const FieldValue* r, 
     case dspb::Mult:
     case dspb::MultInt:
     case dspb::MultReal:
+    case dspb::MultDecimal:
         switch (l->Type()) {
         case FieldType::kInt:
             result.reset(new FieldValue(l->Int() * r->Int()));
@@ -218,6 +329,20 @@ std::unique_ptr<FieldValue> arithCalc(const FieldValue* l, const FieldValue* r, 
                 result.reset(new FieldValue(l->Double() * r->Double()));
             }
             break;
+        case FieldType::kDecimal: {
+            datatype::MyDecimal ret;
+            int32_t error = 0;
+
+            error = datatype::DecimalMul(&ret, &(l->Decimal()), &(r->Decimal()));
+
+            if ( error == datatype::E_DEC_OK || error == datatype::E_DEC_OVERFLOW) {
+                result.reset( new FieldValue(ret));
+            } else {
+                result.reset(nullptr);
+            }
+
+            break;
+        }
         default:
             break;
         }
@@ -226,7 +351,7 @@ std::unique_ptr<FieldValue> arithCalc(const FieldValue* l, const FieldValue* r, 
     case dspb::Div:
     case dspb::DivReal:
     case dspb::IntDivInt:
-    case dspb::IntDivDecimal:
+    case dspb::DivDecimal:
         switch (l->Type()) {
         case FieldType::kInt:
             if (r->Int() != 0) {
@@ -253,6 +378,20 @@ std::unique_ptr<FieldValue> arithCalc(const FieldValue* l, const FieldValue* r, 
                 result.reset(nullptr);
             }
             break;
+        case FieldType::kDecimal: {
+            datatype::MyDecimal ret;
+            int32_t error = 0;
+
+            error = datatype::DecimalDiv(&ret, &(l->Decimal()), &(r->Decimal()), 5);
+
+            if ( error == datatype::E_DEC_OK || error == datatype::E_DEC_OVERFLOW) {
+                result.reset( new FieldValue(ret));
+            } else {
+                result.reset(nullptr);
+            }
+
+            break;
+        }
         default:
             break;
         }
@@ -260,6 +399,7 @@ std::unique_ptr<FieldValue> arithCalc(const FieldValue* l, const FieldValue* r, 
     case dspb::Mod:
     case dspb::ModInt:
     case dspb::ModReal:
+    case dspb::ModDecimal:
         switch (l->Type()) {
         case FieldType::kInt:
             result.reset(new FieldValue(l->Int() % r->Int()));
@@ -270,6 +410,20 @@ std::unique_ptr<FieldValue> arithCalc(const FieldValue* l, const FieldValue* r, 
         case FieldType::kDouble:
             result.reset(new FieldValue(fmod(l->Double(), r->Double())));
             break;
+        case FieldType::kDecimal: {
+            datatype::MyDecimal ret;
+            int32_t error = 0;
+
+            error = datatype::DecimalMod(&ret, &(l->Decimal()), &(r->Decimal()));
+
+            if ( error == datatype::E_DEC_OK || error == datatype::E_DEC_OVERFLOW) {
+                result.reset( new FieldValue(ret));
+            } else {
+                result.reset(nullptr);
+            }
+
+            break;
+        }
         default:
             break;
         }

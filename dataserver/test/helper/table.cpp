@@ -111,7 +111,7 @@ std::unique_ptr<Table> CreatePersonTable(uint32_t tid) {
     std::unique_ptr<Table> t(new Table("person", tid));
     t->AddColumn("id", basepb::BigInt, true);
     t->AddColumn("name", basepb::Varchar);
-    t->AddColumn("age", basepb::Smallint);
+    t->AddColumn("age", basepb::SmallInt);
     t->AddColumn("height", basepb::Double);
     return t;
 }

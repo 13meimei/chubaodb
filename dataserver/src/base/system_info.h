@@ -19,14 +19,9 @@ _Pragma("once");
 
 namespace chubaodb {
 
-class SystemInfo {
-public:
-    virtual ~SystemInfo() = default;
+void SetSysinfoConfig(bool in_docker = false);
 
-    static std::unique_ptr<SystemInfo> New(bool docker = false);
-
-    virtual bool GetFileSystemUsage(const char *path, uint64_t *total, uint64_t *available) const = 0;
-    virtual bool GetMemoryUsage(uint64_t *total, uint64_t *available) const = 0;
-};
+bool GetFileSystemUsage(const char *path, uint64_t *total, uint64_t *available);
+bool GetMemoryUsage(uint64_t *total, uint64_t *available);
 
 } // namespace chubaodb

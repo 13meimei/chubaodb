@@ -25,10 +25,12 @@ import (
 	"github.com/chubaodb/chubaodb/master/service"
 	"github.com/chubaodb/chubaodb/master/utils"
 	"github.com/chubaodb/chubaodb/master/utils/ginutil"
+	"github.com/chubaodb/chubaodb/master/utils/log"
 	"github.com/chubaodb/chubaodb/master/utils/monitoring"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/cast"
 	"net/http"
+	"sort"
 )
 
 //it not support proto api
@@ -50,6 +52,7 @@ func ExportToHealthHandler(router *gin.Engine, service *service.BaseService) {
 	router.Handle(http.MethodGet, "/health/master_list", base30.TimeOutHandler, base30.PaincHandler(c.masterList), base30.TimeOutEndHandler)
 
 	router.Handle(http.MethodPost, "/health/topo_check", base30.TimeOutHandler, base30.PaincHandler(c.topologyCheck), base30.TimeOutEndHandler)
+	router.Handle(http.MethodPost, "/health/set_loglevel", base30.TimeOutHandler, base30.PaincHandler(c.setMasterLogLevel), base30.TimeOutEndHandler)
 }
 
 //it not support proto api
@@ -265,33 +268,73 @@ func (ha *healthApi) topologyCheck(c *gin.Context) {
 		_, _ = c.Writer.WriteString(fmt.Sprintf("query table ranges by tableId[%d] failed, err[%s]", table.GetId(), err.Error()))
 		return
 	}
-	startKey, endKey := utils.EncodeStorePrefix(utils.Store_Prefix_KV, table.GetId())
 
-	for i := range ranges {
-		if i == 0 {
-			if bytes.Compare(startKey, ranges[i].GetStartKey()) != 0 {
-				_, _ = c.Writer.WriteString(fmt.Sprintf("check topo failed, err[%s]", "startKey not matching"))
+	idxRange := make([]*basepb.Range, 0)
+	dataRange := make([]*basepb.Range, 0)
+	for _, rng := range ranges {
+		if rng.RangeType == basepb.RangeType_RNG_Index {
+			idxRange = append(idxRange, rng)
+		}
+		if rng.RangeType == basepb.RangeType_RNG_Data {
+			dataRange = append(dataRange, rng)
+		}
+	}
+
+	sort.Slice(idxRange, func(i, j int) bool {
+		return bytes.Compare(idxRange[i].StartKey, idxRange[j].StartKey) >= 0
+	})
+	sort.Slice(dataRange, func(i, j int) bool {
+		return bytes.Compare(dataRange[i].StartKey, dataRange[j].StartKey) >= 0
+	})
+	idxStartKey, idxEndKey := utils.EncodeStorePrefix(utils.Store_Prefix_INDEX, table.GetId())
+	dataStartKey, dataEndKey := utils.EncodeStorePrefix(utils.Store_Prefix_KV, table.GetId())
+
+	idxCheckKey := idxStartKey
+	for i := range idxRange {
+		if bytes.Compare(idxCheckKey, idxRange[i].GetStartKey()) != 0 {
+			_, _ = c.Writer.WriteString(fmt.Sprintf("check topo failed, err[%s]", "index-startKey not matching"))
+			return
+		} else {
+			idxCheckKey = idxRange[i].GetEndKey()
+		}
+
+		if i == len(idxRange)-1 {
+			if bytes.Compare(idxEndKey, idxRange[i].GetEndKey()) != 0 {
+				_, _ = c.Writer.WriteString(fmt.Sprintf("check topo failed, err[%s]", "index-endKey not matching"))
 				return
 			}
 		}
-		if i == len(ranges)-1 {
-			if bytes.Compare(endKey, ranges[i].GetEndKey()) == 0 {
-				_, _ = c.Writer.WriteString(fmt.Sprintf("check topo failed, err[%s]", "endKey not matching"))
+	}
+
+	dataCheckKey := dataStartKey
+	for i := range dataRange {
+		if bytes.Compare(dataCheckKey, dataRange[i].GetStartKey()) != 0 {
+			_, _ = c.Writer.WriteString(fmt.Sprintf("check topo failed, err[%s]", "data-startKey not matching"))
+			return
+		} else {
+			dataCheckKey = dataRange[i].GetEndKey()
+		}
+
+		if i == len(dataRange)-1 {
+			if bytes.Compare(dataEndKey, dataRange[i].GetEndKey()) != 0 {
+				_, _ = c.Writer.WriteString(fmt.Sprintf("check topo failed, err[%s]", "data-endKey not matching"))
 				return
 			}
-		}
-		queryRange, err := ha.service.QueryRange(ctx, table.GetId(), ranges[i].GetId())
-		if err != nil {
-			_, _ = c.Writer.WriteString(fmt.Sprintf("check topo failed, cannot find range by tableId[%d] rangeId[%d]",
-				table.GetId(), ranges[i].GetId()))
-			return
-		}
-		if bytes.Compare(queryRange.GetStartKey(), ranges[i].GetStartKey()) != 0 ||
-			bytes.Compare(queryRange.GetEndKey(), ranges[i].GetEndKey()) != 0 {
-			_, _ = c.Writer.WriteString(fmt.Sprintf("check topo failed, rangeId[%d] not match", ranges[i].GetId()))
-			return
 		}
 	}
 
 	_, _ = c.Writer.WriteString("check topo succeed")
+}
+
+func (ha *healthApi) setMasterLogLevel(c *gin.Context) {
+	logLevel := c.PostForm("logLevel")
+	if logLevel == "" {
+		_, _ = c.Writer.WriteString("logLevel cannot be null or empty")
+		return
+	}
+
+	log.Info("ready to set master's loglevel to [%s]", logLevel)
+	log.SetLogLevel(logLevel)
+	_, _ = c.Writer.WriteString("OK")
+	return
 }

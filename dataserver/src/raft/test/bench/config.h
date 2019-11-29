@@ -14,22 +14,34 @@
 
 _Pragma("once");
 
-#include <cstddef>
+#include <cstdint>
+#include <string>
 
 namespace chubaodb {
 namespace raft {
 namespace bench {
 
 struct BenchConfig {
-    std::size_t request_num = 1000000;
-    std::size_t thread_num = 3;
     std::size_t range_num = 1;
-    std::size_t concurrency = 100;
+    std::size_t requets_num = 1000000;
+    std::size_t bench_threads = 4;
+    std::size_t bench_concurrency = 100;
 
-    bool use_memory_raft_log = false;
-    bool use_inprocess_transport = false;
-    std::size_t raft_thread_num = 1;
-    std::size_t apply_thread_num = 1;
+    // logger config
+    struct {
+        std::string path = "./logs";
+        std::string level = "info";
+    } logger_config;
+
+    struct {
+        std::string log_path = "./raft";
+        bool use_memory_log = false;
+        bool use_inprocess_transport = false;
+        std::size_t work_threads = 4;
+    } raft_config;
+
+    bool LoadFromFile(const std::string& file);
+    void Print();
 };
 
 extern BenchConfig bench_config;

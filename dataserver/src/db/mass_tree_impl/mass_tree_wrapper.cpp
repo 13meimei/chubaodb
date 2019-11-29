@@ -22,7 +22,10 @@
 #include "masstree-beta/masstree_stats.hh"
 #include "masstree-beta/masstree_insert.hh"
 #include "masstree-beta/masstree_remove.hh"
+#include "masstree-beta/masstree_print.hh"
 
+#include "base/util.h"
+#include "common/logger.h"
 #include "common/masstree_env.h"
 #include "iterator_impl.h"
 
@@ -176,6 +179,16 @@ std::string MasstreeWrapper::TreeStat() {
     } else {
         return "";
     }
+}
+
+Status MasstreeWrapper::Dump(const std::string& file) {
+    FILE *f = ::fopen(file.c_str(), "w");
+    if (f == NULL) {
+        return Status(Status::kIOError, "open dump file " + file, strErrno(errno));
+    }
+    tree_->print(f);
+    ::fclose(f);
+    return Status::OK();
 }
 
 } // namespace db

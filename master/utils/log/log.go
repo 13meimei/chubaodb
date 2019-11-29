@@ -22,6 +22,8 @@ type Log interface {
 
 	//when system exit you should use it
 	Flush()
+
+	SetLogLevel(levelStr string)
 }
 
 var logs [math.MaxUint8]Log
@@ -90,4 +92,8 @@ func Warn(format string, args ...interface{}) {
 
 func Flush() {
 	Get().Flush()
+}
+
+func SetLogLevel(level string) {
+	Get().SetLogLevel(level)
 }

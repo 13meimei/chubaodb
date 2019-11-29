@@ -138,11 +138,9 @@ void Session::do_close() {
 
 void Session::read_head() {
     auto self(shared_from_this());
-    FLOG_DEBUG("read head from: {}", socket_.remote_endpoint().address().to_string());
     asio::async_read(socket_, asio::buffer(&head_, sizeof(head_)),
             [this, self](std::error_code ec, std::size_t) {
                 if (!ec) {
-                    FLOG_DEBUG("read head from: {} finished", socket_.remote_endpoint().address().to_string());
                     head_.Decode();
                     auto ret = head_.Valid();
                     if (ret.ok()) {

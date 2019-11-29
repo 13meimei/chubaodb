@@ -24,6 +24,7 @@
 #include "processor_selection.h"
 #include "processor_limit.h"
 #include "processor_agg.h"
+#include "processor_stream_agg.h"
 #include "processor_order_by.h"
 #include "processor_data_sample.h"
 
@@ -690,51 +691,34 @@ Status Store::TxnSelectFlow(const dspb::SelectFlowRequest& req, dspb::SelectFlow
         return Status( Status::kInvalidArgument, " processor size less 1, cur type : ", std::to_string(p_count) );
     }
 
-    // Suppose the first is read data.
-
-    auto processors = req.processors();
-    if (processors[0].type() != dspb::TABLE_READ_TYPE &&
-        processors[0].type() != dspb::INDEX_READ_TYPE &&
-        processors[0].type() != dspb::DATA_SAMPLE_TYPE
-    ) {
-        return Status( Status::kInvalidArgument, " the first processor type error, cur type : ",
-                std::to_string( static_cast<int>(processors[0].type())));
-    }
-
     uint32_t col_num = 0;
     std::vector<int> off_sets;
 
     dspb::KeyRange range_default;
     range_default.set_start_key(start_key_);
     range_default.set_end_key(end_key_);
-
+    bool gather_trace = req.gather_trace();
     std::unique_ptr<storage::Processor> ptr;
-    if (processors[0].type() == dspb::TABLE_READ_TYPE) {
-        ptr = std::unique_ptr<Processor>(new storage::TableRead( processors[0].table_read(), range_default, *this ));
-
+    auto processors = req.processors();
+    switch (processors[0].type()) {
+    case dspb::TABLE_READ_TYPE:
+        ptr = std::unique_ptr<Processor>(new storage::TableRead( processors[0].table_read(), range_default, *this , gather_trace));
         col_num = processors[0].table_read().columns_size();
-    } else if (processors[0].type() == dspb::INDEX_READ_TYPE) {
-        ptr = std::unique_ptr<Processor>(new storage::IndexRead( processors[0].index_read(), range_default, *this ));
+        break;
+    case dspb::INDEX_READ_TYPE:
+        ptr = std::unique_ptr<Processor>(new storage::IndexRead( processors[0].index_read(), range_default, *this , gather_trace));
         col_num = processors[0].index_read().columns_size();
-    } else if (processors[0].type() == dspb::DATA_SAMPLE_TYPE) {
-        ptr = std::unique_ptr<Processor>(new storage::DataSample( processors[0].data_sample(), range_default, *this ));
+        break;
+    case dspb::DATA_SAMPLE_TYPE:
+        ptr = std::unique_ptr<Processor>(new storage::DataSample( processors[0].data_sample(), range_default, *this , gather_trace));
         col_num = processors[0].data_sample().columns_size();
-    } else {
-        ; // never to here.
+        break;
+    default:
+        return Status( Status::kInvalidArgument, " the first processor type error, cur type : ",
+                std::to_string( static_cast<int>(processors[0].type())));
     }
 
-    for (const auto & i : req.output_offsets()) {
-
-        if (i >= col_num ) {
-            s = Status( Status::kInvalidArgument,
-                    "off_set is overflow",
-                    "offset:" + std::to_string(i) + "; num:" + std::to_string(col_num));
-
-            resp->set_code(s.code()); return s;
-        }
-
-        off_sets.push_back(i);
-    }
+    bool bNeed_Out_Offsets = true;
 
     for ( int i = 1 ; i < p_count; i++) {
         switch (processors[i].type()) {
@@ -742,11 +726,11 @@ Status Store::TxnSelectFlow(const dspb::SelectFlowRequest& req, dspb::SelectFlow
             case dspb::INDEX_READ_TYPE:
             case dspb::DATA_SAMPLE_TYPE:
             {
-                return Status( Status::kInvalidArgument, " more table_read/index_read processor error ", "" );
+                return Status( Status::kInvalidArgument, " more table_read/index_read/data_sample processor error ", "" );
             }
             case dspb::SELECTION_TYPE:
             {
-                ptr = std::unique_ptr<Processor>(new Selection( processors[i].selection(), std::move(ptr)));
+                ptr = std::unique_ptr<Processor>(new Selection( processors[i].selection(), std::move(ptr), gather_trace));
                 break;
             }
             case dspb::PROJECTION_TYPE:
@@ -755,17 +739,34 @@ Status Store::TxnSelectFlow(const dspb::SelectFlowRequest& req, dspb::SelectFlow
             }
             case dspb::ORDER_BY_TYPE:
             {
-                ptr = std::unique_ptr<Processor>(new OrderBy( processors[i].ordering(), std::move(ptr)));
+                ptr = std::unique_ptr<Processor>(new OrderBy( processors[i].ordering(), std::move(ptr), gather_trace));
                 break;
             }
             case dspb::AGGREGATION_TYPE:
             {
-                ptr = std::unique_ptr<Processor>(new Aggregation( processors[i].aggregation(), std::move(ptr)));
+                // 暂时不检查
+                // s = Aggregation::check(processors[i].aggregation());
+                // if (!s.ok()) {
+                //     return s;
+                // }
+                bNeed_Out_Offsets = false;
+                ptr = std::unique_ptr<Processor>(new Aggregation( processors[i].aggregation(), std::move(ptr), gather_trace));
                 break;
             }
             case dspb::LIMIT_TYPE:
             {
-                ptr = std::unique_ptr<Processor>(new Limit( processors[i].limit(), std::move(ptr)));
+                ptr = std::unique_ptr<Processor>(new Limit( processors[i].limit(), std::move(ptr), gather_trace));
+                break;
+            }
+            case dspb::STREAM_AGGREGATION_TYPE:
+            {
+                // 暂时不检查
+                // s = Aggregation::check(processors[i].aggregation());
+                // if (!s.ok()) {
+                //     return s;
+                // }
+                bNeed_Out_Offsets = false;
+                ptr = std::unique_ptr<Processor>(new StreamAggregation( processors[i].stream_aggregation(), std::move(ptr), gather_trace));
                 break;
             }
             default :
@@ -774,6 +775,20 @@ Status Store::TxnSelectFlow(const dspb::SelectFlowRequest& req, dspb::SelectFlow
             }
         }
     }
+
+    if (bNeed_Out_Offsets) {
+        for (const auto & i : req.output_offsets()) {
+            if (i >= col_num ) {
+                s = Status( Status::kInvalidArgument,
+                        "off_set is overflow",
+                        "offset:" + std::to_string(i) + "; num:" + std::to_string(col_num));
+
+                resp->set_code(s.code()); return s;
+            }
+            off_sets.push_back(i);
+        }
+    }
+    
 
     while (true) {
         RowResult rowRes;
@@ -798,6 +813,16 @@ Status Store::TxnSelectFlow(const dspb::SelectFlowRequest& req, dspb::SelectFlow
         resp->set_last_key(ptr->get_last_key());
     }
 
+    if (gather_trace) {
+        std::vector<ProcessorStat> stats;
+        ptr->get_stats(stats);
+        for (auto &stat : stats) {
+            auto trace = resp->add_traces();
+            trace->set_processed_rows(stat.count_);
+            trace->set_elapse_time(stat.time_ns_);
+        }
+    }
+    
     resp->set_code(s.code());
 
     return s;

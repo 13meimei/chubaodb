@@ -21,6 +21,7 @@ set(raft_SOURCES
     src/impl/storage/log_file.cpp
     src/impl/storage/log_format.cpp
     src/impl/storage/log_index.cpp
+    src/impl/storage/log_reader.cpp
     src/impl/storage/meta_file.cpp
     src/impl/storage/storage_disk.cpp
     src/impl/storage/storage_memory.cpp
@@ -49,6 +50,7 @@ set(raft_test_Deps
      chubaodb-base
      chubaodb-common
      ${PROTOBUF_LIBRARY}
+     ${JEMALLOC_LIBRARY}
      pthread
      )
 

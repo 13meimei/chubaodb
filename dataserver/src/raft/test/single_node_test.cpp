@@ -14,7 +14,6 @@
 
 #include <unistd.h>
 #include <cassert>
-#include <iostream>
 
 #include "common/logger.h"
 #include "number_statemachine.h"
@@ -33,11 +32,6 @@ int main(int argc, char* argv[]) {
     ops.tick_interval = std::chrono::milliseconds(100);
     ops.transport_options.use_inprocess_transport = true;
 
-    config.name = argv[0];
-    config.path = "/tmp/test";
-    config.level = "debug";
-
-    LoggerInit(config);
     auto rs = CreateRaftServer(ops);
     assert(rs);
     auto s = rs->Start();
@@ -66,7 +60,8 @@ int main(int argc, char* argv[]) {
 
     for (int i = 0; i <= 100; ++i) {
         std::string cmd = std::to_string(i);
-        s = r->Submit(cmd);
+        // s = r->Submit(cmd, 0, );
+        s = r->Propose(cmd, 0);
         assert(s.ok());
     }
 

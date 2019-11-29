@@ -16,16 +16,17 @@
 
 #include <assert.h>
 #include <dirent.h>
-#include <sys/stat.h>
-#include <sys/types.h>
 #include <unistd.h>
 #include <algorithm>
 #include <sstream>
 
+#include "raft/entry_flags.h"
 #include "common/logger.h"
 #include "base/util.h"
 #include "base/fs_util.h"
+
 #include "log_file.h"
+#include "log_reader.h"
 
 namespace chubaodb {
 namespace raft {
@@ -79,41 +80,15 @@ Status DiskStorage::initMeta() {
         return s;
     }
 
-    s = meta_file_.Load(&hard_state_, &trunc_meta_);
+    s = meta_file_.Load(&hard_state_, &trunc_meta_, &inherit_index_);
     if (!s.ok()) {
         return s;
     }
 
-    if (!ops_.readonly && ops_.initial_first_index > 1) {
-        if (trunc_meta_.index() > 1 || hard_state_.commit() > 1) {
-            std::ostringstream ss;
-            ss << "incompatible trunc index or commit: (" << trunc_meta_.index() << ", ";
-            ss << hard_state_.commit() << ")";
-            return Status(Status::kInvalidArgument, "initial truncate", ss.str());
-        }
-
-        hard_state_.set_commit(ops_.initial_first_index - 1);
-        s = meta_file_.SaveHardState(hard_state_);
-        if (!s.ok()) {
-            return s;
-        }
-
-        trunc_meta_.set_index(ops_.initial_first_index - 1);
-        trunc_meta_.set_term(1);
-        s = meta_file_.SaveTruncMeta(trunc_meta_);
-        if (!s.ok()) {
-            return s;
-        }
-
-        s = meta_file_.Sync();
-        if (!s.ok()) {
-            return s;
-        }
-    }
     return s;
 }
 
-Status DiskStorage::checkLogsValidate(const std::map<uint64_t, uint64_t>& logs) {
+static Status validateLogs(const std::map<uint64_t, uint64_t>& logs) {
     uint64_t prev_seq = 0;
     uint64_t prev_index = 0;
     for (auto it = logs.cbegin(); it != logs.cend(); ++it) {
@@ -134,48 +109,33 @@ Status DiskStorage::checkLogsValidate(const std::map<uint64_t, uint64_t>& logs) 
 Status DiskStorage::listLogs(std::map<uint64_t, uint64_t>* logs) {
     logs->clear();
 
-    DIR* dir = ::opendir(path_.c_str());
-    if (NULL == dir) {
-        return Status(Status::kIOError, "call opendir", strErrno(errno));
+    // list file under directory
+    std::vector<std::string> files;
+    if (!ListDirFiles(path_, files)) {
+        return Status(Status::kIOError, "list dir file: " + path_, strErrno(errno));
     }
 
-    struct dirent* ent = NULL;
-    while (true) {
-        errno = 0;
-        ent = ::readdir(dir);
-        if (NULL == ent) {
-            if (0 == errno) {
-                break;
-            } else {
-                closedir(dir);
-                return Status(Status::kIOError, "call readdir", strErrno(errno));
-            }
+    // filter log files
+    uint64_t seq = 0;
+    uint64_t offset = 0;
+    for (const auto& file : files) {
+        if (!parseLogFileName(file, seq, offset)) {
+            continue;
         }
-        // TODO: call stat if d_type is DT_UNKNOWN
-        if (ent->d_type == DT_REG || ent->d_type == DT_UNKNOWN) {
-            uint64_t seq = 0;
-            uint64_t offset = 0;
-            if (!parseLogFileName(ent->d_name, seq, offset)) {
-                continue;
-            }
-            auto it = logs->emplace(seq, offset);
-            if (!it.second) {
-                closedir(dir);
-                return Status(Status::kIOError, "repeated log sequence",
-                              std::to_string(seq));
-            }
+        auto it = logs->emplace(seq, offset);
+        if (!it.second) {
+            return Status(Status::kIOError, "repeated log sequence", std::to_string(seq));
         }
     }
-    closedir(dir);
-    return Status::OK();
+    return validateLogs(*logs);
 }
 
 Status DiskStorage::openLogs() {
     std::map<uint64_t, uint64_t> logs;
     auto s = listLogs(&logs);
-    if (!s.ok()) return s;
-    s = checkLogsValidate(logs);
-    if (!s.ok()) return s;
+    if (!s.ok()) {
+        return s;
+    }
 
     if (logs.empty()) {
         if (ops_.readonly) {
@@ -234,33 +194,51 @@ Status DiskStorage::InitialState(pb::HardState* hs) const {
     return Status::OK();
 }
 
-Status DiskStorage::tryRotate() {
-    assert(!log_files_.empty());
-    auto f = log_files_.back();
-    if (f->FileSize() >= ops_.log_file_size) {
-        auto s = f->Rotate();
-        if (!s.ok()) {
-            return s;
-        }
-        auto newf = new LogFile(path_, f->Seq() + 1, last_index_ + 1);
-        s = newf->Open(false);
-        if (!s.ok()) {
-            return s;
-        }
-        log_files_.push_back(newf);
+Status DiskStorage::rotate() {
+    auto s = log_files_.back()->Rotate();
+    if (!s.ok()) {
+        return s;
     }
+    auto newf = new LogFile(path_, log_files_.back()->Seq() + 1, last_index_ + 1);
+    s = newf->Open(false);
+    if (!s.ok()) {
+        return s;
+    }
+    log_files_.push_back(newf);
     return Status::OK();
 }
 
-Status DiskStorage::save(const EntryPtr& e) {
-    auto s = tryRotate();
-    if (!s.ok()) return s;
+Status DiskStorage::checkRotate() {
+    assert(!log_files_.empty());
     auto f = log_files_.back();
-    s = f->Append(e);
+    if (f->FileSize() < ops_.log_file_size) {
+        return Status::OK();
+    } else {
+        return rotate();
+    }
+}
+
+Status DiskStorage::save(const EntryPtr& e) {
+    // check entry if has force rotate flag
+    auto force_rotate = HasEntryFlag(e->flags(), EntryFlags::kForceRotate);
+    if (!force_rotate) {
+        auto s = checkRotate();
+        if (!s.ok()) {
+            return s;
+        }
+    }
+
+    auto f = log_files_.back();
+    auto s = f->Append(e);
     if (!s.ok()) {
         return s;
     }
     last_index_ = e->index();
+
+    if (force_rotate) {
+        return rotate();
+    }
+
     return Status::OK();
 }
 
@@ -552,6 +530,120 @@ Status DiskStorage::Destroy(bool backup) {
     return Status::OK();
 }
 
+Status DiskStorage::InheritLog(const std::string& dest_dir, uint64_t last_index, bool only_index) {
+    if (!MakeDirAll(dest_dir, 0755)) {
+        return Status(Status::kIOError, "create clone dest path " + dest_dir, strErrno(errno));
+    }
+
+    // inherit meta file
+    MetaFile inherit_meta(dest_dir);
+    auto s = inherit_meta.Open();
+    if (!s.ok()) {
+        return s;
+    }
+    // save meta commit index
+    pb::HardState hs;
+    hs.set_commit(last_index);
+    s = inherit_meta.SaveHardState(hs);
+    if (!s.ok()) {
+        return s;
+    }
+
+    // only inherit raft log index
+    if (only_index) {
+        // save truncate meta
+        pb::TruncateMeta tm;
+        tm.set_index(last_index);
+        tm.set_term(1);
+        s = inherit_meta.SaveTruncMeta(tm);
+        if (!s.ok()) {
+            return s;
+        }
+        return inherit_meta.Sync();
+    }
+
+    // now, handle inherit log files
+
+    // hard link log files before last index
+    uint64_t linked_last_seq = 0;
+    uint64_t linked_last_index = 0;
+    for (auto f : log_files_) {
+        if (f->Index() > last_index) {
+            break;
+        }
+        auto new_path = JoinFilePath({dest_dir, GetBaseName(f->Path())});
+        int ret = ::link(f->Path().c_str(), new_path.c_str());
+        if (ret != 0) {
+            return Status(Status::kIOError, "link " + f->Path() + " to " + new_path, strErrno(errno));
+        }
+        linked_last_index = f->LastIndex();
+        linked_last_seq = f->Seq();
+    }
+    if (linked_last_index != last_index) {
+        return Status(Status::kUnexpected,
+                      "linked last index: " + std::to_string(linked_last_index), std::to_string(last_index));
+    }
+
+    // create new start file
+    LogFile last_file(dest_dir, linked_last_seq + 1, last_index + 1);
+    s = last_file.Open(true, true);
+    if (!s.ok()) {
+        return s;
+    }
+
+    // save truncate meta
+    pb::TruncateMeta tm = trunc_meta_;
+    trunc_meta_.set_term(1);
+    s = inherit_meta.SaveTruncMeta(tm);
+    if (!s.ok()) {
+        return s;
+    }
+    // save inherit index
+    s = inherit_meta.SaveInheritIndex(last_index);
+    if (!s.ok()) {
+        return s;
+    }
+    return inherit_meta.Sync();
+}
+
+std::unique_ptr<LogReader> DiskStorage::NewReader(uint64_t start_index) {
+    Status s;
+    std::vector<LogFilePtr> read_files;
+    do {
+        if (start_index <= trunc_meta_.index()) {
+            s = Status(Status::kCompacted,
+                    std::to_string(trunc_meta_.index()), std::to_string(start_index));
+            break;
+        }
+
+        if (start_index > last_index_ + 1) {
+            s = Status(Status::kInvalidArgument, "out of bound", std::to_string(start_index));
+            break;
+        }
+
+        for (auto f : log_files_) {
+            if (f->LastIndex() < start_index) {
+                continue;
+            }
+            // target file
+            LogFilePtr cloned_file;
+            s = f->CloneForRead(cloned_file);
+            if (!s.ok()) {
+                break;
+            } else {
+                read_files.push_back(std::move(cloned_file));
+            }
+        }
+    } while (false);
+
+    std::unique_ptr<LogReader> reader;
+    if (!s.ok()) {
+        reader.reset(new LogReaderImpl(std::move(s)));
+    } else {
+        reader.reset(new LogReaderImpl(std::move(read_files), start_index));
+    }
+    return reader;
+}
 
 #ifndef NDEBUG
 void DiskStorage::TEST_Add_Corruption1() {

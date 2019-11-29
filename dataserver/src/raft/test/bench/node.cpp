@@ -28,11 +28,10 @@ Node::Node(uint64_t node_id, std::shared_ptr<NodeAddress> addrs)
     : node_id_(node_id), addr_mgr_(addrs) {
     RaftServerOptions ops;
     ops.node_id = node_id_;
-    ops.apply_threads_num = bench_config.apply_thread_num;
-    ops.consensus_threads_num = bench_config.raft_thread_num;
+    ops.consensus_threads_num = bench_config.raft_config.work_threads;
     ops.election_tick = 2;
     ops.transport_options.listen_port = addr_mgr_->GetListenPort(node_id_);
-    ops.transport_options.use_inprocess_transport = false;
+    ops.transport_options.use_inprocess_transport = bench_config.raft_config.use_inprocess_transport;
     ops.transport_options.resolver =
         std::static_pointer_cast<NodeResolver>(addr_mgr_);
     raft_server_ = CreateRaftServer(ops);
@@ -43,12 +42,15 @@ Node::Node(uint64_t node_id, std::shared_ptr<NodeAddress> addrs)
     }
 }
 
-Node::~Node() {}
+Node::~Node() {
+    for (auto& r: ranges_) {
+        r.second->Destroy();
+    }
+}
 
 void Node::Start() {
     for (uint64_t i = 1; i <= bench_config.range_num; ++i) {
-        auto rng =
-            std::make_shared<Range>(i, node_id_, raft_server_.get(), addr_mgr_);
+        auto rng = std::make_shared<Range>(i, node_id_, raft_server_.get(), addr_mgr_);
         rng->Start();
         ranges_.emplace(i, rng);
     }

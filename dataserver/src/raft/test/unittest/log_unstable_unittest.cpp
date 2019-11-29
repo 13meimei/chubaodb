@@ -29,7 +29,7 @@ using namespace chubaodb::raft::impl::testutil;
 
 TEST(Unstable, All) {
     UnstableLog log(100);
-    ASSERT_EQ(log.offset(), 100);
+    ASSERT_EQ(log.offset(), 100U);
     uint64_t last_index = 0;
     ASSERT_FALSE(log.maybeLastIndex(&last_index));
 
@@ -37,7 +37,7 @@ TEST(Unstable, All) {
     RandomEntries(100, 200, 64, &entries);
     log.truncateAndAppend(entries);
     ASSERT_TRUE(log.maybeLastIndex(&last_index));
-    ASSERT_EQ(last_index, 199);
+    ASSERT_EQ(last_index, 199U);
 
     // test maybeTerm
     uint64_t term = 0;
@@ -78,7 +78,7 @@ TEST(Unstable, All) {
     entries2.clear();
     log.entries(&entries2);
     ASSERT_TRUE(entries2.empty());
-    ASSERT_EQ(log.offset(), 501);
+    ASSERT_EQ(log.offset(), 501U);
 }
 
 TEST(UnstableLog, Append) {
@@ -96,14 +96,14 @@ TEST(UnstableLog, Append) {
     std::vector<EntryPtr> ents2;
     RandomEntries(50, 150, 64, &ents2);
     log.truncateAndAppend(ents2);  // 50-150
-    ASSERT_EQ(log.offset(), 50);
+    ASSERT_EQ(log.offset(), 50U);
     ents.clear();
     log.entries(&ents);
     s = Equal(ents, ents2);
     ASSERT_TRUE(s.ok()) << s.ToString();
 
     log.truncateAndAppend(ents1);
-    ASSERT_EQ(log.offset(), 50);
+    ASSERT_EQ(log.offset(), 50U);
     ents.clear();
     log.entries(&ents);  // 50-200
     std::vector<EntryPtr> ents4(ents2.begin(), ents2.begin() + 50);

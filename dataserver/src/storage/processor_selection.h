@@ -32,19 +32,20 @@ namespace storage {
 class Selection : public Processor {
 
 public:
-    Selection(const dspb::Selection & selection, std::unique_ptr<Processor> processor);
+    Selection(const dspb::Selection & selection, std::unique_ptr<Processor> processor, bool gather_trace);
     ~Selection();
 
     Selection() = delete;
     Selection(const Selection &) = delete;
     Selection &operator=(const Selection &) = delete;
 
-    virtual Status next(RowResult &row);
+    virtual Status next(RowResult &row) override;
 
-    virtual const std::string get_last_key();
+    virtual const std::string get_last_key() override;
 
-    virtual const std::vector<uint64_t> get_col_ids();
+    virtual const std::vector<uint64_t> get_col_ids() override;
 
+    virtual void get_stats(std::vector<ProcessorStat> &stats) override;
 private:
     std::vector< dspb::Expr * > exprs_;
 

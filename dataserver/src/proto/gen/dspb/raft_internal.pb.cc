@@ -113,6 +113,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Command, kv_put_req_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Command, kv_delete_req_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Command, split_cmd_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Command, cmd_flags_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(PeerTask, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -139,9 +140,9 @@ static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_ATTR
   { 0, -1, sizeof(SplitCommand)},
   { 9, -1, sizeof(CmdID)},
   { 16, -1, sizeof(Command)},
-  { 34, -1, sizeof(PeerTask)},
-  { 41, -1, sizeof(SnapshotKVPair)},
-  { 49, -1, sizeof(SnapshotContext)},
+  { 35, -1, sizeof(PeerTask)},
+  { 42, -1, sizeof(SnapshotKVPair)},
+  { 50, -1, sizeof(SnapshotContext)},
 };
 
 static ::google::protobuf::Message const * const file_default_instances[] = {
@@ -244,7 +245,7 @@ void AddDescriptorsImpl() {
       "split_key\030\002 \001(\014\022!\n\005epoch\030\003 \001(\0132\022.basepb."
       "RangeEpoch\022 \n\tnew_range\030\004 \001(\0132\r.basepb.R"
       "ange\"%\n\005CmdID\022\017\n\007node_id\030\001 \001(\004\022\013\n\003seq\030\002 "
-      "\001(\004\"\255\004\n\007Command\022\033\n\006cmd_id\030\001 \001(\0132\013.dspb.C"
+      "\001(\004\"\301\004\n\007Command\022\033\n\006cmd_id\030\001 \001(\0132\013.dspb.C"
       "mdID\022\037\n\010cmd_type\030\002 \001(\0162\r.dspb.CmdType\022(\n"
       "\014verify_epoch\030\003 \001(\0132\022.basepb.RangeEpoch\022"
       "-\n\017txn_prepare_req\030\004 \001(\0132\024.dspb.PrepareR"
@@ -258,20 +259,21 @@ void AddDescriptorsImpl() {
       "\n\nkv_put_req\030\025 \001(\0132\022.dspb.KvPutRequest\022,"
       "\n\rkv_delete_req\030\026 \001(\0132\025.dspb.KvDeleteReq"
       "uest\022%\n\tsplit_cmd\030d \001(\0132\022.dspb.SplitComm"
-      "and\"P\n\010PeerTask\022(\n\014verify_epoch\030\001 \001(\0132\022."
-      "basepb.RangeEpoch\022\032\n\004peer\030\002 \001(\0132\014.basepb"
-      ".Peer\"K\n\016SnapshotKVPair\022\013\n\003key\030\001 \001(\014\022\r\n\005"
-      "value\030\002 \001(\014\022\035\n\007cf_type\030\003 \001(\0162\014.dspb.CFTy"
-      "pe\".\n\017SnapshotContext\022\033\n\004meta\030\001 \001(\0132\r.ba"
-      "sepb.Range*\254\001\n\007CmdType\022\017\n\013Invalid_Cmd\020\000\022"
-      "\016\n\nTxnPrepare\020\001\022\r\n\tTxnDecide\020\002\022\016\n\nTxnCle"
-      "arup\020\003\022\r\n\tTxnSelect\020\004\022\013\n\007TxnScan\020\005\022\021\n\rTx"
-      "nSelectFlow\020\006\022\t\n\005KvGet\020\024\022\t\n\005KvPut\020\025\022\014\n\010K"
-      "vDelete\020\026\022\016\n\nAdminSplit\020d*$\n\006CFType\022\016\n\nC"
-      "F_DEFAULT\020\000\022\n\n\006CF_TXN\020\001b\006proto3"
+      "and\022\022\n\tcmd_flags\030\351\007 \001(\r\"P\n\010PeerTask\022(\n\014v"
+      "erify_epoch\030\001 \001(\0132\022.basepb.RangeEpoch\022\032\n"
+      "\004peer\030\002 \001(\0132\014.basepb.Peer\"K\n\016SnapshotKVP"
+      "air\022\013\n\003key\030\001 \001(\014\022\r\n\005value\030\002 \001(\014\022\035\n\007cf_ty"
+      "pe\030\003 \001(\0162\014.dspb.CFType\".\n\017SnapshotContex"
+      "t\022\033\n\004meta\030\001 \001(\0132\r.basepb.Range*\254\001\n\007CmdTy"
+      "pe\022\017\n\013Invalid_Cmd\020\000\022\016\n\nTxnPrepare\020\001\022\r\n\tT"
+      "xnDecide\020\002\022\016\n\nTxnClearup\020\003\022\r\n\tTxnSelect\020"
+      "\004\022\013\n\007TxnScan\020\005\022\021\n\rTxnSelectFlow\020\006\022\t\n\005KvG"
+      "et\020\024\022\t\n\005KvPut\020\025\022\014\n\010KvDelete\020\026\022\016\n\nAdminSp"
+      "lit\020d*$\n\006CFType\022\016\n\nCF_DEFAULT\020\000\022\n\n\006CF_TX"
+      "N\020\001b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 1231);
+      descriptor, 1251);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "dspb/raft_internal.proto", &protobuf_RegisterTypes);
   ::basepb::protobuf_basepb_2fbasepb_2eproto::AddDescriptors();
@@ -1185,6 +1187,7 @@ const int Command::kKvGetReqFieldNumber;
 const int Command::kKvPutReqFieldNumber;
 const int Command::kKvDeleteReqFieldNumber;
 const int Command::kSplitCmdFieldNumber;
+const int Command::kCmdFlagsFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 Command::Command()
@@ -1260,14 +1263,16 @@ Command::Command(const Command& from)
   } else {
     split_cmd_ = NULL;
   }
-  cmd_type_ = from.cmd_type_;
+  ::memcpy(&cmd_type_, &from.cmd_type_,
+    static_cast<size_t>(reinterpret_cast<char*>(&cmd_flags_) -
+    reinterpret_cast<char*>(&cmd_type_)) + sizeof(cmd_flags_));
   // @@protoc_insertion_point(copy_constructor:dspb.Command)
 }
 
 void Command::SharedCtor() {
   ::memset(&cmd_id_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&cmd_type_) -
-      reinterpret_cast<char*>(&cmd_id_)) + sizeof(cmd_type_));
+      reinterpret_cast<char*>(&cmd_flags_) -
+      reinterpret_cast<char*>(&cmd_id_)) + sizeof(cmd_flags_));
   _cached_size_ = 0;
 }
 
@@ -1368,7 +1373,9 @@ void Command::Clear() {
     delete split_cmd_;
   }
   split_cmd_ = NULL;
-  cmd_type_ = 0;
+  ::memset(&cmd_type_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&cmd_flags_) -
+      reinterpret_cast<char*>(&cmd_type_)) + sizeof(cmd_flags_));
   _internal_metadata_.Clear();
 }
 
@@ -1541,6 +1548,20 @@ bool Command::MergePartialFromCodedStream(
         break;
       }
 
+      // uint32 cmd_flags = 1001;
+      case 1001: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(72u /* 8008 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 input, &cmd_flags_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
       default: {
       handle_unusual:
         if (tag == 0) {
@@ -1645,6 +1666,11 @@ void Command::SerializeWithCachedSizes(
       100, *this->split_cmd_, output);
   }
 
+  // uint32 cmd_flags = 1001;
+  if (this->cmd_flags() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(1001, this->cmd_flags(), output);
+  }
+
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
@@ -1747,6 +1773,11 @@ void Command::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::
       InternalWriteMessageNoVirtualToArray(
         100, *this->split_cmd_, deterministic, target);
+  }
+
+  // uint32 cmd_flags = 1001;
+  if (this->cmd_flags() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(1001, this->cmd_flags(), target);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -1856,6 +1887,13 @@ size_t Command::ByteSizeLong() const {
       ::google::protobuf::internal::WireFormatLite::EnumSize(this->cmd_type());
   }
 
+  // uint32 cmd_flags = 1001;
+  if (this->cmd_flags() != 0) {
+    total_size += 2 +
+      ::google::protobuf::internal::WireFormatLite::UInt32Size(
+        this->cmd_flags());
+  }
+
   int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
   GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
   _cached_size_ = cached_size;
@@ -1924,6 +1962,9 @@ void Command::MergeFrom(const Command& from) {
   if (from.cmd_type() != 0) {
     set_cmd_type(from.cmd_type());
   }
+  if (from.cmd_flags() != 0) {
+    set_cmd_flags(from.cmd_flags());
+  }
 }
 
 void Command::CopyFrom(const ::google::protobuf::Message& from) {
@@ -1963,6 +2004,7 @@ void Command::InternalSwap(Command* other) {
   swap(kv_delete_req_, other->kv_delete_req_);
   swap(split_cmd_, other->split_cmd_);
   swap(cmd_type_, other->cmd_type_);
+  swap(cmd_flags_, other->cmd_flags_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   swap(_cached_size_, other->_cached_size_);
 }
@@ -2467,6 +2509,20 @@ void Command::set_allocated_split_cmd(::dspb::SplitCommand* split_cmd) {
     
   }
   // @@protoc_insertion_point(field_set_allocated:dspb.Command.split_cmd)
+}
+
+// uint32 cmd_flags = 1001;
+void Command::clear_cmd_flags() {
+  cmd_flags_ = 0u;
+}
+::google::protobuf::uint32 Command::cmd_flags() const {
+  // @@protoc_insertion_point(field_get:dspb.Command.cmd_flags)
+  return cmd_flags_;
+}
+void Command::set_cmd_flags(::google::protobuf::uint32 value) {
+  
+  cmd_flags_ = value;
+  // @@protoc_insertion_point(field_set:dspb.Command.cmd_flags)
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS

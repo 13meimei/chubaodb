@@ -14,14 +14,15 @@
 
 #include "processor_selection.h"
 #include "util.h"
+#include <chrono>
 
 namespace chubaodb {
 namespace ds {
 namespace storage {
 
-Selection::Selection(const dspb::Selection &selection, std::unique_ptr<Processor> processor)
-        :processor_(std::move(processor))
-{
+Selection::Selection(const dspb::Selection &selection, std::unique_ptr<Processor> processor, bool gather_trace)
+        :processor_(std::move(processor)){
+    gather_trace_ = gather_trace;
     for (auto f : selection.filter())
     {
         exprs_.push_back( new dspb::Expr(f));
@@ -42,7 +43,10 @@ Selection::~Selection()
 
 Status Selection::next(RowResult &row)
 {
-
+    std::chrono::system_clock::time_point time_begin;
+    if (gather_trace_) {
+        time_begin = std::chrono::system_clock::now();
+    }
     Status s;
     bool matched = true;
     while (true) {
@@ -70,7 +74,10 @@ Status Selection::next(RowResult &row)
             break;
         }
     }
-
+    if (gather_trace_) {
+        ++rows_count_;
+        time_processed_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now() - time_begin).count();
+    }
     return s;
 }
 
@@ -82,6 +89,11 @@ const std::string Selection::get_last_key()
 const std::vector<uint64_t> Selection::get_col_ids()
 {
     return processor_->get_col_ids();
+}
+
+void Selection::get_stats(std::vector<ProcessorStat> &stats) {
+    processor_->get_stats(stats);
+    stats.emplace_back(rows_count_, time_processed_ns_);
 }
 
 } /* namespace storage */

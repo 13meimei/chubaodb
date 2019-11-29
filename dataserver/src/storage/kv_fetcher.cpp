@@ -28,7 +28,11 @@ std::unique_ptr<KvFetcher> KvFetcher::Create(Store& store, const dspb::SelectReq
 }
 
 std::unique_ptr<KvFetcher> KvFetcher::Create(Store& store, const dspb::ScanRequest& req) {
-    return std::unique_ptr<KvFetcher>(new TxnRangeKvFetcher(store, req.start_key(), req.end_key()));
+    if (req.only_one()) {
+        return std::unique_ptr<KvFetcher>(new PointerKvFetcher(store, req.start_key(), true));
+    } else {
+        return std::unique_ptr<KvFetcher>(new TxnRangeKvFetcher(store, req.start_key(), req.end_key()));
+    }
 }
 
 std::unique_ptr<KvFetcher> KvFetcher::Create(
@@ -199,7 +203,6 @@ Status PointersKvFetcher::Next(KvRecord& rec) {
 }
 
 RangeKvFetcher::RangeKvFetcher(Store& s, const std::string& start, const std::string& limit) {
-
     if (start > limit) {
         status_ = Status(Status::kOutOfBound, "range error. ", "[" + start + "," + limit + ")");
     } else {
@@ -231,8 +234,13 @@ Status RangeKvFetcher::Next(KvRecord& rec) {
 }
 
 TxnRangeKvFetcher::TxnRangeKvFetcher(Store& s, const std::string& start, const std::string& limit) {
-    if (start > limit) {
-        status_ = Status(Status::kOutOfBound, "range error. ", "[" + start + "," + limit + ")");
+    auto stort_start_key = s.GetStartKey();
+    auto store_end_key = s.GetEndKey();
+    if (start > limit
+        || (!limit.empty() && limit < stort_start_key)
+        || (!start.empty() && start > store_end_key)) {
+        status_ = Status(Status::kOutOfBound, "range error. ", 
+            "store range:[" + stort_start_key + "," + store_end_key + ") input range:[" + start + "," + limit + ")");
     } else {
         status_ = s.NewIterators(data_iter_, txn_iter_, start, limit);
     }

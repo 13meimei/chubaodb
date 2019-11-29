@@ -290,7 +290,7 @@ TEST_F(SelectFlowTest, SelectFlow_selection_table_read_cmp)
 
 
     { // begin create range
-        dspb::SchReuqest req;
+        dspb::SchRequest req;
         req.mutable_create_range()->set_allocated_range(getPrimaryKeyRange());
 
         // create range

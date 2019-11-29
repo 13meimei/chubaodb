@@ -37,13 +37,13 @@ public:
 
     std::string GetNodeAddress(uint64_t node_id) override;
 
-    bool AddNodeAddress(uint64_t node_id, std::string address) override;
+    bool AddNodeAddress(uint64_t node_id, std::string address);
 private:
     shared_mutex mutex_;
     std::unordered_map<uint64_t, std::string> address_map_;
     master::MasterClient* master_server_;
 };
 
-}//namespace server
-}//namespace ds
-}//namespace chubaodb
+} // namespace server
+} // namespace ds
+} // namespace chubaodb

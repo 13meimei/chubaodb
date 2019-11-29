@@ -410,7 +410,11 @@ Status CheckpointJob::Run() {
         markFinish(JobState::kSuccess);
         FLOG_INFO("{} run success: {}", name_, metric_.ToString());
     } else {
-        FLOG_ERROR("{} run failed: {}, aborting", name_, s.ToString());
+        if (cancel_flag_) {
+            FLOG_INFO("{} is canceled, aborting", name_);
+        } else {
+            FLOG_ERROR("{} run failed: {}, aborting", name_, s.ToString())
+        }
         s = writer_->Abort();
         if (!s.ok()) {
             FLOG_WARN("{} abort failed: {}", name_, s.ToString());

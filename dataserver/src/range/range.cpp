@@ -21,6 +21,7 @@
 
 #include "master/client.h"
 #include "server/run_status.h"
+#include "storage/meta_store.h"
 
 #include "range_logger.h"
 
@@ -30,7 +31,8 @@ namespace range {
 
 static const int kDownPeerThresholdSecs = 50;
 
-Range::Range(RangeContext* context, const basepb::Range &meta) :
+Range::Range(const RangeOptions& opt, RangeContext* context, const basepb::Range &meta) :
+    opt_(opt),
     context_(context),
     node_id_(context_->GetNodeID()),
     id_(meta.id()),
@@ -41,8 +43,14 @@ Range::Range(RangeContext* context, const basepb::Range &meta) :
 Range::~Range() {
 }
 
+std::string Range::raftLogPath(uint64_t table_id, uint64_t range_id) {
+    return JoinFilePath({std::string(ds_config.raft_config.log_path),
+                         std::to_string(table_id),
+                         std::to_string(range_id)});
+}
+
 // start raft
-Status Range::startRaft(uint64_t leader, uint64_t log_start_index) {
+Status Range::startRaft(uint64_t leader) {
     assert(store_ != nullptr);
 
     raft::RaftOptions options;
@@ -56,14 +64,7 @@ Status Range::startRaft(uint64_t leader, uint64_t log_start_index) {
     options.log_file_size = ds_config.raft_config.log_file_size;
     options.max_log_files = ds_config.raft_config.max_log_files;
     options.allow_log_corrupt = ds_config.raft_config.allow_log_corrupt > 0;
-    options.initial_first_index = log_start_index;
-    options.storage_path = JoinFilePath(std::vector<std::string>{
-            std::string(ds_config.raft_config.log_path), std::to_string(meta_.GetTableID()),
-            std::to_string(id_)});
-
-    if (ds_config.b_test && !ds_config.test_config.is_leader) {
-        options.has_campaign = false;
-    }
+    options.storage_path = raftLogPath(meta_.GetTableID(), id_);
 
     // init raft peers
     auto peers = meta_.GetAllPeers();
@@ -92,7 +93,7 @@ Status Range::startRaft(uint64_t leader, uint64_t log_start_index) {
     return Status::OK();
 }
 
-Status Range::Initialize(std::unique_ptr<db::DB> db, uint64_t leader, uint64_t log_start_index) {
+Status Range::Initialize(std::unique_ptr<db::DB> db, uint64_t leader) {
     // create store
     assert(store_ == nullptr);
     if (db == nullptr) {
@@ -106,7 +107,7 @@ Status Range::Initialize(std::unique_ptr<db::DB> db, uint64_t leader, uint64_t l
     store_.reset(new storage::Store(meta_.Get(), std::move(db)));
     apply_index_ = store_->PersistApplied();
 
-    auto s = startRaft(leader, log_start_index);
+    auto s = startRaft(leader);
     if (!s.ok()) {
         RLOG_ERROR("start raft failed: {}", s.ToString());
         return s;
@@ -238,7 +239,7 @@ void Range::scheduleHeartbeat(bool delay) {
 
     std::shared_ptr<HeartbeatTimer> timer(new HeartbeatTimer(shared_from_this()));
     if (delay) {
-        context_->GetTimerQueue()->Push(timer, context_->HeartbeatIntervalMS());
+        context_->GetTimerQueue()->Push(timer, opt_.heartbeat_interval_msec);
     } else {
         context_->GetTimerQueue()->Push(timer, 0);
     }
@@ -383,8 +384,7 @@ Status Range::apply(const dspb::Command &cmd, uint64_t index) {
     }
 }
 
-Status Range::Read(const std::string& cmd, uint16_t verify_result) {
-
+Status Range::ApplyReadIndex(const std::string& cmd, uint16_t verify_result) {
     ErrorPtr err = nullptr;
     dspb::RangeResponse resp;
     if (!valid_) {
@@ -465,7 +465,7 @@ Status Range::Read(const std::string& cmd, uint16_t verify_result) {
     auto end = std::chrono::system_clock::now();
     auto elapsed_usec =
         std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-    if (elapsed_usec > kTimeTakeWarnThresoldUSec) {
+    if (elapsed_usec > opt_.request_warn_usecs) {
         RLOG_WARN("apply takes too long({} ms), type: {}.", elapsed_usec / 1000,
                 dspb::CmdType_Name(raft_cmd.cmd_type()));
     }
@@ -506,7 +506,7 @@ Status Range::Apply(const std::string &cmd, uint64_t index) {
     auto end = std::chrono::system_clock::now();
     auto elapsed_usec =
         std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-    if (elapsed_usec > kTimeTakeWarnThresoldUSec) {
+    if (elapsed_usec > opt_.request_warn_usecs) {
         RLOG_WARN("apply takes too long({} ms), type: {}.", elapsed_usec / 1000,
                 dspb::CmdType_Name(raft_cmd.cmd_type()));
     }
@@ -515,21 +515,16 @@ Status Range::Apply(const std::string &cmd, uint64_t index) {
 }
 
 Status Range::submit(const dspb::Command &cmd, uint16_t rw_flag) {
-    std::string str_cmd;
     if (!ds_config.raft_config.disabled) {
-        if (rw_flag == chubaodb::raft::WRITE_FLAG) {
-            if (is_leader_) {
-                str_cmd = cmd.SerializeAsString();
-                if (str_cmd.empty()) {
-                    return Status(Status::kCorruption, "protobuf serialize failed", "");
-                }
-            } else {
-                return Status(Status::kNotLeader, "Not Leader", "");
-            }
-        } else {
-            str_cmd = cmd.SerializeAsString();
+        if (!is_leader_) {
+            return Status(Status::kNotLeader, "Not Leader", "");
         }
-        return raft_->Submit(str_cmd, cmd.cmd_id().seq(), rw_flag);
+        auto str_cmd = cmd.SerializeAsString();
+        if (rw_flag == chubaodb::raft::WRITE_FLAG) {
+            return raft_->Propose(str_cmd, cmd.cmd_flags());
+        } else {
+            return raft_->ReadIndex(str_cmd);
+        }
     } else {
         static std::atomic<uint64_t> fake_index = {0};
         apply(cmd, ++fake_index);
@@ -569,7 +564,7 @@ void Range::replySubmit(const dspb::Command& cmd, dspb::RangeResponse& resp, Err
     auto ctx = submit_queue_.Remove(cmd.cmd_id().seq());
     if (ctx != nullptr) {
         context_->Statistics()->PushTime(HistogramType::kRaft, apply_time - ctx->SubmitTime());
-        ctx->CheckExecuteTime(id_, kTimeTakeWarnThresoldUSec);
+        ctx->CheckExecuteTime(id_, opt_.request_warn_usecs);
         ctx->SendResponse(resp, std::move(err));
     } else {
         if (!recovering_) {
@@ -727,7 +722,7 @@ Status Range::Destroy() {
 
     context_->Statistics()->ReportLeader(id_, false);
 
-    auto s = context_->RaftServer()->DestroyRaft(id_);
+    auto s = context_->RaftServer()->DestroyRaft(id_, false);
     if (!s.ok()) {
         RLOG_WARN("destroy raft failed: {}", s.ToString());
     }

@@ -49,7 +49,7 @@ func toByte(prefix uint8, id uint64) []byte {
 
 func encodeAscendingKey(buf []byte, col *basepb.Column, sval []byte) ([]byte, error) {
 	switch col.DataType {
-	case basepb.DataType_Tinyint, basepb.DataType_Smallint, basepb.DataType_Int, basepb.DataType_BigInt:
+	case basepb.DataType_TinyInt, basepb.DataType_SmallInt, basepb.DataType_Int, basepb.DataType_BigInt:
 		if col.Unsigned {
 			ival, err := strconv.ParseUint(hack.String(sval), 10, 64)
 			if err != nil {

@@ -18,6 +18,7 @@ _Pragma("once");
 
 #include "common/server_config.h"
 
+#include "db/mass_tree_impl/mass_tree_wrapper.h"
 #include "db/db.h"
 #include "iterator_impl.h"
 #include "write_batch_impl.h"
@@ -28,6 +29,7 @@ namespace db {
 
 class RocksDBManager;
 class RocksWriteBatch;
+class MasstreeWrapper;
 
 struct RocksDBOptions {
     uint64_t id = 0;
@@ -35,7 +37,6 @@ struct RocksDBOptions {
     std::string end_key;
     bool wal_disabled = false;
     bool read_checksum = true;
-    bool replay = true;
 
     rocksdb::DB *db = nullptr;
 };
@@ -43,7 +44,8 @@ struct RocksDBOptions {
 class RocksDBImpl: public DB {
 public:
     RocksDBImpl(const RocksDBOptions& ops, RocksDBManager *manager,
-        rocksdb::ColumnFamilyHandle *data_cf, rocksdb::ColumnFamilyHandle *txn_cf);
+            rocksdb::ColumnFamilyHandle *data_cf, rocksdb::ColumnFamilyHandle *txn_cf,
+            rocksdb::ColumnFamilyHandle *meta_cf, MasstreeWrapper* txn_cache);
 
     ~RocksDBImpl();
 
@@ -75,17 +77,25 @@ public:
     Status ApplySplit(const std::string& split_key, uint64_t raft_index) override;
 
 public:
-    Status DeleteRange(CFType cf, const std::string& begin_key, const std::string& end_key);
-
-    rocksdb::ColumnFamilyHandle *GetColumnFamily(CFType cf) {
-        return cf == CFType::kData? data_cf_ : txn_cf_;
+    rocksdb::ColumnFamilyHandle *getColumnFamily(CFType cf) {
+        return cf == CFType::kData ? data_cf_ : txn_cf_;
     }
+
+    // applied funcs
+    Status loadApplied();
+    Status deleteApplied();
+    Status saveApplied(uint64_t index);
+
+    Status recoverTxnCache();
+
+    Status truncate();
+
+    // append applied_index to batch and write batch to db
+    Status writeBatch(RocksWriteBatch* batch, uint64_t raft_index);
 
 private:
     const uint64_t id_;
-    const bool wal_disabled_ = false;
-    const bool replay_ = true;
-
+    const std::string applied_key_;
     const std::string start_key_;
     std::string end_key_;
 
@@ -98,7 +108,8 @@ private:
     RocksDBManager* manager_ = nullptr;
     rocksdb::ColumnFamilyHandle* data_cf_ = nullptr;
     rocksdb::ColumnFamilyHandle* txn_cf_ = nullptr;
-
+    rocksdb::ColumnFamilyHandle* meta_cf_ = nullptr;
+    MasstreeWrapper* txn_cache_ = nullptr;
 };
 
 } // namespace db

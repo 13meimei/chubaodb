@@ -556,6 +556,12 @@ class Command : public ::google::protobuf::Message /* @@protoc_insertion_point(c
   ::dspb::CmdType cmd_type() const;
   void set_cmd_type(::dspb::CmdType value);
 
+  // uint32 cmd_flags = 1001;
+  void clear_cmd_flags();
+  static const int kCmdFlagsFieldNumber = 1001;
+  ::google::protobuf::uint32 cmd_flags() const;
+  void set_cmd_flags(::google::protobuf::uint32 value);
+
   // @@protoc_insertion_point(class_scope:dspb.Command)
  private:
 
@@ -573,6 +579,7 @@ class Command : public ::google::protobuf::Message /* @@protoc_insertion_point(c
   ::dspb::KvDeleteRequest* kv_delete_req_;
   ::dspb::SplitCommand* split_cmd_;
   int cmd_type_;
+  ::google::protobuf::uint32 cmd_flags_;
   mutable int _cached_size_;
   friend struct protobuf_dspb_2fraft_5finternal_2eproto::TableStruct;
 };
@@ -1600,6 +1607,20 @@ inline void Command::set_allocated_split_cmd(::dspb::SplitCommand* split_cmd) {
     
   }
   // @@protoc_insertion_point(field_set_allocated:dspb.Command.split_cmd)
+}
+
+// uint32 cmd_flags = 1001;
+inline void Command::clear_cmd_flags() {
+  cmd_flags_ = 0u;
+}
+inline ::google::protobuf::uint32 Command::cmd_flags() const {
+  // @@protoc_insertion_point(field_get:dspb.Command.cmd_flags)
+  return cmd_flags_;
+}
+inline void Command::set_cmd_flags(::google::protobuf::uint32 value) {
+  
+  cmd_flags_ = value;
+  // @@protoc_insertion_point(field_set:dspb.Command.cmd_flags)
 }
 
 // -------------------------------------------------------------------

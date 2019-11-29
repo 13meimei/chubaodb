@@ -9,6 +9,9 @@ set(common_SOURCES
     statistics.cpp
     string_util.cpp
     logger.cpp
+    data_type/my_decimal.cpp
+    data_type/my_timestamp.cpp
+    data_type/my_time.cpp
 )
 
 foreach(f IN LISTS common_SOURCES)

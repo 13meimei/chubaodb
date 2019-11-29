@@ -36,7 +36,7 @@ public:
         return instance_;
     };
 
-    int Start();
+    bool Start();
     void Stop();
 
     ContextServer *context_server() { return context_; }

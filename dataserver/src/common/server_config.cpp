@@ -18,6 +18,7 @@
 #include <tuple>
 #include <sstream>
 
+#include "base/system_info.h"
 #include "common/logger.h"
 #include "common/string_util.h"
 
@@ -25,10 +26,21 @@ namespace chubaodb {
 
 ServerConfig ds_config;
 
+std::string EngineTypeName(EngineType et) {
+    switch (et) {
+        case EngineType::kRocksdb:
+            return "rocksdb";
+        case EngineType ::kMassTree:
+            return "masstree";
+        default:
+            return "<unknown>";
+    }
+}
+
 bool ServerConfig::LoadFromFile(const std::string& conf_file, bool btest) {
     INIReader reader(conf_file);
     if (reader.ParseError() < 0) {
-        std::cerr << "parse " << conf_file <<  " failed:" << reader.ParseError() << std::endl;
+        std::cerr << "parse config file(\"" << conf_file <<  "\") failed: " << reader.ParseError() << std::endl;
         return false;
     }
     return load(reader, btest);
@@ -45,6 +57,7 @@ bool ServerConfig::load(const INIReader& reader, bool btest) {
     docker = reader.GetBoolean("", "docker", false);
     if (docker) {
         FLOG_INFO("server run on docker");
+        SetSysinfoConfig(true);
     }
 
     data_path = reader.Get("", "data_path", "");
@@ -130,9 +143,9 @@ bool ServerConfig::loadWorkerConfig(const INIReader& reader) {
     std::tie(worker_config.slow_worker_num, ret) = loadThreadNum(reader, section, "slow_worker", 4);
     if (!ret) return false;
 
-    worker_config.task_in_place = reader.GetBoolean(section, "task_in_place", false);
+    worker_config.task_in_place = reader.GetBoolean(section, "task_in_place", true);
     if (worker_config.task_in_place) {
-        FLOG_WARN("[Conifg] task execution enter in place mode!");
+        FLOG_INFO("[Conifg] task execution enter in place mode.");
     }
 
     std::tie(worker_config.task_timeout_ms, ret) =
@@ -209,6 +222,13 @@ bool ServerConfig::loadRangeConfig(const INIReader& reader) {
         return false;
     }
 
+    range_config.index_split_ratio = reader.GetInteger(section, "index_split_ratio", 10);
+    if (range_config.index_split_ratio == 0 || range_config.index_split_ratio > 100) {
+        FLOG_CRIT("[Config] load range config error, valid config: index_split_ratio in [0, 100], current: {}; ",
+                range_config.index_split_ratio);
+        return false;
+    }
+
     return true;
 }
 
@@ -261,14 +281,6 @@ bool ServerConfig::loadRaftConfig(const INIReader& reader) {
 
     std::tie(raft_config.consensus_queue, ret) =
             loadIntegerAtLeast<size_t>(reader, section, "consensus_queue", 10000, 100);
-    if (!ret) return false;
-
-    std::tie(raft_config.apply_threads, ret) =
-            loadThreadNum(reader, section, "apply_threads", 4);
-    if (!ret) return false;
-
-    std::tie(raft_config.apply_queue, ret) =
-            loadIntegerAtLeast<size_t>(reader, section, "apply_queue", 100000, 100);
     if (!ret) return false;
 
     std::tie(raft_config.transport_send_threads, ret) =

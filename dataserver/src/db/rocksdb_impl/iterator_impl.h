@@ -22,8 +22,6 @@ namespace chubaodb {
 namespace ds {
 namespace db {
 
-class Metric;
-
 class RocksIterator: public Iterator {
 public:
     RocksIterator(rocksdb::Iterator* it, const std::string& start,

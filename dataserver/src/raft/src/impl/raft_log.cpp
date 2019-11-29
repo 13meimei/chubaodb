@@ -1,4 +1,5 @@
-// Copyright 2019 The Chubao Authors.
+// Copyright 2015 The etcd Authors
+// Portions Copyright 2019 The Chubao Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -59,7 +60,7 @@ uint64_t RaftLog::firstIndex() const {
         throw RaftException(std::string("get first index from raft log error:") +
                             s.ToString());
     }
-    return first_index;
+    return std::max(first_index, storage_->InheritIndex() + 1);
 }
 
 uint64_t RaftLog::lastIndex() const {

@@ -16,6 +16,7 @@ _Pragma("once");
 
 #include <atomic>
 #include <mutex>
+#include <rocksdb/db.h>
 
 #include "range/context.h"
 #include "raft/server.h"
@@ -35,10 +36,6 @@ public:
     void Destroy();
 
     uint64_t GetNodeID() const override { return 1; }
-
-    // split policy
-    SplitPolicy* GetSplitPolicy() override { return split_policy_.get(); }
-    int HeartbeatIntervalMS() override { return 10000000; }
 
     db::DBManager* DBManager() override { return db_manager_.get(); }
     master::MasterClient* MasterClient() override { return master_client_.get(); }
@@ -65,7 +62,6 @@ private:
     std::unique_ptr<master::MasterClient> master_client_;
     std::unique_ptr<raft::RaftServer> raft_server_;
     std::unique_ptr<RangeStats> range_stats_;
-    std::unique_ptr<SplitPolicy> split_policy_;
 
     std::atomic<uint64_t> db_usage_percent_ = {0};
 

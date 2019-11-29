@@ -528,3 +528,7 @@ func (rs *BaseService) TransferLeader(ctx context.Context, node *basepb.Node, ol
 func (ns *BaseService) DsClient() client.SchClient {
 	return ns.dsClient
 }
+
+func (ns *BaseService) AdmClient() client.AdminClient {
+	return ns.admClient
+}

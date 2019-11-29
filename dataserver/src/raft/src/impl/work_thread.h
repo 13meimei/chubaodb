@@ -14,70 +14,55 @@
 
 _Pragma("once");
 
-#include <atomic>
 #include <condition_variable>
-#include <memory>
 #include <mutex>
 #include <queue>
 #include <thread>
+#include <atomic>
 #include <functional>
-#include <unordered_map>
-#include "raft_types.h"
 
 namespace chubaodb {
 namespace raft {
 namespace impl {
 
-class RaftImpl;
-class RaftServerImpl;
-
-static const int kMaxBatchSize = 64;
-
-struct Work {
-    uint64_t owner = 0;
-    std::atomic<bool>* stopped = nullptr;
-
-    std::function<void()> f0;
-
-    std::function<void(MessagePtr&)> f1;
-    MessagePtr msg = nullptr;
-
-    void Do();
-};
+using Work = std::function<void()>;
 
 class WorkThread {
 public:
-    WorkThread(RaftServerImpl* server, size_t queue_capcity,
-               const std::string& name = "raft-worker");
+    WorkThread(size_t queue_capcity, const std::string& name = "raft-worker");
     ~WorkThread();
 
     WorkThread(const WorkThread&) = delete;
     WorkThread& operator=(const WorkThread&) = delete;
 
-    bool submit(uint64_t owner, std::atomic<bool>* stopped, uint64_t unique_sequence,
-                uint16_t rw_flag, const std::function<void(MessagePtr&)>& handle, std::string& cmd);
+    bool tryPost(Work&& work);
 
-    bool tryPost(const Work& w);
-    void post(const Work& w);
-    void waitPost(const Work& w);
+    void post(Work&& work);
+
+    void waitPost(Work&& work);
+
     void shutdown();
-    int size() const;
+
+    size_t size() const;
+
+    bool isFull() const;
+
+    bool inCurrentThread() const;
 
 private:
-    bool pull(Work* w);
     void run();
 
 private:
-    RaftServerImpl* server_ = nullptr;
     const size_t capacity_ = 0;
 
-    std::unique_ptr<std::thread> thr_;
     bool running_ = false;
+    std::thread::id tid_;
+
     std::queue<Work> queue_;
-    std::unordered_map<uint64_t, MessagePtr> write_batch_pos_;
-    std::unordered_map<uint64_t, MessagePtr> read_batch_pos_;
+    std::atomic<size_t> que_size_ = {0};
     mutable std::mutex mu_;
     std::condition_variable cv_;
+    std::unique_ptr<std::thread> thr_;
 };
 
 } /* namespace impl */

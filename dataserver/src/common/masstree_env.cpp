@@ -23,6 +23,7 @@
 
 volatile mrcu_epoch_type globalepoch = 1;     // global epoch, updated by main thread regularly
 volatile mrcu_epoch_type active_epoch = 1;
+kvtimestamp_t initial_timestamp = 0;
 
 namespace chubaodb {
 

@@ -100,7 +100,7 @@ public:
         return Status::OK();
     }
 
-    uint64_t PersistApplied() {
+    uint64_t PersistApplied() override {
         return 0;
     }
 
@@ -127,6 +127,10 @@ public:
 
         }
         return s;
+    }
+
+    Status ApplyReadIndex(const std::string& cmd, uint16_t verify_result) override {
+        return Status(Status::kNotSupported);
     }
 
 private:
@@ -176,8 +180,8 @@ TEST(Snapshot, SendAndApply) {
         ASSERT_TRUE(result.status.ok()) << result.status.ToString();
         std::cout << "apply bytes: " << result.bytes_count <<
                   ", blocks: " << result.blocks_count << std::endl;
-        ASSERT_GT(result.bytes_count, 0);
-        ASSERT_GT(result.blocks_count, 0);
+        ASSERT_GT(result.bytes_count, 0U);
+        ASSERT_GT(result.blocks_count, 0U);
 
         // notify apply finished
         {
@@ -218,8 +222,8 @@ TEST(Snapshot, SendAndApply) {
         auto s = testutil::Equal(ctx, send_ctx);
         ASSERT_TRUE(s.ok()) << s.ToString();
         ASSERT_TRUE(result.status.ok()) << result.status.ToString();
-        ASSERT_GT(result.bytes_count, 0);
-        ASSERT_GT(result.blocks_count, 0);
+        ASSERT_GT(result.bytes_count, 0U);
+        ASSERT_GT(result.blocks_count, 0U);
         std::cout << "send bytes: " << result.bytes_count <<
                   ", blocks: " << result.blocks_count << std::endl;
 

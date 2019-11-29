@@ -13,18 +13,20 @@
 // permissions and limitations under the License.
 
 #include "processor_order_by.h"
+#include <chrono>
 
 namespace chubaodb {
 namespace ds {
 namespace storage {
 
-OrderBy::OrderBy(const dspb::Ordering &ordering, std::unique_ptr<Processor> processor)
+OrderBy::OrderBy(const dspb::Ordering &ordering, std::unique_ptr<Processor> processor, bool gather_trace)
     : ordering_(ordering),
     count_(std::min(ordering_.count(), max_count_)),
-    processor_(std::move(processor)) {
+    processor_(std::move(processor)){
+    gather_trace_ = gather_trace;
     status_check_ordering_ = OrderingCheck();
     if (status_check_ordering_.ok()) {
-        ColumnOrderByInfo colInfo;
+        RowColumnInfo colInfo;
         for (const auto &column : ordering_.columns()) {
             colInfo.col_id = column.expr().column().id();
             colInfo.asc = column.asc();
@@ -57,6 +59,10 @@ Status OrderBy::OrderingCheck() {
 }
 
 void OrderBy::FetchOrderByRows() {
+    std::chrono::system_clock::time_point time_begin;
+    if (gather_trace_) {
+        time_begin = std::chrono::system_clock::now();
+    }
     Status s;
     do {
         RowResult row;
@@ -64,7 +70,7 @@ void OrderBy::FetchOrderByRows() {
         if (!s.ok()) {
             break;
         }
-        row.SetColumnOrderByInfos(col_order_by_infos_);
+        row.SetColumnInfos(col_order_by_infos_);
         set_result_.insert(row);
         if (set_result_.size() == count_) {
             break;
@@ -79,13 +85,16 @@ void OrderBy::FetchOrderByRows() {
         }
         auto it = set_result_.end();
         --it;
-        row.SetColumnOrderByInfos(col_order_by_infos_);
+        row.SetColumnInfos(col_order_by_infos_);
         if (row < (*it)) {
             set_result_.erase(it);
             set_result_.insert(row);
         }
     }
     set_result_it_ = set_result_.begin();
+    if (gather_trace_) {
+        time_processed_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now() - time_begin).count();
+    }
 }
 
 Status OrderBy::next(RowResult &row) {
@@ -102,8 +111,15 @@ Status OrderBy::next(RowResult &row) {
     }
 
     row = *set_result_it_++;
-    
+    if (gather_trace_) {
+        ++rows_count_;
+    }
     return Status::OK();
+}
+
+void OrderBy::get_stats(std::vector<ProcessorStat> &stats) {
+    processor_->get_stats(stats);
+    stats.emplace_back(rows_count_, time_processed_ns_);
 }
 
 } /* namespace storage */

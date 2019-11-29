@@ -492,6 +492,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ScanRequest, start_key_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ScanRequest, end_key_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ScanRequest, max_count_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ScanRequest, only_one_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ScanResponse, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -532,7 +533,7 @@ static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_ATTR
   { 231, -1, sizeof(ValueIntent)},
   { 241, -1, sizeof(KeyValue)},
   { 249, -1, sizeof(ScanRequest)},
-  { 257, -1, sizeof(ScanResponse)},
+  { 258, -1, sizeof(ScanResponse)},
 };
 
 static ::google::protobuf::Message const * const file_default_instances[] = {
@@ -790,16 +791,16 @@ void AddDescriptorsImpl() {
       "\022\016\n\006txn_id\030\002 \001(\t\022\023\n\013primary_key\030\003 \001(\014\022\017\n"
       "\007timeout\030\004 \001(\010\022\r\n\005value\030\n \001(\014\"I\n\010KeyValu"
       "e\022\013\n\003key\030\001 \001(\014\022\r\n\005value\030\002 \001(\014\022!\n\006intent\030"
-      "\n \001(\0132\021.dspb.ValueIntent\"D\n\013ScanRequest\022"
+      "\n \001(\0132\021.dspb.ValueIntent\"V\n\013ScanRequest\022"
       "\021\n\tstart_key\030\001 \001(\014\022\017\n\007end_key\030\002 \001(\014\022\021\n\tm"
-      "ax_count\030\003 \001(\003\"9\n\014ScanResponse\022\014\n\004code\030\001"
-      " \001(\005\022\033\n\003kvs\030\002 \003(\0132\016.dspb.KeyValue* \n\006OpT"
-      "ype\022\n\n\006INSERT\020\000\022\n\n\006DELETE\020\001*5\n\tTxnStatus"
-      "\022\014\n\010TXN_INIT\020\000\022\r\n\tCOMMITTED\020\001\022\013\n\007ABORTED"
-      "\020\002b\006proto3"
+      "ax_count\030\003 \001(\003\022\020\n\010only_one\030\004 \001(\010\"9\n\014Scan"
+      "Response\022\014\n\004code\030\001 \001(\005\022\033\n\003kvs\030\002 \003(\0132\016.ds"
+      "pb.KeyValue* \n\006OpType\022\n\n\006INSERT\020\000\022\n\n\006DEL"
+      "ETE\020\001*5\n\tTxnStatus\022\014\n\010TXN_INIT\020\000\022\r\n\tCOMM"
+      "ITTED\020\001\022\013\n\007ABORTED\020\002b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 3290);
+      descriptor, 3308);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "dspb/txn.proto", &protobuf_RegisterTypes);
   ::dspb::protobuf_dspb_2fexpr_2eproto::AddDescriptors();
@@ -15043,6 +15044,7 @@ void KeyValue::set_allocated_intent(::dspb::ValueIntent* intent) {
 const int ScanRequest::kStartKeyFieldNumber;
 const int ScanRequest::kEndKeyFieldNumber;
 const int ScanRequest::kMaxCountFieldNumber;
+const int ScanRequest::kOnlyOneFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 ScanRequest::ScanRequest()
@@ -15066,14 +15068,18 @@ ScanRequest::ScanRequest(const ScanRequest& from)
   if (from.end_key().size() > 0) {
     end_key_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.end_key_);
   }
-  max_count_ = from.max_count_;
+  ::memcpy(&max_count_, &from.max_count_,
+    static_cast<size_t>(reinterpret_cast<char*>(&only_one_) -
+    reinterpret_cast<char*>(&max_count_)) + sizeof(only_one_));
   // @@protoc_insertion_point(copy_constructor:dspb.ScanRequest)
 }
 
 void ScanRequest::SharedCtor() {
   start_key_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   end_key_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  max_count_ = GOOGLE_LONGLONG(0);
+  ::memset(&max_count_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&only_one_) -
+      reinterpret_cast<char*>(&max_count_)) + sizeof(only_one_));
   _cached_size_ = 0;
 }
 
@@ -15118,7 +15124,9 @@ void ScanRequest::Clear() {
 
   start_key_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   end_key_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  max_count_ = GOOGLE_LONGLONG(0);
+  ::memset(&max_count_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&only_one_) -
+      reinterpret_cast<char*>(&max_count_)) + sizeof(only_one_));
   _internal_metadata_.Clear();
 }
 
@@ -15170,6 +15178,20 @@ bool ScanRequest::MergePartialFromCodedStream(
         break;
       }
 
+      // bool only_one = 4;
+      case 4: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(32u /* 32 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   bool, ::google::protobuf::internal::WireFormatLite::TYPE_BOOL>(
+                 input, &only_one_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
       default: {
       handle_unusual:
         if (tag == 0) {
@@ -15213,6 +15235,11 @@ void ScanRequest::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteInt64(3, this->max_count(), output);
   }
 
+  // bool only_one = 4;
+  if (this->only_one() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteBool(4, this->only_one(), output);
+  }
+
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
@@ -15244,6 +15271,11 @@ void ScanRequest::SerializeWithCachedSizes(
   // int64 max_count = 3;
   if (this->max_count() != 0) {
     target = ::google::protobuf::internal::WireFormatLite::WriteInt64ToArray(3, this->max_count(), target);
+  }
+
+  // bool only_one = 4;
+  if (this->only_one() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(4, this->only_one(), target);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -15282,6 +15314,11 @@ size_t ScanRequest::ByteSizeLong() const {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::Int64Size(
         this->max_count());
+  }
+
+  // bool only_one = 4;
+  if (this->only_one() != 0) {
+    total_size += 1 + 1;
   }
 
   int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
@@ -15324,6 +15361,9 @@ void ScanRequest::MergeFrom(const ScanRequest& from) {
   if (from.max_count() != 0) {
     set_max_count(from.max_count());
   }
+  if (from.only_one() != 0) {
+    set_only_one(from.only_one());
+  }
 }
 
 void ScanRequest::CopyFrom(const ::google::protobuf::Message& from) {
@@ -15353,6 +15393,7 @@ void ScanRequest::InternalSwap(ScanRequest* other) {
   start_key_.Swap(&other->start_key_);
   end_key_.Swap(&other->end_key_);
   swap(max_count_, other->max_count_);
+  swap(only_one_, other->only_one_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   swap(_cached_size_, other->_cached_size_);
 }
@@ -15483,6 +15524,20 @@ void ScanRequest::set_max_count(::google::protobuf::int64 value) {
   
   max_count_ = value;
   // @@protoc_insertion_point(field_set:dspb.ScanRequest.max_count)
+}
+
+// bool only_one = 4;
+void ScanRequest::clear_only_one() {
+  only_one_ = false;
+}
+bool ScanRequest::only_one() const {
+  // @@protoc_insertion_point(field_get:dspb.ScanRequest.only_one)
+  return only_one_;
+}
+void ScanRequest::set_only_one(bool value) {
+  
+  only_one_ = value;
+  // @@protoc_insertion_point(field_set:dspb.ScanRequest.only_one)
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS

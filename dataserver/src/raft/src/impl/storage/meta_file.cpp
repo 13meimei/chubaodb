@@ -69,35 +69,53 @@ Status MetaFile::Destroy() {
     }
 }
 
-Status MetaFile::Load(pb::HardState* hs, pb::TruncateMeta* tm) {
-    char buf[kHardStateSize + kTruncateMetaSize] = {'\0'};
-    ssize_t ret = ::pread(fd_, buf, kHardStateSize + kTruncateMetaSize, 0);
-    if (ret < 0) {
-        return Status(Status::kIOError, "load meta", strErrno(errno));
-    } else if (ret == 0) {
-        return Status::OK();
-    } else if (ret == kHardStateSize || ret == kHardStateSize + kTruncateMetaSize) {
-        uint64_t term = 0;
-        uint64_t commit = 0;
-        uint64_t vote = 0;
-        memcpy(&term, buf, 8);
-        memcpy(&commit, buf + 8, 8);
-        memcpy(&vote, buf + 16, 8);
-        hs->set_term(be64toh(term));
-        hs->set_commit(be64toh(commit));
-        hs->set_vote(be64toh(vote));
-        if (ret == kHardStateSize + kTruncateMetaSize) {
-            uint64_t mindex = 0;
-            uint64_t mterm = 0;
-            memcpy(&mindex, buf + 24, 8);
-            memcpy(&mterm, buf + 32, 8);
-            tm->set_index(be64toh(mindex));
-            tm->set_term(be64toh(mterm));
-        }
-        return Status::OK();
-    } else {
-        return Status(Status::kCorruption, "invalid meta size", std::to_string(ret));
+Status MetaFile::Load(pb::HardState* hs, pb::TruncateMeta* tm, uint64_t *inherit_index) {
+    // get file size
+    struct stat sb;
+    memset(&sb, 0, sizeof(sb));
+    int ret = ::fstat(fd_, &sb);
+    if (-1 == ret) {
+        return Status(Status::kIOError, "stat", strErrno(errno));
     }
+    switch (sb.st_size) {
+        case 0:
+        case kHardStateSize:
+        case kHardStateSize + kTruncateMetaSize:
+        case kHardStateSize + kTruncateMetaSize + kInheritIndexSize:
+            break;
+        default:
+            return Status(Status::kIOError, "invalid meta file size", std::to_string(sb.st_size));
+    }
+
+    char buf[kHardStateSize + kTruncateMetaSize + kInheritIndexSize] = {'\0'};
+    ssize_t nbytes_read = ::pread(fd_, buf, kHardStateSize + kTruncateMetaSize + kInheritIndexSize, 0);
+    if (nbytes_read != sb.st_size) {
+        return Status(Status::kIOError, "load meta", strErrno(errno));
+    }
+
+    // parse hardstate
+    uint64_t term = 0;
+    uint64_t commit = 0;
+    uint64_t vote = 0;
+    memcpy(&term, buf, 8);
+    memcpy(&commit, buf + 8, 8);
+    memcpy(&vote, buf + 16, 8);
+    hs->set_term(be64toh(term));
+    hs->set_commit(be64toh(commit));
+    hs->set_vote(be64toh(vote));
+
+    // parse truncate meta
+    uint64_t mindex = 0;
+    uint64_t mterm = 0;
+    memcpy(&mindex, buf + 24, 8);
+    memcpy(&mterm, buf + 32, 8);
+    tm->set_index(be64toh(mindex));
+    tm->set_term(be64toh(mterm));
+
+    // parse inherit index
+    memcpy(inherit_index, buf + 40, 8);
+    *inherit_index = be64toh(*inherit_index);
+    return Status::OK();
 }
 
 Status MetaFile::SaveHardState(const pb::HardState& hs) {
@@ -126,6 +144,15 @@ Status MetaFile::SaveTruncMeta(const pb::TruncateMeta& tm) {
     ssize_t ret = ::pwrite(fd_, buf, kTruncateMetaSize, kHardStateSize);
     if (ret != kTruncateMetaSize) {
         return Status(Status::kIOError, "write trunc meta", strErrno(errno));
+    }
+    return Status::OK();
+}
+
+Status MetaFile::SaveInheritIndex(uint64_t index) {
+    index = htobe64(index);
+    auto ret = ::pwrite(fd_, &index, sizeof(index), kHardStateSize + kTruncateMetaSize);
+    if (ret != sizeof(index)) {
+        return Status(Status::kIOError, "write inherit index", strErrno(errno));
     }
     return Status::OK();
 }

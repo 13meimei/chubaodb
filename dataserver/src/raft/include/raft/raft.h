@@ -1,4 +1,5 @@
-// Copyright 2019 The Chubao Authors.
+// Copyright 2015 The etcd Authors
+// Portions Copyright 2019 The Chubao Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,6 +17,8 @@ _Pragma("once");
 
 #include "options.h"
 #include "status.h"
+#include "log_reader.h"
+#include "entry_flags.h"
 
 namespace chubaodb {
 namespace raft {
@@ -35,12 +38,26 @@ public:
 
     virtual Status TryToLeader() = 0;
 
-    virtual Status Submit(std::string& cmd, uint64_t unique_seq, uint16_t rw_flag) = 0;
+    // propose to replicate a log entry
+    // when log is committed, Apply(entry_data) will be called
+    virtual Status Propose(std::string& entry_data, uint32_t entry_flags) = 0;
+
+    virtual Status ReadIndex(std::string& ctx) = 0;
+
     virtual Status ChangeMemeber(const ConfChange& conf) = 0;
 
     virtual void GetStatus(RaftStatus* status) const = 0;
 
     virtual void Truncate(uint64_t index) = 0;
+
+    // fetch raft log entries since start_index
+    virtual std::unique_ptr<LogReader> ReadLog(uint64_t start_index) = 0;
+
+    // create a new raft log storage to inherit current raft logs, used by range split
+    // 1) if only_index is false, hard link current log files(with entries.index <= last_index) to dest directories
+    //    if only_index is true, no log files will be linked
+    // 2) init new meta file, make the new raft next log index be last_index + 1
+    virtual Status InheritLog(const std::string& dest_dir, uint64_t last_index, bool only_index) = 0;
 };
 
 } /* namespace raft */

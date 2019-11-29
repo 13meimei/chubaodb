@@ -27,14 +27,15 @@ namespace {
 using namespace chubaodb;
 
 TEST(Monitor, Basic) {
-    auto s = SystemInfo::New();
     uint64_t total = 0, available = 0;
-    ASSERT_TRUE(s->GetFileSystemUsage(".", &total, &available));
+    ASSERT_TRUE(GetFileSystemUsage(".", &total, &available));
     ASSERT_GT(total, 0U);
     ASSERT_GT(available, 0U);
     ASSERT_GE(total, available);
+    std::cout << "disk total: " << total << std::endl;
+    std::cout << "disk available: " << available << std::endl;
 
-    ASSERT_TRUE(s->GetMemoryUsage(&total, &available));
+    ASSERT_TRUE(GetMemoryUsage(&total, &available));
     std::cout << "memory total: " << total << std::endl;
     std::cout << "memory available: " << available << std::endl;
 }
