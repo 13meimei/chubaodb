@@ -1,12 +1,12 @@
-Single Machine Beta By Docker
-=============================
+Single-Machine Deployment Beta
+==================================
 
 Prerequisite
 ----------------
 
 need docker and docker-compose installed
 
-::
+.. code-block:: bash
 
   mac os:
   brew install docker docker-compose
@@ -21,7 +21,7 @@ start up docker
 Get DownLoad Script
 ---------------------
 
-::
+.. code-block:: bash
 
   download script code 
   wget http://storage.jd.local/docker-compose/chubaodb_docker_compose.1120.tar.gz
@@ -36,7 +36,7 @@ Get DownLoad Script
 
 Deploy and Start up
 --------------------
-::
+.. code-block:: bash
 
   [root@ap2 chubaodb_docker_compose]# ./stop.sh
   Stopping chubaodb_docker_compose_ms_1 ... done
@@ -58,7 +58,7 @@ Deploy and Start up
 
 Use
 ------
-::
+.. code-block:: bash
 
   create db
   curl -XPOST  -d '{"header": {"cluster_id": 10},"name":"jimtesthot"}' http://0.0.0.0:8817/db/create | python -m json.tool
