@@ -84,9 +84,8 @@ struct ServerConfig {
     } rpc_config;
 
     struct {
-        size_t fast_worker_num = 4;  // fast worker thread num; eg. put/get command
+        size_t schedule_worker_num = 4;  // schedule worker thread num; eg. request from master
         size_t slow_worker_num = 4;  // fast worker thread num; eg. put/get command
-        bool task_in_place = true; // handle task in rpc io thread, do not push to worker thread
         size_t task_timeout_ms = 10000; // default 10s
     } worker_config;
 
@@ -97,7 +96,7 @@ struct ServerConfig {
         uint64_t check_size = 32UL * 1024 * 1024;
         uint64_t split_size = 64UL * 1024 * 1024;;
         uint64_t max_size = 128UL * 1024 * 1024;
-        size_t index_split_ratio = 10; // index range's split_size = {split_size} / index_split_ratio
+        size_t index_split_ratio = 3; // index range's split_size = {split_size} / index_split_ratio
         int worker_threads = 1;
     } range_config;
 
@@ -133,7 +132,7 @@ public:
     void Print() const;
 
 private:
-    bool load(const INIReader& reader, bool btest);
+    bool load(const INIReader& reader);
     bool loadLoggerConfig(const INIReader& reader);
     bool loadRPCConfig(const INIReader& reader);
     bool loadEngineConfig(const INIReader& reader);

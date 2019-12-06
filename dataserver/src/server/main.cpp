@@ -232,9 +232,7 @@ void runServer(const std::string &server_name, const std::string& conf_file, boo
     }
 
     while (true) {
-        if (!ds_config.b_test) {
-            DataServer::Instance().ServerCron();
-        }
+        DataServer::Instance().ServerCron();
         // use node heartbeat interval to trigger server cron jobs
         sleep(ds_config.cluster_config.node_interval_secs);
     }

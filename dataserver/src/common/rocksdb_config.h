@@ -72,6 +72,7 @@ struct RocksDBConfig {
     size_t background_rate_limit = 0;
 
     bool enable_stats = true;
+    unsigned int stats_dump_period_sec = 60 * 5;
     bool enable_debug_log = false;
 
     RocksDBCFConfig default_cf_config = RocksDBCFConfig::NewDefaultCFConfig();

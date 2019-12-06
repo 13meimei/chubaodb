@@ -18,6 +18,9 @@ _Pragma("once");
 #include "net/server.h"
 #include "proto/gen/dspb/admin.pb.h"
 
+#include "db/rocksdb_impl/manager_impl.h"
+#include "db/mass_tree_impl/manager_impl.h"
+
 namespace chubaodb {
 namespace ds {
 namespace admin {
@@ -35,7 +38,6 @@ public:
 
 private:
     void onMessage(const net::Context& ctx, const net::MessagePtr& msg);
-
     Status checkAuth(const dspb::AdminAuth& auth);
     Status execute(const dspb::AdminRequest& req, dspb::AdminResponse* resp);
 
@@ -55,6 +57,9 @@ private:
     std::unique_ptr<net::Server> net_server_;
     // TODO: worker thread
 };
+
+std::pair<db::RocksDBManager*, Status> GetRocksdbMgr(server::ContextServer* ctx);
+std::pair<db::MasstreeDBManager*, Status> GetMasstreeMgr(server::ContextServer* ctx);
 
 } // namespace admin
 } // namespace ds

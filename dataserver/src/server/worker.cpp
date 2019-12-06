@@ -129,15 +129,15 @@ uint64_t Worker::WorkThreadGroup::Clear() {
     return size;
 }
 
-Status Worker::Start(int fast_worker_size, int slow_worker_size, RangeServer* range_server) {
-    FLOG_INFO("Worker Start begin, fast_worker_size: {}, slow_worker_size: {}",
-            fast_worker_size, slow_worker_size);
+Status Worker::Start(int schedule_worker_size, int slow_worker_size, RangeServer* range_server) {
+    FLOG_INFO("Worker Start begin, schedule_worker_size: {}, slow_worker_size: {}",
+              schedule_worker_size, slow_worker_size);
 
     range_server_ = range_server;
 
-    fast_workers_.reset(
-        new WorkThreadGroup(range_server, fast_worker_size, kWorkThreadCapacity, "fast_worker"));
-    fast_workers_->Start();
+    schedule_workers_.reset(
+        new WorkThreadGroup(range_server, schedule_worker_size, kWorkThreadCapacity, "sched_worker"));
+    schedule_workers_->Start();
 
     slow_workers_.reset(
         new WorkThreadGroup(range_server, slow_worker_size, kWorkThreadCapacity, "slow_worker"));
@@ -149,13 +149,13 @@ Status Worker::Start(int fast_worker_size, int slow_worker_size, RangeServer* ra
 }
 
 void Worker::Stop() {
-    fast_workers_->Stop();
+    schedule_workers_->Stop();
     slow_workers_->Stop();
 }
 
 void Worker::Push(RPCRequest* task) {
-    if (!isSlowTask(task)) {
-        fast_workers_->Push(task);
+    if (task->sch_req) {
+        schedule_workers_->Push(task);
     } else {
         slow_workers_->Push(task);
     }
@@ -166,10 +166,10 @@ void Worker::Deal(RPCRequest* req) {
     range_server_->DealTask(std::move(req_ptr));
 }
 
-size_t Worker::ClearQueue(bool fast, bool slow) {
+size_t Worker::ClearQueue(bool schedule, bool slow) {
     size_t count = 0;
-    if (fast) {
-        count += fast_workers_->Clear();
+    if (schedule) {
+        count += schedule_workers_->Clear();
     }
     if (slow) {
         count += slow_workers_->Clear();
@@ -177,19 +177,8 @@ size_t Worker::ClearQueue(bool fast, bool slow) {
     return count;
 }
 
-bool Worker::isSlowTask(RPCRequest* task) {
-    const auto& head = task->msg->head;
-    if (head.ForceFastFlag()) {
-        return false;
-    }
-    if (head.func_id == dspb::kFuncSchedule) {
-        return true;
-    }
-    return false;
-}
-
 void Worker::PrintQueueSize() {
-    FLOG_INFO("worker fast queue size:{}", fast_workers_->PendingSize());
+    FLOG_INFO("worker schedule queue size:{}", schedule_workers_->PendingSize());
     FLOG_INFO("worker slow queue size:{}", slow_workers_->PendingSize());
 }
 

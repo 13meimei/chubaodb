@@ -19,17 +19,19 @@ _Pragma("once");
 
 #include "net/message.h"
 #include "dspb/api.pb.h"
+#include "dspb/schedule.pb.h"
 
 namespace chubaodb {
-
-// rpc default timeout
-static const uint32_t kDefaultRPCRequestTimeoutMS = 10000;
 
 struct RPCRequest {
     net::Context ctx;
     net::MessagePtr msg;
     int64_t expire_time = 0; // absolute time, unit: ms
     int64_t begin_time = 0;  // unit: us
+
+    // request protobuf message
+    std::unique_ptr<dspb::RangeRequest> range_req;
+    std::unique_ptr<dspb::SchRequest> sch_req;
 
     RPCRequest(const net::Context& req_ctx, const net::MessagePtr& req_msg);
     virtual ~RPCRequest() = default;
@@ -38,7 +40,7 @@ struct RPCRequest {
     std::string FuncName() const;
 
     // parse to request protobuf msg
-    bool ParseTo(google::protobuf::Message& proto_req, bool zero_copy = true);
+    bool Parse(bool zero_copy = true);
 
     // reply response to client, declare virtual for mock
     virtual void Reply(const google::protobuf::Message& proto_resp);
@@ -52,4 +54,4 @@ using ErrorPtr = std::unique_ptr<dspb::Error>;
 void SetResponseHeader(dspb::RangeResponse_Header* resp,
                        const dspb::RangeRequest_Header &req, ErrorPtr err = nullptr);
 
-}  // namespace chubaodb
+} // namespace chubaodb

@@ -48,7 +48,11 @@ static RangeOptions makeRangeOptions(basepb::RangeType range_type) {
     opt.check_size = ds_config.range_config.check_size;
     opt.split_size = ds_config.range_config.split_size;
     opt.max_size = ds_config.range_config.max_size;
-    opt.heartbeat_interval_msec = ds_config.cluster_config.range_interval_secs * 1000;
+    if (ds_config.b_test) {
+        opt.heartbeat_interval_msec = 1000*10000UL;
+    } else {
+        opt.heartbeat_interval_msec = ds_config.cluster_config.range_interval_secs * 1000;
+    }
     if (range_type == basepb::RNG_Index) {
         opt.check_size /= ds_config.range_config.index_split_ratio;
         opt.split_size /= ds_config.range_config.index_split_ratio;
@@ -242,15 +246,12 @@ void RangeServer::DealTask(RPCRequestPtr rpc) {
                dspb::FunctionID_Name(static_cast<dspb::FunctionID>(header.func_id)),
                rpc->ctx.remote_addr, rpc->MsgID());
 
-    switch (header.func_id) {
-        case dspb::kFuncRangeRequest:
-            forwardToRange(rpc);
-            break;
-        case dspb::kFuncSchedule:
-            dispatchSchedule(rpc);
-            break;
-        default:
-            FLOG_WARN("unknown func id: {} from {}, msgid: {}", header.func_id, rpc->ctx.remote_addr, rpc->MsgID());
+    if (rpc->range_req) {
+        forwardToRange(rpc);
+    } else if (rpc->sch_req) {
+        dispatchSchedule(rpc);
+    } else {
+        FLOG_WARN("unknown func id: {} from {}, msgid: {}", header.func_id, rpc->ctx.remote_addr, rpc->MsgID());
     }
 }
 
@@ -436,15 +437,11 @@ static ErrorPtr newClusterMismatchErr(uint64_t request, uint64_t actual) {
 }
 
 void RangeServer::forwardToRange(RPCRequestPtr &rpc) {
-    dspb::RangeRequest request;
-    if (!rpc->ParseTo(request)) {
-        FLOG_ERROR("deserialize {} request failed, from {}, msg id={}",
-                   rpc->FuncName(), rpc->ctx.remote_addr, rpc->MsgID());
-        return;
-    }
+    assert(rpc->range_req);
 
-    FLOG_DEBUG("{} from {} called. req: {}", rpc->FuncName(),
-               rpc->ctx.remote_addr, request.DebugString());
+    dspb::RangeRequest& request = *(rpc->range_req);
+
+    FLOG_DEBUG("{} from {} called. req: {}", rpc->FuncName(), rpc->ctx.remote_addr, request.DebugString());
 
     // check cluster id
     if (request.header().cluster_id() != 0 &&
@@ -496,12 +493,8 @@ static ErrorPtr newRangeNotFoundErr(uint64_t range_id) {
 }
 
 void RangeServer::dispatchSchedule(RPCRequestPtr& rpc) {
-    dspb::SchRequest request;
-    if (!rpc->ParseTo(request)) {
-        FLOG_ERROR("deserialize {} request failed, from {}, msg id={}",
-                   rpc->FuncName(), rpc->ctx.remote_addr, rpc->MsgID());
-        return;
-    }
+    assert(rpc->sch_req);
+    dspb::SchRequest& request = *(rpc->sch_req);
 
     dspb::SchResponse response;
     response.mutable_header()->set_cluster_id(request.header().cluster_id());

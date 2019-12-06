@@ -35,8 +35,61 @@ using namespace std;
 using namespace rapidjson;
 using chubaodb::ds::server::ContextServer;
 
-using JsonWriter = rapidjson::Writer<rapidjson::StringBuffer>;
-using GetInfoFunc = std::function<Status(ContextServer*, const vector<string>&, JsonWriter&)>;
+class InfoWriter : public rapidjson::Writer<rapidjson::StringBuffer> {
+public:
+    using super = rapidjson::Writer<rapidjson::StringBuffer>;
+
+    std::ostringstream& GetPlainOStream() {
+        format_ = FormatType::kPlainString;
+        return plain_ostream_;
+    }
+
+    void Key(const char *key) {
+        format_ = FormatType::kJson;
+        if (!json_initialized_) {
+            super::Reset(json_buffer_);
+            super::StartObject();
+            json_initialized_ = true;
+        }
+        super::Key(key);
+    }
+
+    void Key(const std::string& str) {
+        this->Key(str.c_str());
+    }
+
+    std::string ToString() {
+        switch (format_) {
+        case FormatType::kUnspecified:
+             return "<unspecified format>";
+        case FormatType::kPlainString:
+             return plain_ostream_.str();
+        case FormatType::kJson:
+            if (!json_closed_) {
+                super::EndObject();
+                json_closed_ = true;
+            }
+            return json_buffer_.GetString();
+        }
+    };
+
+private:
+    enum class FormatType {
+        kUnspecified= 0,
+        kJson = 1,
+        kPlainString = 2,
+    };
+
+    FormatType format_ = FormatType::kUnspecified;
+
+    bool json_initialized_ = false;
+    bool json_closed_ = false;
+    rapidjson::StringBuffer json_buffer_;
+
+    std::ostringstream plain_ostream_;
+};
+
+using GetInfoFunc = std::function<Status(ContextServer*, const vector<string>&, InfoWriter&)>;
 using GetInfoFunMap = std::map<std::string, GetInfoFunc>;
 
 static vector<string> parsePath(const std::string& str) {
@@ -49,7 +102,7 @@ static vector<string> parsePath(const std::string& str) {
     return result;
 }
 
-static Status getServerInfo(ContextServer* ctx, const vector<string>& path, JsonWriter& writer) {
+static Status getServerInfo(ContextServer* ctx, const vector<string>& path, InfoWriter& writer) {
     writer.Key("version");
     writer.String(server::GetGitDescribe().c_str());
     writer.Key("build_date");
@@ -66,14 +119,14 @@ static Status getServerInfo(ContextServer* ctx, const vector<string>& path, Json
     writer.Key("db_usage_percent");
     writer.Uint64(ctx->run_status->GetDBUsedPercent());
 
-    writer.Key("fast_queue_size");
-    writer.Uint64(ctx->worker->FastQueueSize());
+    writer.Key("schedule_queue_size");
+    writer.Uint64(ctx->worker->ScheduleQueueSize());
     writer.Key("slow_queue_size");
     writer.Uint64(ctx->worker->SlowQueueSize());
     return Status::OK();
 }
 
-static Status getRangeInfo(ContextServer* ctx, const vector<string>& path, JsonWriter& writer) {
+static Status getRangeInfo(ContextServer* ctx, const vector<string>& path, InfoWriter& writer) {
     assert(!path.empty());
     auto rs = ctx->range_server;
     if (path.size() == 1) {
@@ -146,7 +199,7 @@ static Status getRangeInfo(ContextServer* ctx, const vector<string>& path, JsonW
     return Status::OK();
 }
 
-static Status getRaftInfo(ContextServer* ctx, const vector<string>& path, JsonWriter& writer) {
+static Status getRaftInfo(ContextServer* ctx, const vector<string>& path, InfoWriter& writer) {
     assert(!path.empty());
 
     auto rs = ctx->raft_server;
@@ -216,15 +269,36 @@ static Status getRaftInfo(ContextServer* ctx, const vector<string>& path, JsonWr
     return Status::OK();
 }
 
-static Status getRocksdbInfo(ContextServer* ctx, const vector<string>& path, JsonWriter& writer) {
-    writer.Key("version");
-    writer.String(server::GetRocksdbVersion().c_str());
+std::string joinPath(const std::vector<std::string>& paths) {
+    std::string ret = paths.empty() ? "" : paths[0];
+    for (size_t i = 1; i < paths.size(); ++i) {
+        ret.push_back('.');
+        ret += paths[i];
+    }
+    return ret;
+}
+
+static Status getRocksdbInfo(ContextServer* ctx, const vector<string>& path, InfoWriter& writer) {
+    assert(!path.empty());
+    if (path.size() == 1) {
+        writer.Key("version");
+        writer.String(server::GetRocksdbVersion().c_str());
+        return Status::OK();
+    }
+
+    auto ret = GetRocksdbMgr(ctx);
+    if (!ret.second.ok()) {
+        return ret.second;
+    }
+    if (!ret.first->GetProperty(joinPath(path), writer.GetPlainOStream())) {
+        return Status(Status::kInvalidArgument, "rocksdb property", joinPath(path));
+    }
     return Status::OK();
 }
 
 // get jemalloc stats, from jemalloc wiki
 // see https://github.com/jemalloc/jemalloc/wiki/Use-Case%3A-Introspection-Via-mallctl%2A%28%29
-static Status getMemoryInfo(ContextServer* ctx, const vector<string>& path, JsonWriter& writer) {
+static Status getMemoryInfo(ContextServer* ctx, const vector<string>& path, InfoWriter& writer) {
     // Update the statistics cached by je_mallctl.
     uint64_t epoch = 1;
     size_t sz = sizeof(epoch);
@@ -265,10 +339,6 @@ static const GetInfoFunMap get_info_funcs = {
 };
 
 Status AdminServer::getInfo(const dspb::GetInfoRequest& req, dspb::GetInfoResponse* resp) {
-    rapidjson::StringBuffer buffer;
-    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-    writer.StartObject();
-
     auto paths = parsePath(req.path());
     auto type = paths.empty() ? "" : paths[0];
     auto it = get_info_funcs.find(type);
@@ -276,12 +346,12 @@ Status AdminServer::getInfo(const dspb::GetInfoRequest& req, dspb::GetInfoRespon
         return Status(Status::kNotSupported, "get info", type);
     }
 
+    InfoWriter writer;
     auto s = (it->second)(context_, paths, writer);
     if (!s.ok()) {
         return s;
     }
-    writer.EndObject();
-    resp->set_data(buffer.GetString());
+    resp->set_data(writer.ToString());
     return Status::OK();
 }
 

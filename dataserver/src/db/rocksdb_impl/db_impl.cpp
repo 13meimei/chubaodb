@@ -19,6 +19,8 @@
 #include <rocksdb/table.h>
 #include <rocksdb/rate_limiter.h>
 
+#include "db/mass_tree_impl/iterator_impl.h"
+
 #include "manager_impl.h"
 #include "write_batch_impl.h"
 #include "base/util.h"
@@ -265,7 +267,11 @@ Status RocksDBImpl::NewIterators(const std::string& start, const std::string& li
     assert(iterators.size() == 2);
     data_iter.reset(new RocksIterator(iterators[0], start, limit));
     // TODO: use a txn cache iterator
-    txn_iter.reset(new RocksIterator(iterators[1], start, limit));
+    if (txn_cache_) {
+        txn_iter.reset(new MassIterator(txn_cache_, start, limit));
+    } else {
+        txn_iter.reset(new RocksIterator(iterators[1], start, limit));
+    }
 
     return Status::OK();
 }

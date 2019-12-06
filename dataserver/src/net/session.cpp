@@ -109,6 +109,8 @@ bool Session::init_establish() {
     id_.push_back(direction_ == Direction::kServer ? 'S' : 'C');
     id_ += "[" + local_addr_ + "<->" + remote_addr_ + "]";
 
+    socket_.set_option(asio::ip::tcp::no_delay(true));
+
     established_ = true;
     FLOG_INFO("{} establised.", id_);
 

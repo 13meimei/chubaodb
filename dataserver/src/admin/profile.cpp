@@ -49,22 +49,16 @@ Status AdminServer::profile(const ProfileRequest& req, ProfileResponse *resp) {
     case ProfileRequest_ProfileType_HEAP:
         return profileHeap(req);
     case ProfileRequest_ProfileType_ROCKSDB: {
-        if (ds_config.engine_type != EngineType::kRocksdb) {
-            return Status(Status::kNotSupported,
-                          "compaction engine", EngineTypeName(ds_config.engine_type));
-        }
-        // engine type is rocksdb now
-        auto db = dynamic_cast<db::RocksDBManager*>(context_->db_manager);
-        if (db == nullptr) {
-            return Status(Status::kNotSupported,
-                          "unknown db instance", typeid(context_->db_manager).name());
+        auto ret = GetRocksdbMgr(context_);
+        if (!ret.second.ok()) {
+            return ret.second;
         }
         switch (req.op()) {
             case dspb::ProfileRequest_ProfileOp_PROFILE_START:
-                return db->SetPerfLevel(rocksdb::PerfLevel::kEnableTimeExceptForMutex);
+                return ret.first->SetPerfLevel(rocksdb::PerfLevel::kEnableTimeExceptForMutex);
                 break;
             case dspb::ProfileRequest_ProfileOp_PROFILE_STOP:
-                return db->SetPerfLevel(rocksdb::PerfLevel::kDisable);
+                return ret.first->SetPerfLevel(rocksdb::PerfLevel::kDisable);
                 break;
             default:
                 return Status(Status::kInvalidArgument, "profile op type", std::to_string(req.op()));

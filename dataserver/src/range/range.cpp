@@ -208,6 +208,11 @@ void Range::Dispatch(RPCRequestPtr rpc, dspb::RangeRequest& request) {
 
 void Range::sendResponse(RPCRequestPtr& rpc, const dspb::RangeRequest_Header& req_header,
                   dspb::RangeResponse& resp, ErrorPtr err) {
+    auto taken_usec = NowMicros() - rpc->begin_time;
+    if (taken_usec > opt_.request_warn_usecs) {
+        RLOG_WARN("{} takes too long({} ms), from={}, msgid={}",
+                  rpc->FuncName(), taken_usec / 1000, rpc->ctx.remote_addr, rpc->MsgID());
+    }
     SetResponseHeader(resp.mutable_header(), req_header, std::move(err));
     rpc->Reply(resp);
 }

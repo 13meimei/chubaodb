@@ -39,7 +39,7 @@ Status LogReaderImpl::Next(uint64_t& index, std::string& data, bool& over) {
     }
 
     // check reach file end
-    if (current_index_ > log_files_[file_index_]->LastIndex()) {
+    if (log_files_.empty() || current_index_ > log_files_[file_index_]->LastIndex()) {
         ++file_index_;
         if (file_index_ >= log_files_.size()) {
             reach_end_ = true;
