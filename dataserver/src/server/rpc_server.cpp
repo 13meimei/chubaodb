@@ -57,12 +57,46 @@ Status RPCServer::Stop() {
     return Status::OK();
 }
 
+static bool isSlowProcessor(const dspb::Processor& p) {
+    return p.type() == dspb::DATA_SAMPLE_TYPE || p.type() == dspb::AGGREGATION_TYPE
+        || p.type() == dspb::STREAM_AGGREGATION_TYPE;
+}
+
+static bool maybeSlow(const RPCRequest& rpc) {
+    assert(rpc.sch_req || rpc.range_req);
+    // has force fast flag
+    if (rpc.msg->head.ForceFastFlag()) {
+        return false;
+    }
+    // schedule request maybe slow
+    if (!rpc.range_req) {
+        return true;
+    }
+
+    const auto& req = *(rpc.range_req);
+    if (!req.has_select_flow()) {
+        return false;
+    }
+    for (const auto& p : req.select_flow().processors()) {
+        if (isSlowProcessor(p)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+
 void RPCServer::onMessage(const net::Context& ctx, const net::MessagePtr& msg) {
-    auto task = new RPCRequest(ctx, msg);
-    if (msg->head.func_id == dspb::kFuncSchedule || !ds_config.worker_config.task_in_place) {
-        worker_->Push(task);
+    auto rpc = new RPCRequest(ctx, msg);
+    if (!rpc->Parse()) {
+        FLOG_WARN("parse rpc request failed from {}, msgid={}", ctx.remote_addr, msg->head.msg_id);
+        return;
+    }
+
+    if (!maybeSlow(*rpc)) {
+        worker_->Deal(rpc); // if not slow, deal in io thread in place
     } else {
-        worker_->Deal(task);
+        worker_->Push(rpc); // if slow, push to work queue
     }
 }
 

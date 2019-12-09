@@ -38,15 +38,20 @@ std::string EngineTypeName(EngineType et) {
 }
 
 bool ServerConfig::LoadFromFile(const std::string& conf_file, bool btest) {
+    ds_config.b_test = btest;
+    if (ds_config.b_test) {
+        FLOG_WARN("server run in test mode!");
+    }
+
     INIReader reader(conf_file);
     if (reader.ParseError() < 0) {
         std::cerr << "parse config file(\"" << conf_file <<  "\") failed: " << reader.ParseError() << std::endl;
         return false;
     }
-    return load(reader, btest);
+    return load(reader);
 }
 
-bool ServerConfig::load(const INIReader& reader, bool btest) {
+bool ServerConfig::load(const INIReader& reader) {
     // common config options
     pid_file = reader.Get("", "pid_file", "");
     if (pid_file.empty()) {
@@ -74,9 +79,8 @@ bool ServerConfig::load(const INIReader& reader, bool btest) {
     if (!loadRangeConfig(reader)) return false;
     if (!loadRaftConfig(reader)) return false;
     if (!loadManagerConfig(reader)) return false;
-    if (btest) {
+    if (ds_config.b_test) {
         if (!loadTestConfig(reader)) return false;
-        ds_config.b_test = true;
     }
     return true;
 }
@@ -125,7 +129,7 @@ bool ServerConfig::loadRPCConfig(const INIReader& reader) {
     std::tie(rpc_config.port, ret) = loadUInt16(reader, section, "port");
     if (!ret) return false;
 
-    std::tie(rpc_config.io_threads_num, ret) = loadThreadNum(reader, section, "io_threads_num", 4);
+    std::tie(rpc_config.io_threads_num, ret) = loadThreadNum(reader, section, "io_threads_num", 8);
     if (!ret) return false;
 
     rpc_config.ip_address = reader.Get(section, "ip_addr", "0.0.0.0");
@@ -137,16 +141,11 @@ bool ServerConfig::loadWorkerConfig(const INIReader& reader) {
     const char *section = "worker";
 
     bool ret = false;
-    std::tie(worker_config.fast_worker_num, ret) = loadThreadNum(reader, section, "fast_worker", 4);
+    std::tie(worker_config.schedule_worker_num, ret) = loadThreadNum(reader, section, "schedule_worker", 4);
     if (!ret) return false;
 
-    std::tie(worker_config.slow_worker_num, ret) = loadThreadNum(reader, section, "slow_worker", 4);
+    std::tie(worker_config.slow_worker_num, ret) = loadThreadNum(reader, section, "slow_worker", 8);
     if (!ret) return false;
-
-    worker_config.task_in_place = reader.GetBoolean(section, "task_in_place", true);
-    if (worker_config.task_in_place) {
-        FLOG_INFO("[Conifg] task execution enter in place mode.");
-    }
 
     std::tie(worker_config.task_timeout_ms, ret) =
             loadIntegerAtLeast<size_t>(reader, section, "task_timeout", 10000, 5000);
@@ -159,7 +158,7 @@ bool ServerConfig::loadClusterConfig(const INIReader& reader) {
     const char *section = "cluster";
 
     cluster_config.cluster_id = reader.GetInteger(section, "cluster_id", 0);
-    if (cluster_config.cluster_id == 0) {
+    if (cluster_config.cluster_id == 0 && !b_test) {
         FLOG_CRIT("invalid config {}.{}: {}", section, "cluster_id", cluster_config.cluster_id);
         return false;
     }
@@ -180,7 +179,7 @@ bool ServerConfig::loadClusterConfig(const INIReader& reader) {
     while (std::getline(ss, host, '\n')) {
         cluster_config.master_host.push_back(std::move(host));
     }
-    if (master_addrs.empty()) {
+    if (master_addrs.empty() && !b_test) {
         FLOG_CRIT("[Config] invalid cluster.master_host: {}", master_addrs);
         return false;
     }
@@ -222,7 +221,7 @@ bool ServerConfig::loadRangeConfig(const INIReader& reader) {
         return false;
     }
 
-    range_config.index_split_ratio = reader.GetInteger(section, "index_split_ratio", 10);
+    range_config.index_split_ratio = reader.GetInteger(section, "index_split_ratio", 3);
     if (range_config.index_split_ratio == 0 || range_config.index_split_ratio > 100) {
         FLOG_CRIT("[Config] load range config error, valid config: index_split_ratio in [0, 100], current: {}; ",
                 range_config.index_split_ratio);

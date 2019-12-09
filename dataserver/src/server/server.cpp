@@ -170,7 +170,7 @@ bool DataServer::Start() {
     }
 
     // start worker
-    auto ret = context_->worker->Start(ds_config.worker_config.fast_worker_num,
+    auto ret = context_->worker->Start(ds_config.worker_config.schedule_worker_num,
             ds_config.worker_config.slow_worker_num, context_->range_server);
     if (!ret.ok()) {
         FLOG_ERROR("start worker failed: {}", ret.ToString());
@@ -235,7 +235,9 @@ void DataServer::ServerCron() {
     context_->run_status->UpdateDBUsage(context_->db_manager);
 
     // node heartbeat
-    heartbeat();
+    if (!ds_config.b_test) {
+        heartbeat();
+    }
 
     triggerRCU();
 

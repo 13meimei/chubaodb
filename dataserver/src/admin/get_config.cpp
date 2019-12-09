@@ -61,7 +61,7 @@ static const ConfigGeterMap cfg_getters = {
         ADD_CFG_GETTER(raft, max_msg_size),
 
         // worker
-        {"worker.fast_worker", [] { return std::to_string(ds_config.worker_config.fast_worker_num); }},
+        {"worker.schedule_worker", [] { return std::to_string(ds_config.worker_config.schedule_worker_num); }},
         {"worker.slow_worker", [] { return std::to_string(ds_config.worker_config.slow_worker_num); }},
 
         // manager

@@ -39,14 +39,30 @@ std::string RPCRequest::FuncName() const {
     return dspb::FunctionID_Name(static_cast<dspb::FunctionID>(msg->head.func_id));
 }
 
-bool RPCRequest::ParseTo(google::protobuf::Message& proto_req, bool zero_copy) {
+bool RPCRequest::Parse(bool zero_copy) {
+    google::protobuf::Message* req = nullptr;
+    switch (msg->head.func_id) {
+    case dspb::kFuncRangeRequest:
+        range_req.reset(new dspb::RangeRequest);
+        req = range_req.get();
+        break;
+    case dspb::kFuncSchedule:
+        sch_req.reset(new dspb::SchRequest);
+        req = sch_req.get();
+        break;
+    default:
+        FLOG_WARN("invalid func_id {} from {}, msgid={}.", msg->head.func_id, ctx.remote_addr, msg->head.msg_id);
+        return false;
+    }
+
+    assert(req != nullptr);
     auto data = msg->body.data();
     auto len = static_cast<int>(msg->body.size());
     if (zero_copy) {
         google::protobuf::io::ArrayInputStream input(data, len);
-        return proto_req.ParseFromZeroCopyStream(&input);
+        return req->ParseFromZeroCopyStream(&input);
     } else {
-        return proto_req.ParseFromArray(data, len);
+        return req->ParseFromArray(data, len);
     }
 }
 

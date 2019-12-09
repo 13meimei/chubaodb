@@ -542,12 +542,14 @@ Status evaluateExpr(const RowResult& row, const dspb::Expr& expr, ScopedFVPtr& v
         if (lc == nullptr || rc == nullptr) {
             return Status::OK();
         }
-        if ( lc->val->Type() != FieldType::kInt  ||
-            rc->val->Type() != FieldType::kInt ) {
-            return Status(Status::kTypeConflict,
-                    " Int arithmetic operation type Confflict ",
-                     "lc type:[" + lc->val->TypeString() +"], rc type:[" + rc->val->TypeString() + "]"
-                    );
+
+        if (
+                !(((lc->val->Type() == FieldType::kInt) && (rc->val->Type() == FieldType::kInt)) ||
+                  ((lc->val->Type() == FieldType::kUInt) && (rc->val->Type() == FieldType::kUInt)))
+                ) {
+
+            return Status(Status::kTypeConflict, dspb::ExprType_Name(expr.expr_type()) + "Int arithmetic operation type Confflict ",
+                          "lc type:[" + lc->val->TypeString() +"], rc type:[" + rc->val->TypeString() + "]" );
         }
 
         auto result = arithCalc(lc->val, rc->val, expr.expr_type());
@@ -621,11 +623,12 @@ Status evaluateExpr(const RowResult& row, const dspb::Expr& expr, ScopedFVPtr& v
             return s;
         }
 
-        if ( lc->val->Type() != FieldType::kInt ) {
-            return Status(Status::kTypeConflict,
-                    "CastIntToInt type Confflict ",
-                    lc->val->TypeString()
-                    );
+        if (
+                !((lc->val->Type() == FieldType::kInt) || (lc->val->Type() == FieldType::kUInt))
+                ) {
+
+            return Status(Status::kTypeConflict, dspb::ExprType_Name(expr.expr_type()) + "CastIntToInt type Confflict ",
+                    lc->val->TypeString() );
         }
 
         val.reset(new ScopedFV( new FieldValue(lc->val->Int()), false));
@@ -643,11 +646,12 @@ Status evaluateExpr(const RowResult& row, const dspb::Expr& expr, ScopedFVPtr& v
             return s;
         }
 
-        if ( lc->val->Type() != FieldType::kInt ) {
-            return Status(Status::kTypeConflict,
-                    "CastIntToReal type Confflict ",
-                    lc->val->TypeString()
-                    );
+        if (
+                !((lc->val->Type() == FieldType::kInt) || (lc->val->Type() == FieldType::kUInt))
+                ) {
+
+            return Status(Status::kTypeConflict, dspb::ExprType_Name(expr.expr_type()) + "CastIntToReal type Confflict ",
+                    lc->val->TypeString() );
         }
 
         val.reset(new ScopedFV( new FieldValue(double(lc->val->Int())), false));
@@ -665,11 +669,12 @@ Status evaluateExpr(const RowResult& row, const dspb::Expr& expr, ScopedFVPtr& v
             return s;
         }
 
-        if ( lc->val->Type() != FieldType::kInt ) {
-            return Status(Status::kTypeConflict,
-                    "CastIntToString type Confflict ",
-                    lc->val->TypeString()
-                    );
+        if (
+                !((lc->val->Type() == FieldType::kInt) || (lc->val->Type() == FieldType::kUInt))
+                ) {
+
+            return Status(Status::kTypeConflict, dspb::ExprType_Name(expr.expr_type()) + "CastIntToString type Confflict ",
+                    lc->val->TypeString() );
         }
 
         val.reset(new ScopedFV( new FieldValue(lc->val->ToString()) , false));
@@ -687,11 +692,12 @@ Status evaluateExpr(const RowResult& row, const dspb::Expr& expr, ScopedFVPtr& v
             return s;
         }
 
-        if ( lc->val->Type() != FieldType::kInt ) {
-            return Status(Status::kTypeConflict,
-                          "CastIntToDecimal type Confflict ",
-                          lc->val->TypeString()
-            );
+        if (
+                !((lc->val->Type() == FieldType::kInt) || (lc->val->Type() == FieldType::kUInt))
+                ) {
+
+            return Status(Status::kTypeConflict, dspb::ExprType_Name(expr.expr_type()) + "CastIntToDecimal type Confflict ",
+                          lc->val->TypeString() );
         }
 
         datatype::MyDecimal d;
@@ -712,11 +718,12 @@ Status evaluateExpr(const RowResult& row, const dspb::Expr& expr, ScopedFVPtr& v
             return s;
         }
 
-        if ( lc->val->Type() != FieldType::kInt ) {
-            return Status(Status::kTypeConflict,
-                          "CastIntToDate type Conflict ",
-                          lc->val->TypeString()
-            );
+        if (
+                !((lc->val->Type() == FieldType::kInt) || (lc->val->Type() == FieldType::kUInt))
+                ) {
+
+            return Status(Status::kTypeConflict, dspb::ExprType_Name(expr.expr_type()) + "CastIntToDate type Conflict ",
+                          lc->val->TypeString() );
         }
 
         datatype::MyDateTime dt;
@@ -742,9 +749,11 @@ Status evaluateExpr(const RowResult& row, const dspb::Expr& expr, ScopedFVPtr& v
             return s;
         }
 
-        if ( lc->val->Type() != FieldType::kInt ) {
-             return Status(Status::kTypeConflict,
-                     "CastIntToTime type Conflict",
+        if (
+                !((lc->val->Type() == FieldType::kInt) || (lc->val->Type() == FieldType::kUInt))
+                ) {
+
+             return Status(Status::kTypeConflict, dspb::ExprType_Name(expr.expr_type()) + "CastIntToTime type Conflict",
                      lc->val->TypeString());
         }
 
@@ -1738,14 +1747,13 @@ Status filterExpr(const RowResult& row, const dspb::Expr& expr, bool& matched) {
             return Status::OK();
         }
 
-        if ((lc->val->Type() != FieldType::kInt ) ||
-                (rc->val->Type() != FieldType::kInt)
+        if (
+                !(((lc->val->Type() == FieldType::kInt) && (rc->val->Type() == FieldType::kInt)) ||
+                ((lc->val->Type() == FieldType::kUInt ) && (rc->val->Type() == FieldType::kUInt)))
         ) {
             matched = false;
-            return Status( Status::kTypeConflict,
-                    " compare type conflict ",
-                    "lc type:[" + lc->val->TypeString() +"], rc type:[" + rc->val->TypeString() + "]"
-                    );
+            return Status( Status::kTypeConflict, dspb::ExprType_Name(expr.expr_type()) + " compare type conflict ",
+                    "lc type:[" + lc->val->TypeString() +"], rc type:[" + rc->val->TypeString() + "]" );
         }
 
 

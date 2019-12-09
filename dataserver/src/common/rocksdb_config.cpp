@@ -162,6 +162,7 @@ bool RocksDBConfig::Load(const INIReader& reader, const std::string& base_data_p
     }
 
     enable_stats = reader.GetBoolean(section, "enable_stats", true);
+    stats_dump_period_sec = reader.GetInteger(section, "stats_dump_period_sec", stats_dump_period_sec);
     enable_debug_log = reader.GetBoolean(section, "enable_debug_log", false);
 
     if (!default_cf_config.Load(reader, kDefaultCFSection)) {

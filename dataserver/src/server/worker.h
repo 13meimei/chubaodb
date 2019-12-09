@@ -37,15 +37,15 @@ public:
     Worker(const Worker &) = delete;
     Worker &operator=(const Worker &) = delete;
 
-    Status Start(int fast_worker_size, int slow_worker_size, RangeServer* range_server);
+    Status Start(int schedule_worker_size, int slow_worker_size, RangeServer* range_server);
     void Stop();
 
     void Push(RPCRequest* req);
     void Deal(RPCRequest* req);
 
     void PrintQueueSize();
-    size_t ClearQueue(bool fast, bool slow);
-    uint64_t FastQueueSize() const { return fast_workers_->PendingSize(); }
+    size_t ClearQueue(bool schedule, bool slow);
+    uint64_t ScheduleQueueSize() const { return schedule_workers_->PendingSize(); }
     uint64_t SlowQueueSize() const { return slow_workers_->PendingSize(); }
 
 private:
@@ -100,12 +100,9 @@ private:
     };
 
 private:
-    static bool isSlowTask(RPCRequest *task);
-
-private:
     RangeServer *range_server_ = nullptr;
-    std::unique_ptr<WorkThreadGroup> fast_workers_;
-    std::unique_ptr<WorkThreadGroup> slow_workers_;
+    std::unique_ptr<WorkThreadGroup> schedule_workers_; // handle requests from master
+    std::unique_ptr<WorkThreadGroup> slow_workers_; //  handle slow range request
 };
 
 } /* namespace server */

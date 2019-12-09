@@ -820,6 +820,7 @@ Status Store::TxnSelectFlow(const dspb::SelectFlowRequest& req, dspb::SelectFlow
             auto trace = resp->add_traces();
             trace->set_processed_rows(stat.count_);
             trace->set_elapse_time(stat.time_ns_);
+            FLOG_DEBUG("trace stat: {}", trace->ShortDebugString());
         }
     }
     

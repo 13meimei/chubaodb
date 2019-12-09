@@ -472,6 +472,18 @@ TEST_F(StorageTest, Corrupt2) {
 #endif
 
 TEST_F(StorageTest, LogReader) {
+    // read empty
+    {
+        auto reader = storage_->NewReader(1);
+        ASSERT_TRUE(reader != nullptr);
+        uint64_t index = 0;
+        std::string data;
+        bool over = false;
+        auto s = reader->Next(index, data, over);
+        ASSERT_TRUE(over);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+    }
+
     uint64_t lo = 1, hi = 100;
     std::vector<EntryPtr> to_writes;
     RandomEntries(lo, hi, 256, &to_writes);

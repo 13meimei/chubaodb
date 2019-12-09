@@ -48,6 +48,15 @@ RPCRequestMock::RPCRequestMock(const google::protobuf::Message& req,
     auto &body = msg->body;
     body.resize(req.ByteSizeLong());
     req.SerializeToArray(body.data(), static_cast<int>(body.size()));
+    // TODO:
+    auto schedule_req_ptr = dynamic_cast<const dspb::SchRequest*>(&req);
+    if (schedule_req_ptr) {
+        sch_req.reset(new dspb::SchRequest(*schedule_req_ptr));
+    }
+    auto range_req_ptr = dynamic_cast<const dspb::RangeRequest*>(&req);
+    if (range_req_ptr) {
+        range_req.reset(new dspb::RangeRequest(*range_req_ptr));
+    }
 }
 
 void RPCRequestMock::Reply(const google::protobuf::Message& proto_resp) {

@@ -180,8 +180,7 @@ void dispatch(std::vector<std::string>& args) {
     if (it != dispatch_funcs.end()) {
         (it->second)(args);
     } else {
-        std::cerr << "ERR: unsupported command: " << args[0] << std::endl;
-        ::exit(EXIT_FAILURE);
+        std::cerr << "ERR: unsupported command: " << cmd << std::endl;
     }
 }
 

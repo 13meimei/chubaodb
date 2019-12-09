@@ -18,6 +18,8 @@ _Pragma("once");
 #include <rocksdb/db.h>
 #include <rocksdb/perf_context.h>
 
+#include "rapidjson/writer.h"
+
 #include "db/db_manager.h"
 #include "common/rocksdb_config.h"
 
@@ -55,6 +57,8 @@ public:
     Status SetPerfLevel(rocksdb::PerfLevel level);
 
     void RCUFree(bool wait);
+
+    bool GetProperty(const std::string& property, std::ostringstream& os);
 
 private:
     void buildDBOptions(const RocksDBConfig& config, rocksdb::DBOptions& db_opt);

@@ -18,8 +18,6 @@
 #include "common/logger.h"
 #include "server/range_server.h"
 #include "server/worker.h"
-#include "db/rocksdb_impl/manager_impl.h"
-#include "db/mass_tree_impl/manager_impl.h"
 
 namespace chubaodb {
 namespace ds {
@@ -89,6 +87,36 @@ Status AdminServer::execute(const AdminRequest& req, AdminResponse* resp) {
     }
 }
 
+std::pair<db::RocksDBManager*, Status> GetRocksdbMgr(server::ContextServer *ctx) {
+    if (ds_config.engine_type != EngineType::kRocksdb) {
+        return {nullptr, Status(Status::kNotSupported,
+                      "compaction engine", EngineTypeName(ds_config.engine_type))};
+    }
+
+    // engine type is rocksdb now
+    auto db = dynamic_cast<db::RocksDBManager*>(ctx->db_manager);
+    if (db == nullptr) {
+        return {nullptr, Status(Status::kNotSupported,
+                                "compaction engine", EngineTypeName(ds_config.engine_type))};
+    }
+    return { db, Status::OK() };
+}
+
+std::pair<db::MasstreeDBManager*, Status> GetMasstreeMgr(server::ContextServer* ctx) {
+    if (ds_config.engine_type != EngineType::kMassTree) {
+        return { nullptr, Status(Status::kNotSupported,
+                      "dump", EngineTypeName(ds_config.engine_type)) };
+    }
+
+    // engine type is masstree now
+    auto db = dynamic_cast<db::MasstreeDBManager*>(ctx->db_manager);
+    if (db == nullptr) {
+        return { nullptr, Status(Status::kNotSupported,
+                      "unknown db instance", typeid(ctx->db_manager).name()) };
+    }
+    return { db, Status::OK() };
+}
+
 void AdminServer::onMessage(const net::Context& ctx, const net::MessagePtr& msg) {
     AdminRequest req;
     if (!req.ParseFromArray(msg->body.data(), static_cast<int>(msg->body.size()))) {
@@ -127,23 +155,15 @@ Status AdminServer::forceSplit(const ForceSplitRequest& req, ForceSplitResponse*
 }
 
 Status AdminServer::compaction(const CompactionRequest& req, CompactionResponse* resp) {
-    if (ds_config.engine_type != EngineType::kRocksdb) {
-        return Status(Status::kNotSupported,
-                "compaction engine", EngineTypeName(ds_config.engine_type));
+    auto ret = GetRocksdbMgr(context_);
+    if (!ret.second.ok()) {
+        return ret.second;
     }
-
-    // engine type is rocksdb now
-    auto db = dynamic_cast<db::RocksDBManager*>(context_->db_manager);
-    if (db == nullptr) {
-        return Status(Status::kNotSupported,
-                      "unknown db instance", typeid(context_->db_manager).name());
-    }
-
     // db handle got
     Status s;
     rocksdb::CompactRangeOptions options;
     if (req.range_id() == 0) {
-        s = db->CompactRange(options, nullptr, nullptr);
+        s = ret.first->CompactRange(options, nullptr, nullptr);
     } else {
         auto rng = context_->range_server->Find(req.range_id());
         if (rng == nullptr) {
@@ -154,7 +174,7 @@ Status AdminServer::compaction(const CompactionRequest& req, CompactionResponse*
         resp->set_end_key(meta.end_key());
         rocksdb::Slice begin = meta.start_key();
         rocksdb::Slice end = meta.end_key();
-        s = db->CompactRange(options, &begin, &end);
+        s = ret.first->CompactRange(options, &begin, &end);
     }
     return s;
 }
@@ -186,36 +206,22 @@ Status AdminServer::getPending(const GetPendingsRequest& req, GetPendingsRespons
 }
 
 Status AdminServer::flushDB(const FlushDBRequest& req, FlushDBResponse* resp) {
-    if (ds_config.engine_type != EngineType::kRocksdb) {
-        return Status(Status::kNotSupported,
-                      "compaction engine", EngineTypeName(ds_config.engine_type));
-    }
-
-    // engine type is rocksdb now
-    auto db = dynamic_cast<db::RocksDBManager*>(context_->db_manager);
-    if (db == nullptr) {
-        return Status(Status::kNotSupported,
-                      "unknown db instance", typeid(context_->db_manager).name());
+    auto ret = GetRocksdbMgr(context_);
+    if (!ret.second.ok()) {
+        return ret.second;
     }
     // flush
     rocksdb::FlushOptions fops;
     fops.wait = req.wait();
-    return db->Flush(fops);
+    return ret.first->Flush(fops);
 }
 
 Status AdminServer::dump(const dspb::DumpRequest& req, dspb::DumpResponse *resp) {
-    if (ds_config.engine_type != EngineType::kMassTree) {
-        return Status(Status::kNotSupported,
-                      "dump", EngineTypeName(ds_config.engine_type));
+    auto ret = GetMasstreeMgr(context_);
+    if (ret.second.ok()) {
+        return ret.second;
     }
-
-    // engine type is masstree now
-    auto db = dynamic_cast<db::MasstreeDBManager*>(context_->db_manager);
-    if (db == nullptr) {
-        return Status(Status::kNotSupported,
-                      "unknown db instance", typeid(context_->db_manager).name());
-    }
-    return db->DumpTree("/tmp");
+    return ret.first->DumpTree("/tmp");
 }
 
 } // namespace admin

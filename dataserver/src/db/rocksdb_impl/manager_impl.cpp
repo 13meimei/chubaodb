@@ -66,6 +66,7 @@ void RocksDBManager::buildDBOptions(const RocksDBConfig& config, rocksdb::DBOpti
     if (config.enable_stats) {
         db_stats_ = rocksdb::CreateDBStatistics();;
         db_opt.statistics = db_stats_;
+        db_opt.stats_dump_period_sec = config.stats_dump_period_sec;
     }
 
     // row_cache
@@ -245,12 +246,13 @@ std::string RocksDBManager::MetricInfo(bool verbose) {
 
 Status RocksDBManager::CompactRange(const rocksdb::CompactRangeOptions& ops,
                     rocksdb::Slice* start, rocksdb::Slice* end) {
-    auto s = db_->CompactRange(ops, start, end);
-    if (!s.ok()) {
-        return Status(Status::kIOError, "compaction db", s.ToString());
-    } else {
-        return Status::OK();
+    for (auto cf : cf_handles_) {
+        auto s = db_->CompactRange(ops, cf, start, end);
+        if (!s.ok()) {
+            return Status(Status::kIOError, "compaction db", s.ToString());
+        }
     }
+    return Status::OK();
 }
 
 Status RocksDBManager::Flush(const rocksdb::FlushOptions& ops) {
@@ -276,6 +278,18 @@ void RocksDBManager::RCUFree(bool wait) {
         return;
     }
     RunRCUFree(wait);
+}
+
+bool RocksDBManager::GetProperty(const std::string& property, std::ostringstream& os) {
+    for (auto cf : cf_handles_) {
+        std::string value;
+        if (!db_->GetProperty(cf, property, &value)) {
+            return false;
+        }
+        os << "[CF/" << cf->GetName() << "]:" << std::endl;
+        os << value << std::endl;
+    }
+    return true;
 }
 
 } // namespace db
