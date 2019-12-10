@@ -1,12 +1,12 @@
-Code-Based Deployment
+A More Completed Deployment
 =============================
 
-Master-Server Deployment
+Master Deployment
 --------------------------
 
-Compile
+Compilation
 ^^^^^^^^^^^^^^^^^^
-switch to the master branch, cd chubaodb/master-server/cmd, get a executable file by execute the compile script
+We can get a executable file for the master by executing the following script
 
 .. code-block:: bash
 
@@ -14,16 +14,16 @@ switch to the master branch, cd chubaodb/master-server/cmd, get a executable fil
 	./build.sh
 
 
-Start Service
+Starting the Service
 ^^^^^^^^^^^^^^^^^^
-start a background master-service process, passing config args by provide a configuration file
+Before starting the master, a config file named ms.conf needs to be provided. Using the following command to start the master
 
 .. code-block:: bash
 
 	setsid ./master-server -config ms.conf &
 
 
-Configuration Instructions
+Configuration (ms.conf) Instructions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * node-id: master-server's id in Raft replication group, same as id of cluster.peer ip
 
@@ -143,9 +143,9 @@ Configuration Instructions
 Data-Server Deployment
 ------------------------
 
-Compile
+Compilation
 ^^^^^^^^^^^^^^^^^^
-switch to the master branch, cd chubaodb/data-server, get a executable file by execute the compile script
+Before starting the data server, a conifig file named ds.conf needs to be provided. Using the following command to start the data servers
 
 .. code-block:: bash
 
@@ -153,7 +153,7 @@ switch to the master branch, cd chubaodb/data-server, get a executable file by e
 	./data-server ds.conf start
 
 
-Configuration Instructions
+Configuration (ds.conf) Instructions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * base_path: executable file's directory
 
