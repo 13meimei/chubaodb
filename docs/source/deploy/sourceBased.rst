@@ -5,7 +5,7 @@ Master Deployment
 --------------------------
 
 Compilation
-^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 We can get an executable file for the master by executing the following script
 
 .. code-block:: bash
@@ -15,7 +15,7 @@ We can get an executable file for the master by executing the following script
 
 
 Starting the Service
-^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Before starting the master, a config file named ms.conf needs to be provided. Using the following command to start the master
 
 .. code-block:: bash
@@ -24,7 +24,7 @@ Before starting the master, a config file named ms.conf needs to be provided. Us
 
 
 Configuration (ms.conf) Instructions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * node-id: master-server's id in Raft replication group, same as id of cluster.peer ip
 
 .. code-block:: 
@@ -154,7 +154,7 @@ Before starting the data server, a config file named ds.conf needs to be provide
 
 
 Configuration (ds.conf) Instructions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * base_path: executable file's directory
 
 .. code-block:: 
@@ -239,7 +239,7 @@ Proxy Deployment
 ------------------
 
 Directory
-^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: 
 
@@ -518,6 +518,6 @@ after start.sh
 	root     57810     1 99 Sep30 ?        124-18:30:04 /export/servers/jdk1.8.0_60/bin/java -Xms8G -Xmx8G -Xmn3G -XX:SurvivorRatio=8 -XX:MaxDirectMemorySize=4G -XX:MetaspaceSize=64M -XX:MaxMetaspaceSize=512M -Xss256K -server -XX:+TieredCompilation -XX:CICompilerCount=3 -XX:InitialCodeCacheSize=64m -XX:ReservedCodeCacheSize=2048m -XX:CompileThreshold=1000 -XX:FreqInlineSize=2048 -XX:MaxInlineSize=512 -XX:+UseConcMarkSweepGC -XX:+UseCMSCompactAtFullCollection -XX:CMSInitiatingOccupancyFraction=70 -XX:+CMSParallelRemarkEnabled -XX:SoftRefLRUPolicyMSPerMB=0 -XX:CMSMaxAbortablePrecleanTime=100 -XX:+PrintGCDetails -Xloggc:/export/Logs/jimsql/gc.log -XX:+ExplicitGCInvokesConcurrentAndUnloadsClasses -XX:+PrintGCTimeStamps -classpath /export/App/jim-server/conf/:/export/App/jim-server/lib/* -Dbasedir=/export/App/jim-server -Dfile.encoding=UTF-8 io.chubao.jimdb.server.JimBootstrap
 
 Reminder
-^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 We can have multiple Proxys in ChubaoDB. The size of proxy depends on the throughput of the deployed clusters. Each Proxy needs to be deployed by following the above steps.
