@@ -1,4 +1,4 @@
-A More Completed Deployment
+Complete Deployment
 =============================
 
 Master Deployment
