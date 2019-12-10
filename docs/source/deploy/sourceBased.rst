@@ -520,4 +520,4 @@ after start.sh
 Reminder
 ^^^^^^^^
 
-We can have multiple Proxys in ChubaoDB. The size of proxy depends on the throughput of the deployed clusters. Every Proxy can be deployed by following the above steps.
+We can have multiple Proxys in ChubaoDB. The size of proxy depends on the throughput of the deployed clusters. Each Proxy needs to be deployed by following the above steps.
