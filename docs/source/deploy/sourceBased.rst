@@ -6,7 +6,7 @@ Master Deployment
 
 Compilation
 ^^^^^^^^^^^^^^^^^^
-We can get a executable file for the master by executing the following script
+We can get an executable file for the master by executing the following script
 
 .. code-block:: bash
 
