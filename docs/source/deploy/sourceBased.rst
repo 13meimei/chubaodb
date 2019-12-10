@@ -145,7 +145,7 @@ Data-Server Deployment
 
 Compilation
 ^^^^^^^^^^^^^^^^^^
-Before starting the data server, a conifig file named ds.conf needs to be provided. Using the following command to start the data servers
+Before starting the data server, a config file named ds.conf needs to be provided. Using the following command to start data server
 
 .. code-block:: bash
 
@@ -517,9 +517,7 @@ after start.sh
 	root     21234 18113  0 10:10 pts/0    00:00:00 grep --color=auto jim
 	root     57810     1 99 Sep30 ?        124-18:30:04 /export/servers/jdk1.8.0_60/bin/java -Xms8G -Xmx8G -Xmn3G -XX:SurvivorRatio=8 -XX:MaxDirectMemorySize=4G -XX:MetaspaceSize=64M -XX:MaxMetaspaceSize=512M -Xss256K -server -XX:+TieredCompilation -XX:CICompilerCount=3 -XX:InitialCodeCacheSize=64m -XX:ReservedCodeCacheSize=2048m -XX:CompileThreshold=1000 -XX:FreqInlineSize=2048 -XX:MaxInlineSize=512 -XX:+UseConcMarkSweepGC -XX:+UseCMSCompactAtFullCollection -XX:CMSInitiatingOccupancyFraction=70 -XX:+CMSParallelRemarkEnabled -XX:SoftRefLRUPolicyMSPerMB=0 -XX:CMSMaxAbortablePrecleanTime=100 -XX:+PrintGCDetails -Xloggc:/export/Logs/jimsql/gc.log -XX:+ExplicitGCInvokesConcurrentAndUnloadsClasses -XX:+PrintGCTimeStamps -classpath /export/App/jim-server/conf/:/export/App/jim-server/lib/* -Dbasedir=/export/App/jim-server -Dfile.encoding=UTF-8 io.chubao.jimdb.server.JimBootstrap
 
-Hint
-^^^^^
+Reminder
+^^^^^^^^
 
-A proxy can deploy one or more nodes according to the size of network flow. 
-
-Repeat the above steps to deploy more nodes.
+We can have multiple Proxys in ChubaoDB. The size of proxy depends on the throughput of the deployed clusters. Every Proxy can be deployed by following the above steps.
